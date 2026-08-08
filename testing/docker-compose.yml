@@ -1,0 +1,65 @@
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: maggot_mariadb
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: maggot-db
+      MYSQL_USER: maggot
+      MYSQL_PASSWORD: maggot
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - maggot-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: maggot_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8080:80"
+    depends_on:
+      mariadb:
+        condition: service_started
+    networks:
+      - maggot-net
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: maggot_mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    networks:
+      - maggot-net
+
+volumes:
+  mariadb_data:
+    name: maggot_mariadb_data
+  mosquitto_data:
+    name: maggot_mosquitto_data
+  mosquitto_log:
+    name: maggot_mosquitto_log
+
+networks:
+  maggot-net:
+    name: maggot_network
+    driver: bridge
