@@ -358,7 +358,7 @@ def parse_args():
     )
     parser.add_argument(
         "--host",
-        default=os.getenv("MQTT_HOST", "localhost"),
+        default=os.getenv("MQTT_HOST", "broker.hivemq.com"),
         help="Alamat host broker MQTT (default: localhost)",
     )
     parser.add_argument(
