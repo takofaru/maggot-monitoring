@@ -1,9 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Hanken Grotesk', sans-serif;
+    --prime-colour: #163428;
+    --prime-light-colour: #345D4D;
+    --bg-colour: #FAF9F6;
+    --fg-colour: #FFFFFF;
+    --outline-colour: #C1C8C3;
+    --text-colour: #424844;
+
+    --size-4: 4px;
+    --size-6: 6px;
+    --size-10: 10px;
+    --size-16: 16px;
+    --size-26: 26px;
+    --size-42: 42px;
+    --size-68: 68px;
+    --size-110: 110px;
+    --size-188: 118px;
+    --size-304: 304px;
+    --size-492: 492px;
+    --size-796: 796px;
+}
+
+@layer base {
+    div {
+        font-family: var(--font-sans);
+    }
+}
+
+@layer components {
+    /*input container style*/
+    .input-container {
+        display: flex;
+        flex-direction: column;
+        gap: var(--size-10);
+    }
+
+    .input-container input {
+        background-color: var(--bg-colour);
+        border-radius: var(--size-16);
+        padding: var(--size-6) var(--size-16);
+        border-width: 1.5px;
+        border-color: var(--outline-colour);
+    }
+
+    .input-container label {
+        font-size: var(--size-16);
+        font-weight: 600;
+        color: var(--text-colour);
+    }
 }
