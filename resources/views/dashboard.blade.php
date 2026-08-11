@@ -1,3 +1,7 @@
-<div>
-    This is dashboard   <!-- Breathing in, I calm body and mind. Breathing out, I smile. - Thich Nhat Hanh -->
-</div>
+<!DOCTYPE html>
+<head>
+    @vite('resources/css/app.css')
+</head>
+<body class="m-0">
+
+</body>
