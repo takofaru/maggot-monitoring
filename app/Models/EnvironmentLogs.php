@@ -2,14 +2,17 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class EnvironmentLogs extends Model
 {
-<<<<<<< HEAD
+    use HasFactory;
+
+    // Memastikan model terhubung ke nama tabel yang benar di SQLite
     protected $table = 'environment_logs';
-}
-=======
+
+    // Kolom yang diizinkan untuk diisi data
     protected $fillable = [
         'cycle_id',
         'timestamp',
@@ -17,9 +20,16 @@ class EnvironmentLogs extends Model
         'humidity',
     ];
 
+    // Konversi tipe data otomatis saat dipanggil
+    protected $casts = [
+        'temperature' => 'float',
+        'humidity'    => 'float',
+        'timestamp'   => 'datetime',
+    ];
+
+    // Relasi balik ke Model Cycle
     public function cycle()
     {
         return $this->belongsTo(Cycle::class);
     }
 }
->>>>>>> b4d663f (Simpan perubahan lokal sebelum pull)

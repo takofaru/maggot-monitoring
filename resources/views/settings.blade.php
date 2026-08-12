@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<head>
+    @vite('resources/css/app.css')
+</head>
+<body class="m-0 flex flex-row">
+    <x-sidebar/>
+    <div class="flex-1">
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+        Test<br/>
+    </div>
+</body>

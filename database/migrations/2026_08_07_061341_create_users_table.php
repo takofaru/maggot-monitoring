@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('full_name');
-            $table->string('username');
+            $table->string('username')->unique();
             $table->string('password_hash');
+            $table->string('role')->default('user'); // Kolom role dengan default 'user'
             $table->timestamps();
         });
     }

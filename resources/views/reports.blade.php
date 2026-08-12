@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Maggot Monitoring</title>
+    <title>Laporan dan Analisis - Maggot Monitoring</title>
     @vite('resources/css/app.css')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     @livewireStyles
 </head>
-<body class="bg-gray-50 flex min-h-screen">
+<body class="bg-[#F8F9FA] flex min-h-screen">
 
-    <!-- Sidebar Utama -->
+    <!-- Sidebar Component (Blade Component) -->
     <x-sidebar />
 
-    <!-- Konten Dashboard -->
+    <!-- Main Content (Livewire Component) -->
     <main class="flex-1 overflow-y-auto">
-        @livewire('dashboard-overview')
+        @livewire('reports-manager')
     </main>
 
     @livewireScripts

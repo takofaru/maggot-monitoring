@@ -2,38 +2,39 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-<<<<<<< HEAD
-    protected $table = 'users';
-}
-=======
-    use Notifiable;
+    use HasFactory, Notifiable;
 
     protected $table = 'users';
 
+    /**
+     * Modern Mass Assignment Attributes
+     */
     protected $fillable = [
         'full_name',
         'username',
         'password_hash',
+        'role',
     ];
 
+    /**
+     * Attribute tersembunyi
+     */
     protected $hidden = [
         'password_hash',
+        'remember_token',
     ];
 
-    // Beritahu Laravel untuk menggunakan kolom 'password_hash' untuk autentikasi
-    public function getAuthPasswordName()
-    {
-        return 'password_hash';
-    }
-
-  /*   public function getAuthPassword()
+    /**
+     * Beritahu Laravel untuk menggunakan kolom 'password_hash' untuk password autentikasi
+     */
+    public function getAuthPassword()
     {
         return $this->password_hash;
-    } */
+    }
 }
->>>>>>> b4d663f (Simpan perubahan lokal sebelum pull)

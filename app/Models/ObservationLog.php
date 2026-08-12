@@ -6,10 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ObservationLog extends Model
 {
-<<<<<<< HEAD
-    protected $table = 'observation_logs';
-}
-=======
+
     protected $fillable = [
         'cycle_id',
         'timestamp',
@@ -22,4 +19,4 @@ class ObservationLog extends Model
         return $this->belongsTo(Cycle::class);
     }
 }
->>>>>>> b4d663f (Simpan perubahan lokal sebelum pull)
+

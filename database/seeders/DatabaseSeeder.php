@@ -14,11 +14,19 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. User (Tabel users: full_name, username, password_hash)
+                User::create([
+            'full_name'     => 'Admin Dua',
+            'username'      => 'admin2',
+            'password_hash' => Hash::make('password123'),
+            'role'          => 'admin',
+        ]);
+
+        // Akun User/Siswa Tambahan
         User::create([
-            'full_name'     => 'Admin Maggot',
-            'username'      => 'admin',
-            'password_hash' => Hash::make('password'),
+            'full_name'     => 'Siswa Dua',
+            'username'      => 'siswa2',
+            'password_hash' => Hash::make('password123'),
+            'role'          => 'user',
         ]);
 
         // 2. Phase Settings (Tabel phase_settings: order, phase_name, temp_bottom, temp_top, humid_bottom, humid_top)

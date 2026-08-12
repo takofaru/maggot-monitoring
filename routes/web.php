@@ -1,12 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Livewire\DashboardOverview;
-use App\Livewire\ObservationLogManager;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,22 +12,14 @@ use Illuminate\Support\Facades\Hash;
 |--------------------------------------------------------------------------
 */
 
-// Redirect Halaman Utama (/) ke Login
 Route::get('/', function () {
-<<<<<<< HEAD
-    return view('welcome');
-});
-Route::get('login', function () {
-    return view('portal');
-=======
     return redirect()->route('login');
->>>>>>> b4d663f (Simpan perubahan lokal sebelum pull)
 });
 
-// Halaman Login
+// Halaman Portal Login
 Route::get('/login', function () {
     if (Auth::check()) {
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard.index');
     }
     return view('portal');
 })->name('login');
@@ -62,13 +52,29 @@ Route::post('/logout', function (Request $request) {
     return redirect()->route('login');
 })->name('logout');
 
-// Route Terproteksi (WAJIB LOGIN)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', DashboardOverview::class)->name('dashboard');
-    Route::get('/catatan', ObservationLogManager::class)->name('catatan');
 
-    // Placeholder Menu Sidebar
-    Route::get('/laporan', fn() => view('reports.index'))->name('laporan');
-    Route::get('/perangkat', fn() => view('devices.index'))->name('perangkat');
-    Route::get('/manajemen-akun', fn() => view('users.index'))->name('users');
+/*
+|--------------------------------------------------------------------------
+| Menu Application Routes (Protected with Auth)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth'])->group(function () {
+
+    // Memberikan nama 'dashboard.index' dan alias 'dashboard'
+    Route::get('/dashboard', fn() => view('dashboard'))
+        ->name('dashboard.index');
+
+    // Route alias 'dashboard' agar tidak error jika dipanggil via route('dashboard')
+    Route::get('/dashboard-alias', fn() => redirect()->route('dashboard.index'))
+        ->name('dashboard');
+
+    Route::get('/maintenance', fn() => view('maintenance'))->name('maintenance.index');
+    Route::get('/reports', fn() => view('reports'))->name('reports.index');
+
+    // Group Khusus Role Admin
+    Route::middleware(['can:admin-only'])->group(function () {
+        Route::get('/settings', fn() => view('settings'))->name('settings.index');
+        Route::get('/account', fn() => view('account'))->name('account.index');
+    });
+
 });

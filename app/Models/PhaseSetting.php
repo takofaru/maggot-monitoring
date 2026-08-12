@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class PhaseSetting extends Model
 {
-<<<<<<< HEAD
+    use HasFactory;
+
     protected $table = 'phase_settings';
-}
-=======
+
     protected $fillable = [
         'order',
         'phase_name',
@@ -19,4 +20,3 @@ class PhaseSetting extends Model
         'humid_top',
     ];
 }
->>>>>>> b4d663f (Simpan perubahan lokal sebelum pull)

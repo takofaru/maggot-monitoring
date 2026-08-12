@@ -6,9 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cycle extends Model
 {
-<<<<<<< HEAD
-    protected $table = 'cycles';
-=======
+
     protected $fillable = [
         'name',
         'start_date',
@@ -28,5 +26,5 @@ class Cycle extends Model
     {
         return $this->hasMany(EnvironmentLogs::class);
     }
->>>>>>> b4d663f (Simpan perubahan lokal sebelum pull)
+
 }
