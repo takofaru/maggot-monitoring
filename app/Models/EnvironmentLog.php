@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class EnvironmentLogs extends Model
+class EnvironmentLog extends Model
 {
     use HasFactory;
 

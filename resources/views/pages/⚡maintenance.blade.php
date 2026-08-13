@@ -13,20 +13,24 @@ new class extends Component
     public $selectedCycleName = '#'; // Menyimpan teks yang tampil di tombol
     public $latestCycle;
     public $observationData;
+    public $isSelectedCurrent = True;
 
     public function mount()
     {
         // Ambil siklus terakhir sebagai default saat halaman dimuat
-        $latestCycle = Cycle::latest('id')->first();
-        if ($latestCycle) {
-            $this->selectedCycleName = $this->selectedCycleId = $latestCycle->id;
+        $latest = Cycle::latest('id')->first();
+        if ($latest) {
+            $this->latestCycle = $latest->id;
+            $this->selectedCycleName = $this->selectedCycleId = $latest->id;
+            $this->isSelectedCurrent = True;
         }
     }
 
     // Fungsi ini dipanggil saat item di custom dropdown di-klik
-    public function selectCyle($id)
+    public function selectCycle($id)
     {
         $this->selectedCycleName = $this->selectedCycleId = $id;
+        $this->isSelectedCurrent = $this->selectedCycleId == $this->latestCycle;
         $this->resetPage();
     }
 
@@ -34,7 +38,10 @@ new class extends Component
     {
         return [
             'cycleData' => Cycle::orderBy('created_at', 'asc')->get(),
-            'observationData' => ObservationLog::where('cycle_id', $this->selectedCycleId)->paginate(14),
+            'observationData' => ObservationLog::with('environmentLog')
+                ->where('cycle_id', $this->selectedCycleId)
+                ->orderBy('timestamp', 'desc')
+                ->paginate(14),
         ];
     }
 };
@@ -62,13 +69,15 @@ new class extends Component
                     x-show="open"
                     @click.outside="open = false"
                     x-transition.opacity.duration.200ms
-                    class="absolute left-0 top-full mt-1 w-(--size-492) bg-white border border-gray-300 rounded shadow-lg z-50"
+                    class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-lg z-50"
                     x-cloak
                 >
                     @foreach($cycleData as $item)
                         <button
                             type="button"
-                            class="w-full flex justify-between items-center text-left p-2 hover:bg-gray-100 rounded"
+                            wire:click="selectCycle({{ $item->id }})"
+                            @click="open = false"
+                            class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 rounded"
                         >
                             <span class="font-semibold">Siklus {{ $item->id }}</span>
                             <span class="text-sm text-(--outline-colour)">
@@ -79,39 +88,35 @@ new class extends Component
                 </div>
             </div>
         </div>
-        <div class="inline-flex gap-(--size-10)">
-            <x-lucide-calendar class="w-(--size-16)"/>
-        </div>
-        <div class="inline-flex gap-(--size-10)">
-            <x-lucide-move-up-right class="w-(--size-16)"/>
+        <div class="{{ $isSelectedCurrent ? 'inline-flex ' : 'hidden' }} gap-(--size-10) ">
+            Ya
         </div>
     </div>
     <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full">
-
         <table class="w-full text-left border-collapse">
             <!-- Bagian Kepala (Header) -->
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>
-                    <th class="min-w-[250px]">Tanggal</th>
-                    <th class="min-w-[112px]">Fase</th>
-                    <th class="min-w-[98px]">Suhu</th>
-                    <th class="min-w-[143px]">Kelembapan</th>
-                    <th class="min-w-[141px]">Berat Pakan</th>
-                    <th class="min-w-[151px]">Berat Maggot</th>
-                    <th class="border-r-0 min-w-[177px]">Aksi</th>
+                    <th class="min-w-[238px]">Tanggal</th>
+                    <th class="min-w-[109px]">Fase</th>
+                    <th class="min-w-[84px]">Suhu</th>
+                    <th class="min-w-[96px]">Kelembapan</th>
+                    <th class="min-w-[82px]">Berat Pakan</th>
+                    <th class="min-w-[79px]">Berat Maggot</th>
+                    <th class="border-r-0 min-w-[160px]">Aksi</th>
                 </tr>
             </thead>
 
             <!-- Bagian Isi (Body) -->
             <tbody>
+                @foreach($observationData as $item)
                 <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                    @foreach($observationData as $item)
                     <td>{{ $item->timestamp->translatedFormat('l, d F Y') }}</td>
-                    <td>{{ $item->phase_setting_id->phase_name}}</td>
-                    <td>000&deg;C</td>
-                    <td>100.00%</td>
-                    <td>000kg</td>
-                    <td>000kg</td>
+                    <td>{{ $item->phase_name}}</td>
+                    <td>{{ $item->environmentLog->temperature ?? '-' }}&deg;C</td>
+                    <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
+                    <td>{{ $item->feed_weight}}kg</td>
+                    <td>{{ $item->maggot_weight}}kg</td>
                     <td class="border-r-0">
                         <!-- Aksi menggunakan button agar interaktif -->
                         <button class="inline-flex items-center justify-center gap-(--size-10) text-(--text-colour) hover:underline">
@@ -119,8 +124,8 @@ new class extends Component
                             <span>Ubah Catatan</span>
                         </button>
                     </td>
-                    @endforeach
                 </tr>
+                @endforeach
             </tbody>
         </table>
 

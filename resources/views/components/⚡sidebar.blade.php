@@ -17,7 +17,7 @@ new class extends Component
 };
 ?>
 
-<aside class="bg-(--bg2-colour) border-r-[1.5px] border-(--outline-colour) flex flex-col justify-between shrink-0 min-h-screen">
+<aside class="bg-(--bg2-colour) border-r-[1.5px] border-(--outline-colour) flex flex-col justify-between shrink-0 max-h-screen">
     <div class="space-y-(--size-26) px-(--size-26) py-(--size-42)">
         <!-- Logo -->
         <div class="flex items-center py-(--size-26)">

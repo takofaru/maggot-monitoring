@@ -9,7 +9,7 @@ class ObservationLog extends Model
     protected $fillable = [
         'cycle_id',
         'phase_name',
-        'environment_log',
+        'environment_log_id',
         'timestamp',
         'feed_weight',
         'maggot_weight',
@@ -23,11 +23,11 @@ class ObservationLog extends Model
 
     public function cycle()
     {
-        return $this->belongsTo(Cycle::class);
+        return $this->belongsTo(Cycle::class, 'cycle_id');
     }
 
     public function environmentLog()
     {
-        return $this->belongsTo(EnvironmentLogs::class, 'environment_log');
+        return $this->belongsTo(EnvironmentLog::class, 'environment_log_id');
     }
 }

@@ -77,7 +77,7 @@ class ObservationLogSeeder extends Seeder
                 ObservationLog::create([
                     'cycle_id'        => $cycle->id,
                     'phase_name'      => $phaseName,
-                    'environment_log' => $envLog->id,
+                    'environment_log_id' => $envLog->id,
                     'timestamp'       => $logDate->toDateString(),
                     'feed_weight'     => max(0.5, $feedWeight),
                     'maggot_weight'   => max(0.2, $maggotWeight),
