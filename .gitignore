@@ -5,6 +5,8 @@
 .env.production
 .phpactor.json
 .phpunit.result.cache
+/composer.lock
+/package-lock.json
 /.codex
 /.cursor/
 /.idea
