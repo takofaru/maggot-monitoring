@@ -30,11 +30,30 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_USER = 'user';
+
     /**
      * Beritahu Laravel untuk menggunakan kolom 'password_hash' untuk password autentikasi
      */
     public function getAuthPassword()
     {
         return $this->password_hash;
+    }
+
+    /**
+     * Cek apakah role user adalah admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Cek apakah role user adalah user biasa
+     */
+    public function isUser(): bool
+    {
+        return $this->role === self::ROLE_USER;
     }
 }

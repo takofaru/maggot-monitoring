@@ -9,6 +9,7 @@
     --prime-colour: #163428;
     --prime-light-colour: #345D4D;
     --bg-colour: #FAF9F6;
+    --bg2-colour: #EEEEEA;
     --fg-colour: #FFFFFF;
     --outline-colour: #C1C8C3;
     --text-colour: #424844;
@@ -28,31 +29,43 @@
 }
 
 @layer base {
-    div {
+    body, div, input {
         font-family: var(--font-sans);
+        color: var(--text-colour);
+    }
+
+    ::placeholder {
+        color: var(--outline-colour);
+    }
+    :focus {
+        outline: none;
+    }
+    body {
+        margin: 0;
     }
 }
 
 @layer components {
     /*input container style*/
-    .input-text {
+
+    .input-container {
         font-size: var(--size-16);
         display: flex;
         flex-direction: column;
         gap: var(--size-10);
     }
 
-    .input-text input {
+    .input-container label {
+        font-weight: 600;
+        color: var(--text-colour);
+    }
+
+    .input-text {
         background-color: var(--bg-colour);
         border-radius: var(--size-16);
         padding: var(--size-6) var(--size-16);
         border-width: 1.5px;
         border-color: var(--outline-colour);
-    }
-
-    .input-text label {
-        font-weight: 600;
-        color: var(--text-colour);
     }
 
     .input-button {

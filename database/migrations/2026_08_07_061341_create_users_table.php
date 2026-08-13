@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('full_name');
             $table->string('username')->unique();
             $table->string('password_hash');
-            $table->string('role')->default('user'); // Kolom role dengan default 'user'
+            $table->enum('role', ['admin', 'user'])->default('user'); // Kolom role dengan default 'user'
             $table->timestamps();
         });
     }

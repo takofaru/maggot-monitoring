@@ -13,45 +13,21 @@ use App\Models\User;
 */
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect()->route('dashboard');
 });
 
-// Halaman Portal Login
-Route::get('/login', function () {
-    if (Auth::check()) {
-        return redirect()->route('dashboard.index');
-    }
-    return view('portal');
-})->name('login');
-
-// Eksekusi Login
-Route::post('/login', function (Request $request) {
-    $request->validate([
-        'username' => 'required',
-        'password' => 'required',
-    ]);
-
-    $user = User::where('username', $request->username)->first();
-
-    if ($user && Hash::check($request->password, $user->password_hash)) {
-        Auth::login($user);
-        $request->session()->regenerate();
-        return redirect()->intended('/dashboard');
-    }
-
-    return back()->withErrors([
-        'username' => 'Username atau password yang Anda masukkan salah.',
-    ])->onlyInput('username');
+// Guest Routes
+Route::middleware(['guest'])->group(function () {
+    Route::livewire('/login', 'pages::auth.login')->name('login');
 });
 
-// Eksekusi Logout
+// Logout Route
 Route::post('/logout', function (Request $request) {
     Auth::logout();
     $request->session()->invalidate();
     $request->session()->regenerateToken();
     return redirect()->route('login');
-})->name('logout');
-
+})->name('logout')->middleware('auth');
 
 /*
 |--------------------------------------------------------------------------
@@ -61,20 +37,9 @@ Route::post('/logout', function (Request $request) {
 Route::middleware(['auth'])->group(function () {
 
     // Memberikan nama 'dashboard.index' dan alias 'dashboard'
-    Route::get('/dashboard', fn() => view('dashboard'))
-        ->name('dashboard.index');
-
-    // Route alias 'dashboard' agar tidak error jika dipanggil via route('dashboard')
-    Route::get('/dashboard-alias', fn() => redirect()->route('dashboard.index'))
-        ->name('dashboard');
-
-    Route::get('/maintenance', fn() => view('maintenance'))->name('maintenance.index');
-    Route::get('/reports', fn() => view('reports'))->name('reports.index');
-
-    // Group Khusus Role Admin
-    Route::middleware(['can:admin-only'])->group(function () {
-        Route::get('/settings', fn() => view('settings'))->name('settings.index');
-        Route::get('/account', fn() => view('account'))->name('account.index');
-    });
-
+    Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard.index');
+    Route::livewire('/maintenance', 'pages::maintenance')->name('maintenance.index');
+    Route::livewire('/reports', 'pages::reports')->name('reports.index');
+    Route::livewire('/settings', 'pages::settings')->name('settings.index');
+    Route::livewire('/account', 'pages::account')->name('account.index');
 });

@@ -59,7 +59,7 @@ class MaintenanceManager extends Component
     {
         $this->resetForm();
         $this->isEditMode = false;
-        
+
         $activeCycle = Cycle::where('is_active', true)->first() ?? Cycle::latest()->first();
         if ($activeCycle) {
             $this->cycle_id = $activeCycle->id;
@@ -81,7 +81,7 @@ class MaintenanceManager extends Component
         $this->reset(['log_id', 'feed_weight', 'maggot_weight', 'isEditMode']);
         $this->resetValidation();
         $this->log_date = date('Y-m-d');
-        
+
         $activeCycle = Cycle::where('is_active', true)->first() ?? Cycle::latest()->first();
         $this->cycle_id = $activeCycle ? $activeCycle->id : 1;
     }
@@ -167,7 +167,7 @@ class MaintenanceManager extends Component
 
     public function render()
     {
-        $cycles = Cycle::orderBy('cycle_number', 'asc')->get();
+        $cycles = Cycle::orderBy('id', 'asc')->get();
 
         $query = ObservationLog::query();
         if ($this->selectedCycle) {
