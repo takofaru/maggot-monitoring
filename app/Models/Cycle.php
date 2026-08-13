@@ -26,10 +26,10 @@ class Cycle extends Model
         return $this->hasMany(ObservationLog::class);
     }
 
-    // Relasi: Satu Cycle memiliki banyak EnvironmentLogs
+    // Relasi: Satu Cycle memiliki banyak EnvironmentLog
     public function environmentLogs()
     {
-        return $this->hasMany(EnvironmentLogs::class);
+        return $this->hasMany(EnvironmentLog::class);
     }
 
 }

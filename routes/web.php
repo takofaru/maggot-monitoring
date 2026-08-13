@@ -38,7 +38,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Memberikan nama 'dashboard.index' dan alias 'dashboard'
     Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard.index');
-    Route::livewire('/maintenance', 'pages::maintenance')->name('maintenance.index');
+    Route::livewire('/observation', 'pages::observation')->name('observation.index');
     Route::livewire('/reports', 'pages::reports')->name('reports.index');
     Route::livewire('/settings', 'pages::settings')->name('settings.index');
     Route::livewire('/account', 'pages::account')->name('account.index');

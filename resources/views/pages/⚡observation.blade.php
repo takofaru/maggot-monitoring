@@ -41,7 +41,7 @@ new class extends Component
             'observationData' => ObservationLog::with('environmentLog')
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
-                ->paginate(14),
+                ->paginate(13),
         ];
     }
 };
@@ -128,6 +128,8 @@ new class extends Component
                 @endforeach
             </tbody>
         </table>
-
+    </div>
+    <div>
+        {{ $observationData->links() }}
     </div>
 </div>

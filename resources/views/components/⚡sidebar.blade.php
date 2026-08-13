@@ -32,7 +32,7 @@ new class extends Component
                 Dashboard
             </livewire:nav-link>
 
-            <livewire:nav-link route="maintenance.index" icon="notebook-text">
+            <livewire:nav-link route="observation.index" icon="notebook-text">
                 Catatan Pemeliharaan
             </livewire:nav-link>
 

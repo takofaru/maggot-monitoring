@@ -5,7 +5,7 @@ namespace App\Livewire;
 use Livewire\Component;
 use App\Models\Cycle;
 use App\Models\ObservationLog;
-use App\Models\EnvironmentLogs;
+use App\Models\EnvironmentLog;
 use Carbon\Carbon;
 
 class DashboardOverview extends Component
@@ -41,7 +41,7 @@ class DashboardOverview extends Component
         }
 
         // 3. Query Telemetri Lingkungan (10 Data Terakhir) - Grafik Tetap Utuh
-        $envLogsModel = EnvironmentLogs::latest('id')->take(10)->get()->reverse();
+        $envLogsModel = EnvironmentLog::latest('id')->take(10)->get()->reverse();
 
         $latestEnv = $envLogsModel->last();
         $tempVal = $latestEnv ? $latestEnv->temperature : 0;
