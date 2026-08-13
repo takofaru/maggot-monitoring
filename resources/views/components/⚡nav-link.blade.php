@@ -35,12 +35,12 @@ new class extends Component
 };
 ?>
 
-<div class="rounded-(--size-16) {{ $isActive ? 'text-(--fg-colour) bg-(--prime-colour)' : 'text-(--text-colour) hover:bg-(--bg-colour)' }}">
+<div class="rounded-(--size-16) border-[1.5px] transition-all {{ $isActive ? 'text-(--fg-colour) bg-(--prime-colour) border-hidden' : 'text-(--text-colour) hover:bg-(--bg-colour) border-(--bg2-colour) hover:border-(--outline-colour) hover:border-solid' }}">
     @php
         $iconName = $icon ? (str_starts_with($icon, 'lucide-') ? $icon : 'lucide-' . $icon) : null;
     @endphp
 
-    <a href="{{ $href }}" class="flex items-center gap-(--size-10) px-(--size-26) py-(--size-16) font-semibold text-(--size-16) transition-all">
+    <a href="{{ $href }}" class="flex items-center gap-(--size-10) px-(--size-26) py-(--size-16) font-semibold text-(length:--size-16)">
         @if($iconName)
             <x-dynamic-component :component="$iconName" class="w-(--size-26)" />
         @endif

@@ -8,11 +8,16 @@ class Cycle extends Model
 {
 
     protected $fillable = [
-        'name',
         'start_date',
         'end_date',
         'is_active',
         'current_phase',
+    ];
+
+    protected $casts = [
+        'is_active'  => 'boolean',
+        'start_date' => 'date',
+        'end_date'   => 'date',
     ];
 
     // Relasi: Satu Cycle memiliki banyak ObservationLog

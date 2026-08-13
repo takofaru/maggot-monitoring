@@ -13,6 +13,7 @@ testing/
 │   └── config/
 │       └── mosquitto.conf      # Konfigurasi broker Mosquitto (port 1883 & 9001)
 ├── requirements.txt            # Dependensi Python (paho-mqtt)
+├── tui_monitor.py              # Monitor & Tester TUI Interaktif (Kirim 10s & Tangkap environmentLimit)
 ├── simulator.py                # Simulator mikrokontroler (ESP32) dengan pengiriman sekuensial
 ├── test_publisher.py           # Skrip pengujian perubahan data (environmentLimit & totalDay)
 └── README.md                   # Panduan lengkap dalam Bahasa Indonesia
@@ -206,8 +207,28 @@ Mikrokontroler disimulasikan melalui script [`simulator.py`](file:///home/dimas/
 
 ## 🧪 5. Cara Menjalankan Pengujian
 
-### Langkah 1: Jalankan Simulator Mikrokontroler
-Buka terminal pertama dan jalankan:
+### Langkah 1: Jalankan TUI Monitor MQTT (Interaktif)
+Buka terminal dan jalankan:
+```bash
+python3 tui_monitor.py
+```
+*Gunakan tombol interaktif di dalam TUI:*
+- **`[▶ START (S)]` / Tekan `S` atau Spasi**: Mulai pengiriman data suhu & kelembapan otomatis ke `environmentData` setiap **10 detik**.
+- **`[⏹ STOP (S)]` / Tekan `S` atau Spasi**: Hentikan/Jeda pengiriman data.
+- **`[⚡ SEND NOW (N)]` / Tekan `N`**: Kirimkan 1 frame telemetri secara instan tanpa menunggu timer 10 detik.
+- **`[🗑 CLEAR (C)]` / Tekan `C`**: Bersihkan log dan riwayat tabel.
+- **`[✕ KELUAR (Q)]` / Tekan `Q` atau `ESC`**: Keluar dari aplikasi TUI.
+
+*Opsi argumen (opsional):*
+```bash
+# Menyesuaikan host, port (default 1883), dan interval (default 10.0s)
+python3 tui_monitor.py --host localhost --port 1883 -i 10.0
+```
+
+---
+
+### Langkah 2: Jalankan Simulator Mikrokontroler (Alternatif CLI)
+Buka terminal dan jalankan:
 ```bash
 python3 simulator.py
 ```

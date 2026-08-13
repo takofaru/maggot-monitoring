@@ -13,11 +13,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('environment_logs', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement()->primary();
             $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();
             $table->dateTime('timestamp');
             $table->decimal('temperature', 8, 2);
-            $table->decimal('humidity', 3, 2);
+            $table->decimal('humidity', 5, 2);
             $table->timestamps();
         });
     }

@@ -12,13 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('phase_settings', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement()->primary();
             $table->integer('order');
             $table->string('phase_name');
             $table->decimal('temp_bottom', 8, 2);
             $table->decimal('temp_top', 8, 2);
-            $table->decimal('humid_bottom', 3, 2);
-            $table->decimal('humid_top', 3, 2);
+            $table->decimal('humid_bottom', 8, 2);
+            $table->decimal('humid_top', 8, 2);
             $table->timestamps();
         });
     }

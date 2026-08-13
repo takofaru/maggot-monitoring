@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('observation_logs', function (Blueprint $table) {
-            $table->id();
+            $table->id()->autoIncrement()->primary();
             $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();
+            $table->string('phase_name');
+            $table->foreignId('environment_log')->constrained()->cascadeOnDelete();
             $table->date('timestamp');
             $table->decimal('feed_weight', 8, 2)->default(0);
             $table->decimal('maggot_weight', 8, 2)->default(0);

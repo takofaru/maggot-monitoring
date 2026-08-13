@@ -43,6 +43,24 @@
     body {
         margin: 0;
     }
+
+    th {
+        border-right-width: 1.5px;
+        border-color: var(--prime-light-colour);
+        padding-inline: var(--size-26);
+        padding-block: var(--size-16);
+        font-weight: 600;
+        color: var(--fg-colour);
+        text-align: center;
+    }
+
+    td {
+        border-right-width: 1.5px;
+        border-color: var(--outline-colour);
+        padding-inline: var(--size-26);
+        padding-block: var(--size-16);
+        text-align: center;
+    }
 }
 
 @layer components {

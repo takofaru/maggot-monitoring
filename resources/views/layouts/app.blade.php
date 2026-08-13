@@ -10,11 +10,13 @@
 
         @livewireStyles
     </head>
-    <body class="bg-[#FAF9F6] flex min-h-screen">
+    <body class="bg-(--bg-colour) flex min-h-screen">
         <livewire:sidebar />
 
         <main class="flex-1 overflow-y-auto">
-            {{ $slot }}
+            <div class="p-(--size-42) min-w-max">
+                {{ $slot }}
+            </div>
         </main>
 
         @livewireScripts
