@@ -418,8 +418,8 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Canvas Chart Suhu dengan Range 0 sampai Suhu Tertinggi -->
-            <div class="relative w-full h-44 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
+            <!-- Canvas Chart Suhu dengan Range 0 sampai Suhu Tertinggi (Rasio W:H = 1:0.6) -->
+            <div class="relative w-full aspect-[1/0.6] min-h-[300px] border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
                 <canvas x-data="{
                     chart: null,
                     init() {
@@ -572,8 +572,8 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Canvas Chart Kelembapan dengan Range 0 - 100% -->
-            <div class="relative w-full h-44 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
+            <!-- Canvas Chart Kelembapan dengan Range 0 - 100% (Rasio W:H = 1:0.6) -->
+            <div class="relative w-full aspect-[1/0.6] min-h-[300px] border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
                 <canvas x-data="{
                     chart: null,
                     init() {
