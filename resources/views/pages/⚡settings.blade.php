@@ -10,136 +10,121 @@ use Illuminate\Support\Facades\Cache;
 
 new class extends Component
 {
-    // Fase 1: Penetasan
-    public $penetasanTempMin = 27.00;
-    public $penetasanTempMax = 30.00;
-    public $penetasanHumidMin = 60.00;
-    public $penetasanHumidMax = 80.00;
+    // Fase Penetasan
+    public $penetasanTempMin;
+    public $penetasanTempMax;
+    public $penetasanHumidMin;
+    public $penetasanHumidMax;
 
-    // Fase 2: Pembesaran
-    public $pembesaranTempMin = 26.00;
-    public $pembesaranTempMax = 32.00;
-    public $pembesaranHumidMin = 60.00;
-    public $pembesaranHumidMax = 85.00;
+    // Fase Pembesaran
+    public $pembesaranTempMin;
+    public $pembesaranTempMax;
+    public $pembesaranHumidMin;
+    public $pembesaranHumidMax;
 
-    // Fase 3: Prepupa
-    public $prepupaTempMin = 25.00;
-    public $prepupaTempMax = 29.00;
-    public $prepupaHumidMin = 50.00;
-    public $prepupaHumidMax = 70.00;
+    // Fase Prepupa
+    public $prepupaTempMin;
+    public $prepupaTempMax;
+    public $prepupaHumidMin;
+    public $prepupaHumidMax;
 
-    // Feedback message
     public string $flashMessage = '';
 
     public function mount()
     {
         $settings = PhaseSetting::all()->keyBy('phase_name');
 
-        if (isset($settings['penetasan'])) {
-            $this->penetasanTempMin = (float) $settings['penetasan']->temp_bottom;
-            $this->penetasanTempMax = (float) $settings['penetasan']->temp_top;
-            $this->penetasanHumidMin = (float) $settings['penetasan']->humid_bottom;
-            $this->penetasanHumidMax = (float) $settings['penetasan']->humid_top;
-        }
+        // Penetasan
+        $p = $settings->get('penetasan');
+        $this->penetasanTempMin = $p?->temp_bottom ?? 27.00;
+        $this->penetasanTempMax = $p?->temp_top ?? 30.00;
+        $this->penetasanHumidMin = $p?->humid_bottom ?? 60.00;
+        $this->penetasanHumidMax = $p?->humid_top ?? 80.00;
 
-        if (isset($settings['pembesaran'])) {
-            $this->pembesaranTempMin = (float) $settings['pembesaran']->temp_bottom;
-            $this->pembesaranTempMax = (float) $settings['pembesaran']->temp_top;
-            $this->pembesaranHumidMin = (float) $settings['pembesaran']->humid_bottom;
-            $this->pembesaranHumidMax = (float) $settings['pembesaran']->humid_top;
-        }
+        // Pembesaran
+        $b = $settings->get('pembesaran');
+        $this->pembesaranTempMin = $b?->temp_bottom ?? 28.00;
+        $this->pembesaranTempMax = $b?->temp_top ?? 32.00;
+        $this->pembesaranHumidMin = $b?->humid_bottom ?? 50.00;
+        $this->pembesaranHumidMax = $b?->humid_top ?? 70.00;
 
-        if (isset($settings['prepupa'])) {
-            $this->prepupaTempMin = (float) $settings['prepupa']->temp_bottom;
-            $this->prepupaTempMax = (float) $settings['prepupa']->temp_top;
-            $this->prepupaHumidMin = (float) $settings['prepupa']->humid_bottom;
-            $this->prepupaHumidMax = (float) $settings['prepupa']->humid_top;
-        }
+        // Prepupa
+        $pr = $settings->get('prepupa');
+        $this->prepupaTempMin = $pr?->temp_bottom ?? 26.00;
+        $this->prepupaTempMax = $pr?->temp_top ?? 29.00;
+        $this->prepupaHumidMin = $pr?->humid_bottom ?? 40.00;
+        $this->prepupaHumidMax = $pr?->humid_top ?? 60.00;
     }
 
     public function changePhaseSettings()
     {
+        $this->flashMessage = '';
+
         $this->validate([
-            'penetasanTempMin'  => 'required|numeric|between:0,100|lte:penetasanTempMax',
-            'penetasanTempMax'  => 'required|numeric|between:0,100|gte:penetasanTempMin',
-            'penetasanHumidMin' => 'required|numeric|between:0,100|lte:penetasanHumidMax',
-            'penetasanHumidMax' => 'required|numeric|between:0,100|gte:penetasanHumidMin',
+            'penetasanTempMin'  => 'required|numeric|min:0|max:100|lte:penetasanTempMax',
+            'penetasanTempMax'  => 'required|numeric|min:0|max:100|gte:penetasanTempMin',
+            'penetasanHumidMin' => 'required|numeric|min:0|max:100|lte:penetasanHumidMax',
+            'penetasanHumidMax' => 'required|numeric|min:0|max:100|gte:penetasanHumidMin',
 
-            'pembesaranTempMin'  => 'required|numeric|between:0,100|lte:pembesaranTempMax',
-            'pembesaranTempMax'  => 'required|numeric|between:0,100|gte:pembesaranTempMin',
-            'pembesaranHumidMin' => 'required|numeric|between:0,100|lte:pembesaranHumidMax',
-            'pembesaranHumidMax' => 'required|numeric|between:0,100|gte:pembesaranHumidMin',
+            'pembesaranTempMin'  => 'required|numeric|min:0|max:100|lte:pembesaranTempMax',
+            'pembesaranTempMax'  => 'required|numeric|min:0|max:100|gte:pembesaranTempMin',
+            'pembesaranHumidMin' => 'required|numeric|min:0|max:100|lte:pembesaranHumidMax',
+            'pembesaranHumidMax' => 'required|numeric|min:0|max:100|gte:pembesaranHumidMin',
 
-            'prepupaTempMin'  => 'required|numeric|between:0,100|lte:prepupaTempMax',
-            'prepupaTempMax'  => 'required|numeric|between:0,100|gte:prepupaTempMin',
-            'prepupaHumidMin' => 'required|numeric|between:0,100|lte:prepupaHumidMax',
-            'prepupaHumidMax' => 'required|numeric|between:0,100|gte:prepupaHumidMin',
+            'prepupaTempMin'  => 'required|numeric|min:0|max:100|lte:prepupaTempMax',
+            'prepupaTempMax'  => 'required|numeric|min:0|max:100|gte:prepupaTempMin',
+            'prepupaHumidMin' => 'required|numeric|min:0|max:100|lte:prepupaHumidMax',
+            'prepupaHumidMax' => 'required|numeric|min:0|max:100|gte:prepupaHumidMin',
         ], [
-            'penetasanTempMin.lte'  => 'Suhu minimum penetasan tidak boleh melebihi suhu maksimum.',
-            'penetasanTempMax.gte'  => 'Suhu maksimum penetasan harus lebih besar atau sama dengan suhu minimum.',
-            'penetasanHumidMin.lte' => 'Kelembapan minimum penetasan tidak boleh melebihi kelembapan maksimum.',
-            'penetasanHumidMax.gte' => 'Kelembapan maksimum penetasan harus lebih besar atau sama dengan kelembapan minimum.',
-
-            'pembesaranTempMin.lte'  => 'Suhu minimum pembesaran tidak boleh melebihi suhu maksimum.',
-            'pembesaranTempMax.gte'  => 'Suhu maksimum pembesaran harus lebih besar atau sama dengan suhu minimum.',
-            'pembesaranHumidMin.lte' => 'Kelembapan minimum pembesaran tidak boleh melebihi kelembapan maksimum.',
-            'pembesaranHumidMax.gte' => 'Kelembapan maksimum pembesaran harus lebih besar atau sama dengan kelembapan minimum.',
-
-            'prepupaTempMin.lte'  => 'Suhu minimum prepupa tidak boleh melebihi suhu maksimum.',
-            'prepupaTempMax.gte'  => 'Suhu maksimum prepupa harus lebih besar atau sama dengan suhu minimum.',
-            'prepupaHumidMin.lte' => 'Kelembapan minimum prepupa tidak boleh melebihi kelembapan maksimum.',
-            'prepupaHumidMax.gte' => 'Kelembapan maksimum prepupa harus lebih besar atau sama dengan kelembapan minimum.',
+            '*.required' => 'Batas wajib diisi.',
+            '*.numeric'  => 'Batas harus berupa angka.',
+            '*.lte'      => 'Batas minimal tidak boleh lebih besar dari batas maksimal.',
+            '*.gte'      => 'Batas maksimal tidak boleh lebih kecil dari batas minimal.',
         ]);
 
-        // 1. Ambil data pengaturan lama dari database untuk pengecekan perubahan
-        $existingSettings = PhaseSetting::all()->keyBy('phase_name');
-
-        // Deteksi fase siklus yang saat ini sedang aktif
+        // 1. Periksa batas fase aktif saat ini sebelum disimpan
         $activeCycle = Cycle::where('is_active', true)->first();
         $currentPhase = $activeCycle ? strtolower($activeCycle->current_phase) : 'penetasan';
-
         if (!in_array($currentPhase, ['penetasan', 'pembesaran', 'prepupa'])) {
             $currentPhase = 'penetasan';
         }
 
-        // Cek apakah ada perubahan pada nilai fase aktif yang sedang berjalan
-        $activeOld = $existingSettings[$currentPhase] ?? null;
-        $activeNewTMin = (float) $this->{$currentPhase . 'TempMin'};
-        $activeNewTMax = (float) $this->{$currentPhase . 'TempMax'};
-        $activeNewHMin = (float) $this->{$currentPhase . 'HumidMin'};
-        $activeNewHMax = (float) $this->{$currentPhase . 'HumidMax'};
+        $oldSetting = PhaseSetting::where('phase_name', $currentPhase)->first();
 
-        $activePhaseChanged = (
-            !$activeOld ||
-            (float) $activeOld->temp_bottom !== $activeNewTMin ||
-            (float) $activeOld->temp_top !== $activeNewTMax ||
-            (float) $activeOld->humid_bottom !== $activeNewHMin ||
-            (float) $activeOld->humid_top !== $activeNewHMax
-        );
+        $activeNewTMin = match($currentPhase) {
+            'penetasan'  => (float) $this->penetasanTempMin,
+            'pembesaran' => (float) $this->pembesaranTempMin,
+            'prepupa'    => (float) $this->prepupaTempMin,
+        };
+        $activeNewTMax = match($currentPhase) {
+            'penetasan'  => (float) $this->penetasanTempMax,
+            'pembesaran' => (float) $this->pembesaranTempMax,
+            'prepupa'    => (float) $this->prepupaTempMax,
+        };
+        $activeNewHMin = match($currentPhase) {
+            'penetasan'  => (float) $this->penetasanHumidMin,
+            'pembesaran' => (float) $this->pembesaranHumidMin,
+            'prepupa'    => (float) $this->prepupaHumidMin,
+        };
+        $activeNewHMax = match($currentPhase) {
+            'penetasan'  => (float) $this->penetasanHumidMax,
+            'pembesaran' => (float) $this->pembesaranHumidMax,
+            'prepupa'    => (float) $this->prepupaHumidMax,
+        };
 
-        // Cek apakah ada perubahan pada fase mana pun
-        $anyPhaseChanged = false;
-        foreach (['penetasan', 'pembesaran', 'prepupa'] as $p) {
-            $old = $existingSettings[$p] ?? null;
-            if (
-                !$old ||
-                (float) $old->temp_bottom !== (float) $this->{$p . 'TempMin'} ||
-                (float) $old->temp_top !== (float) $this->{$p . 'TempMax'} ||
-                (float) $old->humid_bottom !== (float) $this->{$p . 'HumidMin'} ||
-                (float) $old->humid_top !== (float) $this->{$p . 'HumidMax'}
-            ) {
-                $anyPhaseChanged = true;
-                break;
+        $activePhaseChanged = true;
+        if ($oldSetting) {
+            $tMinDiff = abs((float)$oldSetting->temp_bottom - $activeNewTMin);
+            $tMaxDiff = abs((float)$oldSetting->temp_top - $activeNewTMax);
+            $hMinDiff = abs((float)$oldSetting->humid_bottom - $activeNewHMin);
+            $hMaxDiff = abs((float)$oldSetting->humid_top - $activeNewHMax);
+
+            if ($tMinDiff < 0.001 && $tMaxDiff < 0.001 && $hMinDiff < 0.001 && $hMaxDiff < 0.001) {
+                $activePhaseChanged = false;
             }
         }
 
-        // Jika tidak ada perubahan sama sekali, tidak perlu menyimpan dan tidak kirim ke MQTT
-        if (!$anyPhaseChanged) {
-            $this->flashMessage = 'Tidak ada perubahan pada pengaturan fase.';
-            return;
-        }
-
-        // 2. Simpan perubahan ke database
+        // 2. Simpan batas fase ke Database
         PhaseSetting::updateOrCreate(
             ['phase_name' => 'penetasan'],
             [
@@ -216,7 +201,7 @@ new class extends Component
             $lastSeen = $cachedLastSeen ?? $dbLastSeen;
         }
 
-        // 4. Hitung selisih waktu antara jam sekarang dengan data terakhir (dalam detik)
+        // 3. Hitung selisih waktu antara jam sekarang dengan data terakhir (dalam detik)
         $diffInSeconds = $lastSeen ? (int) abs($currentTime->diffInSeconds($lastSeen, false)) : null;
 
         // Status Perangkat: Online jika data masuk <= 20 detik yang lalu (interval normal 10 detik/data)
@@ -236,7 +221,7 @@ new class extends Component
 <div class="space-y-(--size-26) min-w-[922px]">
     <!-- Header & Notifikasi Flash -->
     <div class="flex items-center justify-between">
-        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
+        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
             Pengaturan Perangkat
         </h1>
         @if ($flashMessage)
@@ -252,91 +237,52 @@ new class extends Component
         @endif
     </div>
 
-    <!-- Status Perangkat IoT, Jam Sekarang, Data Terakhir & Selisih Waktu (Check Setiap 10 Detik) -->
-    <div wire:poll.10s class="flex flex-col lg:flex-row lg:items-center justify-between gap-(--size-16) px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-        <!-- Bagian Kiri: Ikon & Status Online/Offline -->
-        <div class="flex items-center gap-(--size-16)">
-            <div class="p-3.5 bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0">
-                <x-lucide-cpu class="w-(--size-26) h-(--size-26)" />
-            </div>
-            <div>
-                <div class="flex items-center gap-2.5">
-                    <span class="text-sm font-bold text-gray-900">Status Perangkat IoT:</span>
-                    @if($isOnline)
-                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Online (Terhubung)
-                        </span>
-                    @else
-                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
-                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            Offline (Terputus)
-                        </span>
-                    @endif
-                </div>
-                <div class="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    @if($isOnline)
-                        <span class="text-emerald-700 font-medium">Perangkat aktif mengirimkan data telemetri lingkungan.</span>
-                        @if($latestEnv)
-                            <span class="text-gray-400">|</span>
-                            <span class="font-medium text-gray-700">Sensor: {{ $latestEnv->temperature }}&deg;C &bull; {{ $latestEnv->humidity }}%</span>
-                        @endif
-                    @else
-                        <span class="text-gray-500">Tidak ada data sensor baru dari topik <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px] text-gray-700">environmentData</code> (&gt; 20 detik).</span>
-                    @endif
-                </div>
-            </div>
+    <!-- Status Alat & Waktu Terakhir Terhubung (Persis settings.png) -->
+    <div wire:poll.10s class="flex flex-row items-center justify-between text-sm py-1">
+        <!-- Status Alat -->
+        <div class="flex items-center gap-3">
+            <span class="font-bold text-(--text-colour) text-base">Status Alat:</span>
+            @if($isOnline)
+                <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Online
+                </span>
+            @else
+                <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 inline-flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                    Offline
+                </span>
+            @endif
         </div>
 
-        <!-- Bagian Kanan: Jam Sekarang, Data Terakhir Masuk & Selisih Detik -->
-        <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 lg:gap-6 border-t lg:border-t-0 pt-3 lg:pt-0 text-xs">
-            <!-- Jam Server Sekarang -->
-            <div class="flex flex-col">
-                <span class="text-gray-400 font-medium">Jam Sekarang:</span>
-                <span class="font-bold text-gray-800 font-mono text-xs">
-                    {{ $currentTime->translatedFormat('d M Y, H:i:s') }}
-                </span>
-            </div>
-
-            <div class="hidden sm:block w-px h-8 bg-gray-200"></div>
-
-            <!-- Data Terakhir Masuk -->
-            <div class="flex flex-col">
-                <span class="text-gray-400 font-medium">Data Terakhir:</span>
-                <span class="font-bold text-(--prime-colour) font-mono text-xs">
-                    {{ $lastSeen ? $lastSeen->translatedFormat('d M Y, H:i:s') : 'Belum ada data' }}
-                </span>
-            </div>
-
-            <div class="hidden sm:block w-px h-8 bg-gray-200"></div>
-
-            <!-- Selisih Waktu -->
-            <div class="flex flex-col">
-                <span class="text-gray-400 font-medium">Selisih Waktu:</span>
-                <span class="font-bold {{ $isOnline ? 'text-emerald-700' : 'text-red-600' }}">
-                    @if($diffInSeconds !== null)
-                        {{ $diffInSeconds }} detik yang lalu
-                    @else
-                        -
-                    @endif
-                </span>
-            </div>
+        <!-- Terakhir Terhubung -->
+        <div class="text-xs text-gray-400 font-medium">
+            @if($lastSeen)
+                Terakhir terhubung pada {{ $lastSeen->translatedFormat('l, d F Y - H:i:s') }}
+                @if($diffInSeconds !== null)
+                    <span class="{{ $isOnline ? 'text-emerald-700' : 'text-red-500' }} font-bold">({{ $diffInSeconds }} detik yang lalu)</span>
+                @endif
+            @else
+                Terakhir terhubung: Belum ada data
+            @endif
         </div>
     </div>
 
+    <!-- Form Batas Lingkungan Fase (Grid 2 Kolom Persis settings.png) -->
     <form wire:submit.prevent="changePhaseSettings" onsubmit="event.preventDefault();" id="changePhaseSettingsForm" class="space-y-(--size-26)">
-        <!-- Grid 3 Fase: Penetasan, Pembesaran, Prepupa -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-(--size-26) w-full">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-(--size-26) w-full">
             
             <!-- 1. Fase Penetasan -->
             <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
                 <div class="flex flex-row gap-(--size-16) items-center">
-                    <x-lucide-egg class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-egg class="w-(--size-26) h-(--size-26)"/>
+                    </div>
                     <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Fase Penetasan</span>
                 </div>
                 <div class="flex flex-col gap-(--size-16)">
                     <div class="input-container w-full min-w-0">
-                        <label>Batas Suhu</label>
+                        <label>Batas Suhu (&deg;C)</label>
                         <div class="flex flex-row gap-(--size-10) items-center w-full">
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('penetasanTempMin') border-red-500 @enderror">
                                 <input
@@ -346,12 +292,12 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Min"
+                                    placeholder="Nilai Minimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">&deg;C</span>
                             </div>
-                            <span class="text-xs text-gray-500 font-medium shrink-0">s/d</span>
+                            <span class="text-xs text-gray-500 font-medium shrink-0 px-1">sampai</span>
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('penetasanTempMax') border-red-500 @enderror">
                                 <input
                                     wire:model="penetasanTempMax"
@@ -360,7 +306,7 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Max"
+                                    placeholder="Nilai Maksimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">&deg;C</span>
@@ -375,7 +321,7 @@ new class extends Component
                     </div>
 
                     <div class="input-container w-full min-w-0">
-                        <label>Batas Kelembapan</label>
+                        <label>Batas Kelembapan (%)</label>
                         <div class="flex flex-row gap-(--size-10) items-center w-full">
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('penetasanHumidMin') border-red-500 @enderror">
                                 <input
@@ -385,12 +331,12 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Min"
+                                    placeholder="Nilai Minimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">%</span>
                             </div>
-                            <span class="text-xs text-gray-500 font-medium shrink-0">s/d</span>
+                            <span class="text-xs text-gray-500 font-medium shrink-0 px-1">sampai</span>
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('penetasanHumidMax') border-red-500 @enderror">
                                 <input
                                     wire:model="penetasanHumidMax"
@@ -399,7 +345,7 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Max"
+                                    placeholder="Nilai Maksimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">%</span>
@@ -418,12 +364,14 @@ new class extends Component
             <!-- 2. Fase Pembesaran -->
             <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
                 <div class="flex flex-row gap-(--size-16) items-center">
-                    <x-lucide-worm class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-worm class="w-(--size-26) h-(--size-26)"/>
+                    </div>
                     <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Fase Pembesaran</span>
                 </div>
                 <div class="flex flex-col gap-(--size-16)">
                     <div class="input-container w-full min-w-0">
-                        <label>Batas Suhu</label>
+                        <label>Batas Suhu (&deg;C)</label>
                         <div class="flex flex-row gap-(--size-10) items-center w-full">
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('pembesaranTempMin') border-red-500 @enderror">
                                 <input
@@ -433,12 +381,12 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Min"
+                                    placeholder="Nilai Minimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">&deg;C</span>
                             </div>
-                            <span class="text-xs text-gray-500 font-medium shrink-0">s/d</span>
+                            <span class="text-xs text-gray-500 font-medium shrink-0 px-1">sampai</span>
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('pembesaranTempMax') border-red-500 @enderror">
                                 <input
                                     wire:model="pembesaranTempMax"
@@ -447,7 +395,7 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Max"
+                                    placeholder="Nilai Maksimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">&deg;C</span>
@@ -462,7 +410,7 @@ new class extends Component
                     </div>
 
                     <div class="input-container w-full min-w-0">
-                        <label>Batas Kelembapan</label>
+                        <label>Batas Kelembapan (%)</label>
                         <div class="flex flex-row gap-(--size-10) items-center w-full">
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('pembesaranHumidMin') border-red-500 @enderror">
                                 <input
@@ -472,12 +420,12 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Min"
+                                    placeholder="Nilai Minimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">%</span>
                             </div>
-                            <span class="text-xs text-gray-500 font-medium shrink-0">s/d</span>
+                            <span class="text-xs text-gray-500 font-medium shrink-0 px-1">sampai</span>
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('pembesaranHumidMax') border-red-500 @enderror">
                                 <input
                                     wire:model="pembesaranHumidMax"
@@ -486,7 +434,7 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Max"
+                                    placeholder="Nilai Maksimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">%</span>
@@ -505,12 +453,14 @@ new class extends Component
             <!-- 3. Fase Prepupa -->
             <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
                 <div class="flex flex-row gap-(--size-16) items-center">
-                    <x-lucide-bug class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-bug class="w-(--size-26) h-(--size-26)"/>
+                    </div>
                     <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Fase Prepupa</span>
                 </div>
                 <div class="flex flex-col gap-(--size-16)">
                     <div class="input-container w-full min-w-0">
-                        <label>Batas Suhu</label>
+                        <label>Batas Suhu (&deg;C)</label>
                         <div class="flex flex-row gap-(--size-10) items-center w-full">
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('prepupaTempMin') border-red-500 @enderror">
                                 <input
@@ -520,12 +470,12 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Min"
+                                    placeholder="Nilai Minimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">&deg;C</span>
                             </div>
-                            <span class="text-xs text-gray-500 font-medium shrink-0">s/d</span>
+                            <span class="text-xs text-gray-500 font-medium shrink-0 px-1">sampai</span>
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('prepupaTempMax') border-red-500 @enderror">
                                 <input
                                     wire:model="prepupaTempMax"
@@ -534,7 +484,7 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Max"
+                                    placeholder="Nilai Maksimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">&deg;C</span>
@@ -549,7 +499,7 @@ new class extends Component
                     </div>
 
                     <div class="input-container w-full min-w-0">
-                        <label>Batas Kelembapan</label>
+                        <label>Batas Kelembapan (%)</label>
                         <div class="flex flex-row gap-(--size-10) items-center w-full">
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('prepupaHumidMin') border-red-500 @enderror">
                                 <input
@@ -559,12 +509,12 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Min"
+                                    placeholder="Nilai Minimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">%</span>
                             </div>
-                            <span class="text-xs text-gray-500 font-medium shrink-0">s/d</span>
+                            <span class="text-xs text-gray-500 font-medium shrink-0 px-1">sampai</span>
                             <div class="flex flex-row items-center justify-between input-text w-full min-w-0 @error('prepupaHumidMax') border-red-500 @enderror">
                                 <input
                                     wire:model="prepupaHumidMax"
@@ -573,7 +523,7 @@ new class extends Component
                                     step="0.01"
                                     min="0"
                                     max="100"
-                                    placeholder="Max"
+                                    placeholder="Nilai Maksimum"
                                     class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
                                 <span class="text-gray-500 font-medium ml-1">%</span>
@@ -591,16 +541,18 @@ new class extends Component
 
         </div>
 
-        <!-- Tombol Simpan Pengaturan -->
-        <button
-            type="submit"
-            wire:click.prevent="changePhaseSettings"
-            wire:loading.attr="disabled"
-            class="input-button w-full cursor-pointer hover:opacity-90 flex items-center justify-center gap-2"
-        >
-            <x-lucide-save class="w-(--size-26)"/>
-            <span wire:loading.remove wire:target="changePhaseSettings">Simpan Pengaturan</span>
-            <span wire:loading wire:target="changePhaseSettings">Menyimpan...</span>
-        </button>
+        <!-- Tombol Simpan Pengaturan (Align Right Persis settings.png) -->
+        <div class="flex justify-end pt-2">
+            <button
+                type="submit"
+                wire:click.prevent="changePhaseSettings"
+                wire:loading.attr="disabled"
+                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center px-8 shadow-xs"
+            >
+                <x-lucide-save class="w-(--size-26)"/>
+                <span wire:loading.remove wire:target="changePhaseSettings">Simpan Pengaturan</span>
+                <span wire:loading wire:target="changePhaseSettings">Menyimpan...</span>
+            </button>
+        </div>
     </form>
 </div>

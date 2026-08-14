@@ -59,7 +59,7 @@ new class extends Component
             fputcsv($handle, ["Tanggal Mulai", $cycle?->start_date?->format('d/m/Y') ?? '-'], ',', '"', "\\");
             fputcsv($handle, ["Tanggal Selesai", $cycle?->end_date?->format('d/m/Y') ?? 'Sedang Berjalan'], ',', '"', "\\");
             fputcsv($handle, ["Status", $cycle?->is_active ? 'Aktif' : 'Panen / Selesai'], ',', '"', "\\");
-            fputcsv($handle, [], ',', '"', "\\"); // Baris Kosong
+            fputcsv($handle, [], ',', '"', "\\");
 
             // Header Tabel Data
             fputcsv($handle, [
@@ -111,14 +111,14 @@ new class extends Component
         $initialMaggotWeight = (float) ($allLogs->first()?->maggot_weight ?? 0.0);
         $netMaggotGain = max(0, $finalMaggotWeight - $initialMaggotWeight);
 
-        // FCR (Feed Conversion Ratio) = Total Pakan / Berat Maggot Akhir (atau Net Gain)
+        // FCR = Total Pakan / Berat Maggot Akhir
         $fcr = $finalMaggotWeight > 0 ? round($totalFeed / $finalMaggotWeight, 2) : 0.0;
 
         // Durasi Hari Siklus
         $durationDays = 0;
         if ($cycle && $cycle->start_date) {
             $endDate = $cycle->end_date ?? now();
-            $durationDays = Carbon::parse($cycle->start_date)->diffInDays(Carbon::parse($endDate)) + 1;
+            $durationDays = (int) Carbon::parse($cycle->start_date)->diffInDays(Carbon::parse($endDate)) + 1;
         }
 
         // Rata-rata Lingkungan
@@ -137,7 +137,6 @@ new class extends Component
             $pEndMaggot = (float) ($pLogs->last()?->maggot_weight ?? 0.0);
             $pGain = max(0, $pEndMaggot - $pStartMaggot);
 
-            // Rata-rata suhu dan kelembapan dari env logs yang terkait dengan observasi fase ini
             $pEnvIds = $pLogs->pluck('environment_log_id')->filter();
             $pEnvLogs = $envLogs->whereIn('id', $pEnvIds);
             $pAvgTemp = $pEnvLogs->count() > 0 ? round((float) $pEnvLogs->avg('temperature'), 1) : '-';
@@ -177,21 +176,19 @@ new class extends Component
 ?>
 
 <div class="space-y-(--size-26) min-w-[922px]">
-    <!-- Header Halaman & Kontrol Laporan -->
-    <div class="flex flex-row items-center justify-between gap-4">
-        <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
-                Laporan Budidaya
-            </h1>
-            <p class="text-xs text-gray-500 font-medium">
-                Rekapitulasi performa pertumbuhan, konversi pakan (FCR), dan stabilitas lingkungan per siklus.
-            </p>
-        </div>
+    <!-- Header Halaman -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            Laporan Budidaya
+        </h1>
+    </div>
 
-        <div class="flex flex-row items-center gap-(--size-16)">
+    <!-- Toolbar: Selector Siklus, Status Siklus, & Tombol Aksi (Harmonized with observation.blade.php) -->
+    <div class="inline-flex gap-(--size-10) justify-between w-full flex-wrap">
+        <div class="flex flex-row items-center gap-(--size-10)">
             <!-- Dropdown Pilihan Siklus -->
             <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs">
-                <span class="text-sm font-semibold">Siklus:</span>
+                <span>Siklus ke:</span>
                 <div class="relative inline-block">
                     <button
                         @click="openDropdown = !openDropdown"
@@ -206,7 +203,7 @@ new class extends Component
                         x-show="openDropdown"
                         @click.outside="openDropdown = false"
                         x-transition.opacity.duration.200ms
-                        class="absolute right-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
                         x-cloak
                     >
                         @foreach($cycleData as $item)
@@ -233,139 +230,120 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Tombol Ekspor CSV -->
+            <!-- Status Siklus Pill -->
+            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm">
+                <div class="gap-(--size-6)">
+                    Status:
+                    <span class="font-bold text-(--prime-colour)">
+                        {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
+                    </span>
+                    <span class="text-xs text-gray-400 ml-1">({{ $durationDays }} Hari)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Ekspor CSV & Cetak -->
+        <div class="flex flex-row items-center gap-(--size-10)">
             <button
                 wire:click="exportCsv"
                 type="button"
-                title="Ekspor data observasi ke file CSV"
-                class="rounded-(--size-16) inline-flex items-center gap-(--size-10) px-(--size-16) py-(--size-10) input-button cursor-pointer hover:opacity-90 shadow-xs"
+                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center"
             >
-                <x-lucide-download class="w-(--size-16)"/>
-                <span class="text-sm font-semibold">Ekspor CSV</span>
+                <x-lucide-download class="w-(--size-26)"/>
+                <span>Ekspor CSV</span>
             </button>
 
-            <!-- Tombol Cetak Dokumen (Print) -->
             <button
                 onclick="window.print()"
                 type="button"
-                title="Cetak lembar laporan resmi"
-                class="rounded-(--size-16) inline-flex items-center gap-(--size-10) px-(--size-16) py-(--size-10) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) hover:bg-(--bg2-colour) cursor-pointer shadow-xs transition-colors"
+                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center"
             >
-                <x-lucide-printer class="w-(--size-16)"/>
-                <span class="text-sm font-semibold">Cetak</span>
+                <x-lucide-printer class="w-(--size-26)"/>
+                <span>Cetak Laporan</span>
             </button>
         </div>
     </div>
 
-    <!-- Informasi Status Siklus Banner -->
-    <div class="flex flex-row items-center justify-between px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-        <div class="flex items-center gap-4">
-            <div class="p-3 bg-emerald-50 text-(--prime-colour) rounded-(--size-16) border border-emerald-200">
-                <x-lucide-info class="w-(--size-26)" />
+    <!-- 3 Kartu Ringkasan KPI Utama (Harmonized with dashboard.blade.php) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-(--size-26) w-full">
+        <!-- 1. Total Pakan Kumulatif -->
+        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
+                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Total Pakan Kumulatif
+                </span>
             </div>
             <div>
-                <div class="text-base font-bold text-gray-900 flex items-center gap-2">
-                    <span>Ringkasan {{ $selectedCycleName }}</span>
-                    @if($currentCycle?->is_active)
-                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold">Sedang Berjalan (Fase {{ ucfirst($currentCycle?->current_phase) }})</span>
-                    @else
-                        <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 rounded-full text-xs font-bold">Selesai / Panen</span>
-                    @endif
+                <div class="flex items-baseline gap-2">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($totalFeed, 1) }}
+                    </span>
+                    <span class="text-base font-bold text-gray-500">kg</span>
                 </div>
-                <div class="text-xs text-gray-500 mt-0.5">
-                    Periode: {{ $currentCycle?->start_date ? $currentCycle->start_date->translatedFormat('l, d F Y') : '-' }} s/d {{ $currentCycle?->end_date ? $currentCycle->end_date->translatedFormat('l, d F Y') : 'Sekarang' }} ({{ $durationDays }} Hari)
-                </div>
-            </div>
-        </div>
-        <div class="text-right">
-            <span class="text-xs text-gray-400 font-medium">Status Fase Akhir:</span>
-            <div class="text-base font-bold text-(--prime-colour) capitalize">{{ $currentCycle?->current_phase ?? '-' }}</div>
-        </div>
-    </div>
-
-    <!-- 4 Kartu Metrik Utama (KPI) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-(--size-26) w-full">
-        <!-- 1. Total Hasil Maggot -->
-        <div class="flex flex-col justify-between gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row justify-between items-center">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Hasil Akhir Maggot</span>
-                <x-lucide-worm class="w-8 h-8 text-(--fg-colour) p-1.5 bg-(--prime-colour) rounded-(--size-10) shrink-0"/>
-            </div>
-            <div>
-                <div class="text-(length:--size-42) font-bold text-(--prime-colour) leading-none">
-                    {{ number_format($finalMaggotWeight, 2) }} <span class="text-base font-normal text-gray-500">kg</span>
-                </div>
-                <div class="text-xs text-emerald-700 font-medium mt-2 flex items-center gap-1">
-                    <x-lucide-trending-up class="w-3.5 h-3.5" />
-                    <span>Bobot biomassa panen tercatat</span>
-                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    Akumulasi konsumsi pakan siklus
+                </p>
             </div>
         </div>
 
-        <!-- 2. Total Pakan Diberikan -->
-        <div class="flex flex-col justify-between gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row justify-between items-center">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Konsumsi Pakan</span>
-                <x-lucide-utensils class="w-8 h-8 text-(--fg-colour) p-1.5 bg-(--prime-colour) rounded-(--size-10) shrink-0"/>
+        <!-- 2. Hasil Akhir Maggot -->
+        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
+                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Hasil Akhir Maggot
+                </span>
             </div>
             <div>
-                <div class="text-(length:--size-42) font-bold text-gray-900 leading-none">
-                    {{ number_format($totalFeed, 2) }} <span class="text-base font-normal text-gray-500">kg</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($finalMaggotWeight, 1) }}
+                    </span>
+                    <span class="text-base font-bold text-gray-500">kg</span>
                 </div>
-                <div class="text-xs text-gray-500 font-medium mt-2 flex items-center gap-1">
-                    <x-lucide-layers class="w-3.5 h-3.5" />
-                    <span>Akumulasi pakan seluruh fase</span>
-                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    Biomassa maggot tercatat
+                </p>
             </div>
         </div>
 
-        <!-- 3. Rasio Konversi Pakan (FCR) -->
-        <div class="flex flex-col justify-between gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row justify-between items-center">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Feed Conversion Ratio</span>
-                <x-lucide-scale class="w-8 h-8 text-(--fg-colour) p-1.5 bg-(--prime-colour) rounded-(--size-10) shrink-0"/>
+        <!-- 3. Konversi Rasio Pakan (FCR) -->
+        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
+                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Konversi Rasio Pakan (FCR)
+                </span>
             </div>
             <div>
-                <div class="text-(length:--size-42) font-bold text-(--prime-colour) leading-none">
-                    {{ $fcr > 0 ? $fcr : '-' }}
+                <div class="flex items-baseline gap-2">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ $fcr > 0 ? number_format($fcr, 1) : '-' }}
+                    </span>
+                    <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
                 </div>
-                <div class="text-xs {{ $fcr > 0 && $fcr <= 5 ? 'text-emerald-700' : 'text-amber-700' }} font-medium mt-2 flex items-center gap-1">
-                    <x-lucide-check-circle class="w-3.5 h-3.5" />
-                    <span>{{ $fcr > 0 && $fcr <= 5 ? 'Efisiensi pakan sangat baik' : 'Rasio konversi pakan ke biomassa' }}</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. Rata-rata Kondisi Lingkungan -->
-        <div class="flex flex-col justify-between gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row justify-between items-center">
-                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Rata-rata Lingkungan</span>
-                <x-lucide-thermometer-sun class="w-8 h-8 text-(--fg-colour) p-1.5 bg-(--prime-colour) rounded-(--size-10) shrink-0"/>
-            </div>
-            <div>
-                <div class="flex items-baseline gap-3">
-                    <span class="text-(length:--size-26) font-bold text-gray-900">{{ $avgTemp }}&deg;C</span>
-                    <span class="text-gray-300">|</span>
-                    <span class="text-(length:--size-26) font-bold text-gray-900">{{ $avgHumid }}%</span>
-                </div>
-                <div class="text-xs text-gray-500 font-medium mt-2">
-                    Suhu rata-rata & kelembapan aktual
-                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    Rata-rata lingkungan: {{ $avgTemp }}&deg;C &bull; {{ $avgHumid }}%
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Rincian Analisis Performa Per Fase Budidaya -->
+    <!-- Tabel 1: Analisis Performa Per Fase Budidaya -->
     <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-        <div class="flex flex-row items-center justify-between border-b pb-4">
-            <div class="flex flex-row gap-(--size-16) items-center">
-                <x-lucide-bar-chart-3 class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
-                <div>
-                    <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Analisis Performa Per Fase Budidaya
-                    </h2>
-                    <p class="text-xs text-gray-500">Perbandingan durasi, pakan, pertambahan biomassa, dan kondisi lingkungan antar fase.</p>
-                </div>
+        <div class="flex flex-row gap-(--size-16) items-center">
+            <x-lucide-bar-chart-3 class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+            <div>
+                <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Analisis Performa Per Fase Budidaya
+                </h2>
             </div>
         </div>
 
@@ -385,7 +363,7 @@ new class extends Component
                     @foreach($phaseBreakdown as $key => $p)
                         <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
                             <td class="font-bold text-(--prime-colour)">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center justify-center gap-2">
                                     @if($key === 'penetasan')
                                         <x-lucide-egg class="w-4 h-4 text-(--prime-colour)" />
                                     @elseif($key === 'pembesaran')
@@ -397,11 +375,11 @@ new class extends Component
                                 </div>
                             </td>
                             <td>{{ $p['log_count'] }} kali observasi</td>
-                            <td class="font-semibold">{{ number_format($p['total_feed'], 2) }} kg</td>
+                            <td class="font-semibold">{{ number_format($p['total_feed'], 1) }} kg</td>
                             <td>
-                                <div class="font-semibold text-gray-900">{{ number_format($p['end_maggot'], 2) }} kg</div>
+                                <div class="font-semibold text-gray-900">{{ number_format($p['end_maggot'], 1) }} kg</div>
                                 @if($p['growth_gain'] > 0)
-                                    <div class="text-[11px] text-emerald-700 font-medium">(+{{ number_format($p['growth_gain'], 2) }} kg pada fase ini)</div>
+                                    <div class="text-[11px] text-emerald-700 font-medium">(+{{ number_format($p['growth_gain'], 1) }} kg pada fase ini)</div>
                                 @endif
                             </td>
                             <td>
@@ -419,17 +397,14 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Tabel Rincian Data Log Observasi & Telemetri -->
+    <!-- Tabel 2: Rincian Log Harian Siklus -->
     <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-        <div class="flex flex-row items-center justify-between border-b pb-4">
-            <div class="flex flex-row gap-(--size-16) items-center">
-                <x-lucide-table class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
-                <div>
-                    <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Rincian Log Harian Siklus
-                    </h2>
-                    <p class="text-xs text-gray-500">Histori lengkap parameter pengamatan lapangan dan sensor telemetri.</p>
-                </div>
+        <div class="flex flex-row gap-(--size-16) items-center">
+            <x-lucide-table class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+            <div>
+                <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Rincian Log Harian Siklus
+                </h2>
             </div>
         </div>
 
@@ -456,12 +431,12 @@ new class extends Component
                             </td>
                             <td>{{ $item->environmentLog->temperature ?? '-' }}&deg;C</td>
                             <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
-                            <td class="font-semibold">{{ $item->feed_weight }} kg</td>
-                            <td class="border-r-0 font-semibold text-(--prime-colour)">{{ $item->maggot_weight }} kg</td>
+                            <td>{{ $item->feed_weight }} kg</td>
+                            <td class="border-r-0">{{ $item->maggot_weight }} kg</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center py-8 text-gray-400">
+                            <td colspan="6" class="border-r-0 py-8 text-center text-gray-400">
                                 Tidak ada catatan observasi untuk siklus ini.
                             </td>
                         </tr>
@@ -470,9 +445,10 @@ new class extends Component
             </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="m-0 pt-2">
-            {{ $observationLogs->links() }}
-        </div>
+        @if($observationLogs->hasPages())
+            <div class="pt-2">
+                {{ $observationLogs->links() }}
+            </div>
+        @endif
     </div>
 </div>
