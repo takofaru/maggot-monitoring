@@ -23,6 +23,9 @@
             </div>
         </main>
 
+        <!-- Custom Global Confirmation Dialog UI -->
+        <livewire:confirm-dialog />
+
         @livewireScripts
     </body>
 </html>

@@ -428,9 +428,16 @@ new class extends Component
                             </button>
                             @if($item->id !== Auth::id())
                                 <button
-                                    wire:click="deleteUser({{ $item->id }})"
-                                    wire:confirm="Yakin ingin menghapus pengguna {{ $item->username }}?"
                                     type="button"
+                                    @click="$confirm({
+                                        title: 'Hapus Pengguna',
+                                        message: 'Apakah Anda yakin ingin menghapus pengguna {{ $item->username }}? Akun ini tidak akan dapat mengakses sistem kembali.',
+                                        confirmText: 'Ya, Hapus Pengguna',
+                                        cancelText: 'Batal',
+                                        variant: 'danger',
+                                        icon: 'trash',
+                                        onConfirm: () => $wire.deleteUser({{ $item->id }})
+                                    })"
                                     title="Hapus Pengguna"
                                     class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer"
                                 >

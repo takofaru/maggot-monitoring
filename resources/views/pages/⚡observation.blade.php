@@ -373,9 +373,16 @@ new class extends Component
                 </div>
                 @if($isSelectedCurrent && $currPhase !== 'panen')
                     <button
-                        wire:click="nextPhase"
-                        wire:confirm="{{ $confirmMsg }}"
                         type="button"
+                        @click="$confirm({
+                            title: 'Konfirmasi Lanjut Fase',
+                            message: '{{ addslashes($confirmMsg) }}',
+                            confirmText: 'Ya, Lanjutkan',
+                            cancelText: 'Batal',
+                            variant: 'primary',
+                            icon: 'chevrons-right',
+                            onConfirm: () => $wire.nextPhase()
+                        })"
                         title="{{ $currPhase === 'prepupa' ? 'Selesaikan siklus ini dan mulai siklus baru' : 'Lanjut ke fase berikutnya' }}"
                         class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour) cursor-pointer hover:opacity-90 whitespace-nowrap shrink-0"
                     >
@@ -436,9 +443,16 @@ new class extends Component
                                     <x-lucide-square-pen class="w-(--size-16)"/>
                                 </button>
                                 <button
-                                    wire:click="deleteObservationLog({{ $item->id }})"
-                                    wire:confirm="Yakin ingin menghapus catatan observasi ini?"
                                     type="button"
+                                    @click="$confirm({
+                                        title: 'Hapus Catatan Observasi',
+                                        message: 'Apakah Anda yakin ingin menghapus catatan observasi tanggal {{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y') : '' }}? Data yang dihapus tidak dapat dipulihkan.',
+                                        confirmText: 'Ya, Hapus',
+                                        cancelText: 'Batal',
+                                        variant: 'danger',
+                                        icon: 'trash',
+                                        onConfirm: () => $wire.deleteObservationLog({{ $item->id }})
+                                    })"
                                     title="Hapus Catatan"
                                     class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer"
                                 >
