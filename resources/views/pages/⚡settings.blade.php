@@ -88,7 +88,55 @@ new class extends Component
             'prepupaHumidMax.gte' => 'Kelembapan maksimum prepupa harus lebih besar atau sama dengan kelembapan minimum.',
         ]);
 
-        // 1. Simpan perubahan ke database
+        // 1. Ambil data pengaturan lama dari database untuk pengecekan perubahan
+        $existingSettings = PhaseSetting::all()->keyBy('phase_name');
+
+        // Deteksi fase siklus yang saat ini sedang aktif
+        $activeCycle = Cycle::where('is_active', true)->first();
+        $currentPhase = $activeCycle ? strtolower($activeCycle->current_phase) : 'penetasan';
+
+        if (!in_array($currentPhase, ['penetasan', 'pembesaran', 'prepupa'])) {
+            $currentPhase = 'penetasan';
+        }
+
+        // Cek apakah ada perubahan pada nilai fase aktif yang sedang berjalan
+        $activeOld = $existingSettings[$currentPhase] ?? null;
+        $activeNewTMin = (float) $this->{$currentPhase . 'TempMin'};
+        $activeNewTMax = (float) $this->{$currentPhase . 'TempMax'};
+        $activeNewHMin = (float) $this->{$currentPhase . 'HumidMin'};
+        $activeNewHMax = (float) $this->{$currentPhase . 'HumidMax'};
+
+        $activePhaseChanged = (
+            !$activeOld ||
+            (float) $activeOld->temp_bottom !== $activeNewTMin ||
+            (float) $activeOld->temp_top !== $activeNewTMax ||
+            (float) $activeOld->humid_bottom !== $activeNewHMin ||
+            (float) $activeOld->humid_top !== $activeNewHMax
+        );
+
+        // Cek apakah ada perubahan pada fase mana pun
+        $anyPhaseChanged = false;
+        foreach (['penetasan', 'pembesaran', 'prepupa'] as $p) {
+            $old = $existingSettings[$p] ?? null;
+            if (
+                !$old ||
+                (float) $old->temp_bottom !== (float) $this->{$p . 'TempMin'} ||
+                (float) $old->temp_top !== (float) $this->{$p . 'TempMax'} ||
+                (float) $old->humid_bottom !== (float) $this->{$p . 'HumidMin'} ||
+                (float) $old->humid_top !== (float) $this->{$p . 'HumidMax'}
+            ) {
+                $anyPhaseChanged = true;
+                break;
+            }
+        }
+
+        // Jika tidak ada perubahan sama sekali, tidak perlu menyimpan dan tidak kirim ke MQTT
+        if (!$anyPhaseChanged) {
+            $this->flashMessage = 'Tidak ada perubahan pada pengaturan fase.';
+            return;
+        }
+
+        // 2. Simpan perubahan ke database
         PhaseSetting::updateOrCreate(
             ['phase_name' => 'penetasan'],
             [
@@ -122,59 +170,31 @@ new class extends Component
             ]
         );
 
-        // 2. Tentukan fase siklus yang saat ini sedang aktif / berjalan
-        $activeCycle = Cycle::where('is_active', true)->first();
-        $currentPhase = $activeCycle ? strtolower($activeCycle->current_phase) : 'penetasan';
-
-        if (!in_array($currentPhase, ['penetasan', 'pembesaran', 'prepupa'])) {
-            $currentPhase = 'penetasan';
-        }
-
-        // Siapkan payload data fase yang sedang berlanjut
-        $activePhaseData = match ($currentPhase) {
-            'pembesaran' => [
-                'phase_name'  => 'pembesaran',
-                'temp_min'    => (float) $this->pembesaranTempMin,
-                'temp_max'    => (float) $this->pembesaranTempMax,
-                'humid_min'   => (float) $this->pembesaranHumidMin,
-                'humid_max'   => (float) $this->pembesaranHumidMax,
-                'TempBottom'  => (float) $this->pembesaranTempMin,
-                'TempTop'     => (float) $this->pembesaranTempMax,
-                'HumidBottom' => (float) $this->pembesaranHumidMin,
-                'HumidTop'    => (float) $this->pembesaranHumidMax,
-            ],
-            'prepupa' => [
-                'phase_name'  => 'prepupa',
-                'temp_min'    => (float) $this->prepupaTempMin,
-                'temp_max'    => (float) $this->prepupaTempMax,
-                'humid_min'   => (float) $this->prepupaHumidMin,
-                'humid_max'   => (float) $this->prepupaHumidMax,
-                'TempBottom'  => (float) $this->prepupaTempMin,
-                'TempTop'     => (float) $this->prepupaTempMax,
-                'HumidBottom' => (float) $this->prepupaHumidMin,
-                'HumidTop'    => (float) $this->prepupaHumidMax,
-            ],
-            default => [
-                'phase_name'  => 'penetasan',
-                'temp_min'    => (float) $this->penetasanTempMin,
-                'temp_max'    => (float) $this->penetasanTempMax,
-                'humid_min'   => (float) $this->penetasanHumidMin,
-                'humid_max'   => (float) $this->penetasanHumidMax,
-                'TempBottom'  => (float) $this->penetasanTempMin,
-                'TempTop'     => (float) $this->penetasanTempMax,
-                'HumidBottom' => (float) $this->penetasanHumidMin,
-                'HumidTop'    => (float) $this->penetasanHumidMax,
-            ],
-        };
-
-        // 3. Publikasikan ke topik MQTT 'environmentLimit'
-        $mqttPublished = MqttService::publish('environmentLimit', $activePhaseData);
-
+        // 3. Hanya kirim ke MQTT jika batas fase aktif mengalami perubahan
         $phaseLabel = ucfirst($currentPhase);
-        if ($mqttPublished) {
-            $this->flashMessage = "Pengaturan berhasil disimpan dan dikirim ke MQTT topik 'environmentLimit' (Fase Aktif: {$phaseLabel}).";
+
+        if ($activePhaseChanged) {
+            $activePhaseData = [
+                'phase_name'  => $currentPhase,
+                'temp_min'    => $activeNewTMin,
+                'temp_max'    => $activeNewTMax,
+                'humid_min'   => $activeNewHMin,
+                'humid_max'   => $activeNewHMax,
+                'TempBottom'  => $activeNewTMin,
+                'TempTop'     => $activeNewTMax,
+                'HumidBottom' => $activeNewHMin,
+                'HumidTop'    => $activeNewHMax,
+            ];
+
+            $mqttPublished = MqttService::publish('environmentLimit', $activePhaseData);
+
+            if ($mqttPublished) {
+                $this->flashMessage = "Pengaturan berhasil diperbarui dan dikirim ke MQTT topik 'environmentLimit' (Fase Aktif: {$phaseLabel}).";
+            } else {
+                $this->flashMessage = "Pengaturan berhasil disimpan di database (MQTT broker tidak terjangkau, Fase Aktif: {$phaseLabel}).";
+            }
         } else {
-            $this->flashMessage = "Pengaturan berhasil disimpan di database (MQTT broker tidak terjangkau, Fase Aktif: {$phaseLabel}).";
+            $this->flashMessage = "Pengaturan fase berhasil disimpan (Tidak ada perubahan pada batas fase aktif '{$phaseLabel}', data MQTT tidak dikirim).";
         }
     }
 };
@@ -474,7 +494,7 @@ new class extends Component
         >
             <x-lucide-save class="w-(--size-26)"/>
             <span wire:loading.remove wire:target="changePhaseSettings">Simpan Pengaturan</span>
-            <span wire:loading wire:target="changePhaseSettings">Menyimpan & Mengirim ke MQTT...</span>
+            <span wire:loading wire:target="changePhaseSettings">Menyimpan...</span>
         </button>
     </form>
 </div>
