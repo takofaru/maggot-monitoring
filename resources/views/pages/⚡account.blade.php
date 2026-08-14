@@ -474,13 +474,6 @@ new class extends Component
                             <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
                                 {{ $editingUserId ? 'Ubah Data Pengguna' : 'Tambah Pengguna Baru' }}
                             </span>
-                            <button
-                                type="button"
-                                wire:click="closeUserModal"
-                                class="text-gray-400 hover:text-gray-600 cursor-pointer text-xl font-bold"
-                            >
-                                &times;
-                            </button>
                         </div>
 
                         <!-- 1. Baris 1: Nama Lengkap dan Username -->

@@ -474,7 +474,7 @@ new class extends Component
         >
             <div
                 @click.outside="$wire.closeForm()"
-                class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) p-(--size-26) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
+                class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) px-(--size-26) py-(--size-42) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
             >
                 <form wire:submit="save" class="flex flex-col gap-(--size-26)">
                     <!-- Header Modal -->
@@ -482,13 +482,6 @@ new class extends Component
                         <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
                             {{ $editingId ? 'Ubah Catatan Observasi' : 'Tambah Catatan Baru' }}
                         </span>
-                        <button
-                            type="button"
-                            wire:click="closeForm"
-                            class="text-gray-400 hover:text-gray-600 cursor-pointer text-xl font-bold"
-                        >
-                            &times;
-                        </button>
                     </div>
 
                     <!-- Input Suhu & Kelembapan (Enabled/Disabled berdasarkan Switch) -->
@@ -585,18 +578,18 @@ new class extends Component
                     </div>
 
                     <!-- Tombol Simpan & Batal -->
-                    <div class="flex justify-end gap-3 pt-2">
+                    <div class="flex justify-between gap-(--size-16)">
                         <button
                             type="button"
                             wire:click="closeForm"
-                            class="px-4 py-2 border border-gray-300 rounded-(--size-16) text-gray-700 font-medium hover:bg-gray-100 cursor-pointer"
+                            class="px-4 py-2 border border-gray-300 rounded-(--size-16) text-gray-700 font-medium hover:bg-gray-100 cursor-pointer w-full"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
                             wire:loading.attr="disabled"
-                            class="input-button cursor-pointer flex items-center gap-2"
+                            class="input-button cursor-pointer flex items-center w-full"
                         >
                             @if ($editingId)
                                 <x-lucide-square-pen class="w-(--size-16)"/>
