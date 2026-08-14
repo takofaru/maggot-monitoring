@@ -60,15 +60,29 @@ new class extends Component
 
         $currentPhase = strtolower($cycle->current_phase);
 
-        // Jika sudah di tahap prepupa, menyelesaikan siklus & menetapkannya sebagai panen
+        // Jika sudah di tahap prepupa: menyelesaikan siklus lama & otomatis membuat siklus baru
         if ($currentPhase === 'prepupa') {
             $cycle->update([
                 'current_phase' => 'panen',
                 'is_active'     => false,
                 'end_date'      => now()->toDateString(),
             ]);
-            $this->isSelectedCurrent = false;
-            $this->flashMessage = "Siklus {$cycle->id} telah selesai dan berhasil ditetapkan sebagai Panen.";
+
+            // Buat siklus baru yang aktif dengan fase awal penetasan
+            $newCycle = Cycle::create([
+                'start_date'    => now()->toDateString(),
+                'end_date'      => null,
+                'current_phase' => 'penetasan',
+                'is_active'     => true,
+            ]);
+
+            // Otomatis pindah ke siklus baru
+            $this->latestCycle = $newCycle->id;
+            $this->selectedCycleId = $newCycle->id;
+            $this->selectedCycleName = "Siklus {$newCycle->id}";
+            $this->isSelectedCurrent = true;
+            $this->flashMessage = "Siklus {$cycle->id} telah selesai (Panen). Siklus baru (Siklus {$newCycle->id}) berhasil dimulai dengan fase Penetasan.";
+            $this->resetPage();
             return;
         }
 
@@ -89,6 +103,8 @@ new class extends Component
 
     public function openCreateModal()
     {
+        if (!$this->isSelectedCurrent) return;
+
         $this->resetForm();
         $this->useManualEnvLog = false;
         
@@ -105,7 +121,13 @@ new class extends Component
 
     public function openEditModal($id)
     {
-        $log = ObservationLog::with('environmentLog')->findOrFail($id);
+        $log = ObservationLog::with(['environmentLog', 'cycle'])->findOrFail($id);
+
+        // Hanya catatan pada siklus aktif yang dapat diedit
+        if (!$log->cycle?->is_active) {
+            $this->flashMessage = 'Catatan pada siklus yang sudah selesai tidak dapat diubah.';
+            return;
+        }
         
         $this->editingId = $log->id;
         $this->feed = $log->feed_weight;
@@ -161,6 +183,12 @@ new class extends Component
         ]);
 
         $cycle = Cycle::findOrFail($this->selectedCycleId);
+
+        if (!$cycle->is_active) {
+            $this->flashMessage = 'Tidak dapat menambah/mengubah catatan pada siklus yang sudah selesai.';
+            $this->closeForm();
+            return;
+        }
 
         // Penanganan EnvironmentLog
         $envLogId = null;
@@ -222,8 +250,12 @@ new class extends Component
 
     public function deleteObservationLog($id)
     {
-        $log = ObservationLog::find($id);
+        $log = ObservationLog::with('cycle')->find($id);
         if ($log) {
+            if (!$log->cycle?->is_active) {
+                $this->flashMessage = 'Catatan pada siklus yang sudah selesai tidak dapat dihapus.';
+                return;
+            }
             $log->delete();
             $this->flashMessage = 'Catatan observasi berhasil dihapus.';
         }
@@ -296,6 +328,8 @@ new class extends Component
                                     Siklus {{ $item->id }}
                                     @if($item->is_active)
                                         <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px]">Aktif</span>
+                                    @else
+                                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px]">Selesai</span>
                                     @endif
                                 </span>
                                 <span class="text-xs text-gray-500">
@@ -314,7 +348,7 @@ new class extends Component
                 $confirmMsg = match($currPhase) {
                     'penetasan' => 'Yakin ingin melanjutkan ke fase Pembesaran?',
                     'pembesaran' => 'Yakin ingin melanjutkan ke fase Prepupa?',
-                    'prepupa'   => 'Siklus berada pada tahap Prepupa. Melanjutkan akan menyelesaikan siklus ini dan menetapkannya sebagai Panen. Lanjutkan?',
+                    'prepupa'   => 'Siklus berada pada tahap Prepupa. Melanjutkan akan menyelesaikan siklus ini (Panen) dan otomatis membuat siklus baru. Lanjutkan?',
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
@@ -328,7 +362,7 @@ new class extends Component
                         wire:click="nextPhase"
                         wire:confirm="{{ $confirmMsg }}"
                         type="button"
-                        title="{{ $currPhase === 'prepupa' ? 'Selesaikan siklus dan tetapkan sebagai Panen' : 'Lanjut ke fase berikutnya' }}"
+                        title="{{ $currPhase === 'prepupa' ? 'Selesaikan siklus ini dan mulai siklus baru' : 'Lanjut ke fase berikutnya' }}"
                         class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour) cursor-pointer hover:opacity-90"
                     >
                         <x-lucide-chevrons-right class="w-(--size-26)"/>
@@ -378,23 +412,42 @@ new class extends Component
                         <td>{{ $item->feed_weight }} kg</td>
                         <td>{{ $item->maggot_weight }} kg</td>
                         <td class="border-r-0 flex flex-row gap-(--size-10) w-full justify-center py-2">
-                            <button
-                                wire:click="openEditModal({{ $item->id }})"
-                                type="button"
-                                title="Ubah Catatan"
-                                class="input-button p-(--size-10) cursor-pointer hover:bg-(--prime-light-colour)"
-                            >
-                                <x-lucide-square-pen class="w-(--size-16)"/>
-                            </button>
-                            <button
-                                wire:click="deleteObservationLog({{ $item->id }})"
-                                wire:confirm="Yakin ingin menghapus catatan observasi ini?"
-                                type="button"
-                                title="Hapus Catatan"
-                                class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer"
-                            >
-                                <x-lucide-trash-2 class="w-(--size-16)"/>
-                            </button>
+                            @if($isSelectedCurrent)
+                                <button
+                                    wire:click="openEditModal({{ $item->id }})"
+                                    type="button"
+                                    title="Ubah Catatan"
+                                    class="input-button p-(--size-10) cursor-pointer hover:bg-(--prime-light-colour)"
+                                >
+                                    <x-lucide-square-pen class="w-(--size-16)"/>
+                                </button>
+                                <button
+                                    wire:click="deleteObservationLog({{ $item->id }})"
+                                    wire:confirm="Yakin ingin menghapus catatan observasi ini?"
+                                    type="button"
+                                    title="Hapus Catatan"
+                                    class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer"
+                                >
+                                    <x-lucide-trash-2 class="w-(--size-16)"/>
+                                </button>
+                            @else
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="Siklus sudah selesai (tidak dapat diubah)"
+                                    class="input-button p-(--size-10) opacity-30 cursor-not-allowed grayscale pointer-events-none"
+                                >
+                                    <x-lucide-square-pen class="w-(--size-16)"/>
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="Siklus sudah selesai (tidak dapat dihapus)"
+                                    class="input-button p-(--size-10) opacity-30 cursor-not-allowed grayscale bg-red-600 pointer-events-none"
+                                >
+                                    <x-lucide-trash-2 class="w-(--size-16)"/>
+                                </button>
+                            @endif
                         </td>
                     </tr>
                 @empty
