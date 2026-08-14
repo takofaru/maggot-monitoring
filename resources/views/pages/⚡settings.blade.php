@@ -233,7 +233,7 @@ new class extends Component
 };
 ?>
 
-<div class="space-y-(--size-26)">
+<div class="space-y-(--size-26) min-w-[922px]">
     <!-- Header & Notifikasi Flash -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
