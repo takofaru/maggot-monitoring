@@ -10,11 +10,14 @@
 
         @livewireStyles
     </head>
-    <body class="bg-(--bg-colour) flex min-h-screen">
+    <body class="bg-(--bg-colour) flex h-screen overflow-hidden">
+
+        <!-- Sidebar Anda sekarang akan TERKUNCI alias diam di tempat! -->
         <livewire:sidebar />
 
+        <!-- Karena main punya overflow-y-auto, HANYA area ini yang akan bisa di-scroll -->
         <main class="flex-1 overflow-y-auto">
-            <div class="p-(--size-42) min-w-max">
+            <div class="p-(--size-42) min-w-max relative">
                 {{ $slot }}
             </div>
         </main>

@@ -40,7 +40,7 @@ new class extends Component
         $iconName = $icon ? (str_starts_with($icon, 'lucide-') ? $icon : 'lucide-' . $icon) : null;
     @endphp
 
-    <a href="{{ $href }}" class="flex items-center gap-(--size-10) px-(--size-26) py-(--size-16) font-semibold text-(length:--size-16)">
+    <a href="{{ $href }}" class="flex items-center gap-(--size-10) px-(--size-26) py-(--size-16) font-medium text-(length:--size-16)">
         @if($iconName)
             <x-dynamic-component :component="$iconName" class="w-(--size-26)" />
         @endif

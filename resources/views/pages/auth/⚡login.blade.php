@@ -10,7 +10,6 @@ new #[Layout('layouts.guest')] class extends Component
     public string $password = '';
     public bool $remember = false;
     public string $errorMessage = '';
-    public int $errorCount = 0;
 
     public function mount()
     {
@@ -37,35 +36,11 @@ new #[Layout('layouts.guest')] class extends Component
         }
 
         $this->errorMessage = 'Username atau password yang Anda masukkan salah.';
-        $this->errorCount++;
     }
 };
 ?>
 
-<div class="relative w-screen h-screen flex justify-center items-center bg-(--bg-colour) overflow-hidden">
-    <!-- Notifikasi Error dari Atas (Otomatis Hilang 5 Detik) -->
-    @if ($errorMessage)
-        <div
-            wire:key="toast-{{ $errorCount }}"
-            x-data="{ show: true }"
-            x-show="show"
-            x-init="setTimeout(() => show = false, 5000)"
-            x-transition:enter="transition ease-out duration-300 transform"
-            x-transition:enter-start="-translate-y-8 opacity-0"
-            x-transition:enter-end="translate-y-0 opacity-100"
-            x-transition:leave="transition ease-in duration-300 transform"
-            x-transition:leave-start="translate-y-0 opacity-100"
-            x-transition:leave-end="-translate-y-8 opacity-0"
-            class="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-5 py-3.5 bg-red-600 text-white rounded-2xl shadow-xl border border-red-700 max-w-sm w-full mx-4"
-        >
-            <x-lucide-alert-circle class="w-5 h-5 shrink-0" />
-            <span class="text-xs md:text-sm font-medium flex-1">{{ $errorMessage }}</span>
-            <button type="button" @click="show = false" class="text-white/80 hover:text-white cursor-pointer transition-colors">
-                <x-lucide-x class="w-4 h-4" />
-            </button>
-        </div>
-    @endif
-
+<div class="w-screen h-screen flex justify-center items-center bg-(--bg-colour)">
     <div class="flex flex-col gap-(--size-42) min-w-(--size-304) max-w-(--size-304) items-center">
         <div id="logo">
             <div class="w-16 h-16 bg-[#163428] text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
@@ -79,21 +54,10 @@ new #[Layout('layouts.guest')] class extends Component
 
             <div id="login-container" class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) rounded-(--size-16) border-[1.5px] border-(--outline-colour)">
                 <form wire:submit="login" id="loginForm" class="flex flex-col gap-(--size-16)">
+
+                    <!-- Field Username -->
                     <div class="input-container">
-                        <div class="flex items-center gap-1.5">
-                            <label for="username">Username</label>
-                            @error('username')
-                                <div class="relative inline-flex items-center group cursor-pointer">
-                                    <x-lucide-alert-circle class="w-(--size-16) text-red-500 hover:text-red-600 transition-colors" />
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex flex-col items-center z-30 pointer-events-none">
-                                        <div class="bg-red-600 text-white text-xs font-medium px-2.5 py-1 rounded-lg shadow-lg whitespace-nowrap">
-                                            {{ $message }}
-                                        </div>
-                                        <div class="w-2 h-1 bg-red-600 [clip-path:polygon(0_0,100%_0,50%_100%)]"></div>
-                                    </div>
-                                </div>
-                            @enderror
-                        </div>
+                        <label for="username">Username</label>
                         <input
                             wire:model="username"
                             id="username"
@@ -103,23 +67,14 @@ new #[Layout('layouts.guest')] class extends Component
                             autocomplete="username"
                             autofocus
                         />
+                        @error('username')
+                            <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                        @enderror
                     </div>
 
+                    <!-- Field Password -->
                     <div class="input-container" x-data="{ showPass: false }">
-                        <div class="flex items-center gap-1.5">
-                            <label for="password">Password</label>
-                            @error('password')
-                                <div class="relative inline-flex items-center group cursor-pointer">
-                                    <x-lucide-alert-circle class="w-(--size-16) text-red-500 hover:text-red-600 transition-colors" />
-                                    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:flex flex-col items-center z-30 pointer-events-none">
-                                        <div class="bg-red-600 text-white text-xs font-medium px-2.5 py-1 rounded-lg shadow-lg whitespace-nowrap">
-                                            {{ $message }}
-                                        </div>
-                                        <div class="w-2 h-1 bg-red-600 [clip-path:polygon(0_0,100%_0,50%_100%)]"></div>
-                                    </div>
-                                </div>
-                            @enderror
-                        </div>
+                        <label for="password">Password</label>
                         <div class="flex flex-row items-center justify-between input-text @error('password') border-red-500 @enderror {{ $errorMessage ? 'border-red-500' : '' }}">
                             <input
                                 wire:model="password"
@@ -134,10 +89,21 @@ new #[Layout('layouts.guest')] class extends Component
                                 <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
                             </button>
                         </div>
+                        @error('password')
+                            <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                        @enderror
                     </div>
 
+                    <!-- Box Notifikasi Login Gagal (Di Atas Tombol Login) -->
+                    @if ($errorMessage)
+                        <div class="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-(--size-16) text-red-700 text-xs font-medium">
+                            <x-lucide-alert-circle class="w-4 h-4 text-red-500 shrink-0" />
+                            <span>{{ $errorMessage }}</span>
+                        </div>
+                    @endif
+
                     <button class="input-button cursor-pointer flex items-center justify-center gap-2" type="submit" wire:loading.attr="disabled">
-                        <x-lucide-log-in class="w-(--size-16)" />
+                        <x-lucide-log-in class="w-(--size-26)" />
                         <span wire:loading.remove wire:target="login">Masuk ke Akun</span>
                         <span wire:loading wire:target="login">Memproses...</span>
                     </button>

@@ -33,7 +33,7 @@ new class extends Component
             </livewire:nav-link>
 
             <livewire:nav-link route="observation.index" icon="notebook-text">
-                Catatan Pemeliharaan
+                Catatan Observasi
             </livewire:nav-link>
 
             <livewire:nav-link route="reports.index" icon="chart-column">

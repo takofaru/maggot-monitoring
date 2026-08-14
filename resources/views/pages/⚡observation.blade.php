@@ -17,7 +17,6 @@ new class extends Component
 
     public function mount()
     {
-        // Ambil siklus terakhir sebagai default saat halaman dimuat
         $latest = Cycle::latest('id')->first();
         if ($latest) {
             $this->latestCycle = $latest->id;
@@ -26,7 +25,6 @@ new class extends Component
         }
     }
 
-    // Fungsi ini dipanggil saat item di custom dropdown di-klik
     public function selectCycle($id)
     {
         $this->selectedCycleName = $this->selectedCycleId = $id;
@@ -41,23 +39,23 @@ new class extends Component
             'observationData' => ObservationLog::with('environmentLog')
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
-                ->paginate(13),
+                ->paginate(10),
         ];
     }
 };
 ?>
 
-<div class="space-y-(--size-26)">
+<div x-data="{ openForm: false, createObservation: false }" class="space-y-(--size-26)">
     <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
-        Catatan Pemeliharaan
+        Catatan Observasi
     </h1>
-    <div class="inline-flex gap-(--size-10)">
-        <div x-data="{ open: false }" class="inline-flex gap-(--size-10) items-center">
+    <div class="inline-flex gap-(--size-10) justify-between w-full">
+        <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center">
             <x-lucide-refresh-cw class="w-(--size-16)"/>
             Siklus ke:
-            <div x-data="{ open: false }" class="relative inline-block">
+            <div class="relative inline-block">
                 <button
-                    @click="open = !open"
+                    @click="openDropdown = !openDropdown"
                     type="button"
                     class="w-full inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) bg-(--fg-colour) hover:bg-(--bg-colour)"
                 >
@@ -66,8 +64,8 @@ new class extends Component
                 </button>
 
                 <div
-                    x-show="open"
-                    @click.outside="open = false"
+                    x-show="openDropdown"
+                    @click.outside="openDropdown = false"
                     x-transition.opacity.duration.200ms
                     class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-lg z-50"
                     x-cloak
@@ -76,7 +74,7 @@ new class extends Component
                         <button
                             type="button"
                             wire:click="selectCycle({{ $item->id }})"
-                            @click="open = false"
+                            @click="openDropdown = false"
                             class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 rounded"
                         >
                             <span class="font-semibold">Siklus {{ $item->id }}</span>
@@ -88,13 +86,21 @@ new class extends Component
                 </div>
             </div>
         </div>
-        <div class="{{ $isSelectedCurrent ? 'inline-flex ' : 'hidden' }} gap-(--size-10) ">
-            Ya
-        </div>
+        <button
+            @click="
+                openForm = !openForm
+                createObservation = !createObservation;
+            "
+            class="gap-(--size-10) input-button"
+            @disabled(!$isSelectedCurrent)
+        >
+            <x-lucide-plus class="w-(--size-26)"/>
+            Tambah Catatan Baru
+        </button>
     </div>
     <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full">
         <table class="w-full text-left border-collapse">
-            <!-- Bagian Kepala (Header) -->
+
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>
                     <th class="min-w-[238px]">Tanggal</th>
@@ -103,11 +109,11 @@ new class extends Component
                     <th class="min-w-[96px]">Kelembapan</th>
                     <th class="min-w-[82px]">Berat Pakan</th>
                     <th class="min-w-[79px]">Berat Maggot</th>
-                    <th class="border-r-0 min-w-[160px]">Aksi</th>
+                    <th class="border-r-0 min-w-[114px]">Aksi</th>
                 </tr>
             </thead>
 
-            <!-- Bagian Isi (Body) -->
+
             <tbody>
                 @foreach($observationData as $item)
                 <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
@@ -117,11 +123,12 @@ new class extends Component
                     <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
                     <td>{{ $item->feed_weight}}kg</td>
                     <td>{{ $item->maggot_weight}}kg</td>
-                    <td class="border-r-0">
-                        <!-- Aksi menggunakan button agar interaktif -->
-                        <button class="inline-flex items-center justify-center gap-(--size-10) text-(--text-colour) hover:underline">
+                    <td class="border-r-0 flex flex-row gap-(--size-10) w-full justify-center">
+                        <button class="input-button p-(--size-10)">
                             <x-lucide-square-pen class="w-(--size-16)"/>
-                            <span>Ubah Catatan</span>
+                        </button>
+                        <button class="input-button p-(--size-10)">
+                            <x-lucide-trash-2 class="w-(--size-16)"/>
                         </button>
                     </td>
                 </tr>
@@ -129,7 +136,106 @@ new class extends Component
             </tbody>
         </table>
     </div>
-    <div>
+    <div class="m-0">
         {{ $observationData->links() }}
+    </div>
+    <div
+        x-show="openForm"
+        x-cloak
+        class="absolute inset-0 w-full h-screen backdrop-blur-sm"
+    >
+        <form
+            :wire:submit="createObservation ? 'createObservationLog' : 'updateObservationLog'"
+            id="loginForm"
+            class="flex flex-col gap-(--size-26) m-(--size-42) px-(--size-26) py-(--size-42) bg-(--fg-colour) rounded-(--size-16)"
+            @click.outside="
+                openForm = false
+                createObservation = false
+            "
+            value="{{}}"
+        >
+            <span x-show="createObservation" class="text-(length:--size-26) text-(--prime-colour) font-bold">Tambah Catatan Baru</span>
+            <span x-show="!createObservation" x-cloak class="text-(length:--size-26) text-(--prime-colour) font-bold">Ubah Catatan</span>
+
+            <div class="flex flex-row gap-(--size-16)">
+                <div class="input-container w-full">
+                    <label for="temp">Suhu yang Diamati</label>
+                    <div class="flex flex-row items-center justify-between input-text">
+                        <input
+                            wire:model="temp"
+                            id="temp"
+                            type=""
+                            placeholder="Masukkan Suhu yang Diamati"
+                            class="w-full bg-transparent focus:outline-none"
+                        />
+                        &deg;C
+                    </div>
+                </div>
+                <div class="input-container w-full">
+                    <label for="humid">Kelembapan yang Diamati</label>
+                    <div class="flex flex-row items-center justify-between input-text">
+                        <input
+                            wire:model="humid"
+                            id="humid"
+                            type=""
+                            placeholder="Masukkan Kelembapan yang Diamati"
+                            class="w-full bg-transparent focus:outline-none"
+                        />
+                        %
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-row gap-(--size-10)">
+                <div class="relative inline-block w-9 h-5">
+                    <input wire:mode="useNewEnvironmentLog" id="switch-component" type="checkbox" class="peer appearance-none w-9 h-5 bg-(--bg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-6) checked:bg-(--prime-colour) checked:border-(--prime-colour) cursor-pointer transition-colors duration-300" />
+                    <label for="switch-component" class="absolute top-0 left-0 w-5 h-5 bg-white rounded-(--size-6) border border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-4 peer-checked:border-slate-800 cursor-pointer">
+                    </label>
+                </div>
+                Gunakan Data Suhu dan Kelembapan yang Baru
+            </div>
+            <div class="flex flex-row gap-(--size-16)">
+                <div class="input-container w-full">
+                    <label for="maggot">Berat Pakan yang Diberikan</label>
+                    <div class="flex flex-row items-center justify-between input-text">
+                        <input
+                            wire:model="feed"
+                            id="feed"
+                            type=""
+                            placeholder="Masukkan Berat Pakan yang Diberikan"
+                            class="w-full bg-transparent focus:outline-none"
+                        />
+                        kg
+                    </div>
+                </div>
+                <div class="input-container w-full">
+                    <label for="maggot">Berat Maggot yang Diamati</label>
+                    <div class="flex flex-row items-center justify-between input-text">
+                        <input
+                            wire:model="maggot"
+                            id="maggot"
+                            type=""
+                            placeholder="Masukkan Berat Maggot yang Diamati"
+                            class="w-full bg-transparent focus:outline-none"
+                        />
+                        kg
+                    </div>
+                </div>
+            </div>
+            <div>
+                <button
+                    class="input-button"
+                    @click="createObservation = False"
+                >
+                    <span x-show="createObservation" class="text-(length:--size-16) flex flex-row gap-(--size-10) items-center">
+                        <x-lucide-plus class="w-(--size-26)"/>
+                        Tambah Catatan
+                    </span>
+                    <span x-show="!createObservation" x-cloak class="text-(length:--size-26) flex flex-row gap-(--size-10) items-center">
+                        <x-lucide-square-pen class="w-(--size-26)"/>
+                        Ubah Catatan
+                    </span>
+                </button>
+            </div>
+        </form>
     </div>
 </div>
