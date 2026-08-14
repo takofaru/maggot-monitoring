@@ -36,7 +36,7 @@ new class extends Component
     {
         return [
             'cycleData' => Cycle::orderBy('created_at', 'asc')->get(),
-            'observationData' => ObservationLog::with('environmentLog')
+            'observationData' => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
                 ->paginate(10),
@@ -50,41 +50,54 @@ new class extends Component
         Catatan Observasi
     </h1>
     <div class="inline-flex gap-(--size-10) justify-between w-full">
-        <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center">
-            <x-lucide-refresh-cw class="w-(--size-16)"/>
-            Siklus ke:
-            <div class="relative inline-block">
-                <button
-                    @click="openDropdown = !openDropdown"
-                    type="button"
-                    class="w-full inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) bg-(--fg-colour) hover:bg-(--bg-colour)"
-                >
-                    <span>{{ $selectedCycleName }}</span>
-                    <x-lucide-chevron-down class="w-(--size-16)"/>
-                </button>
+        <div class="flex flex-row items-center gap-(--size-10)">
+            <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
+                Siklus ke:
+                <div class="relative inline-block">
+                    <button
+                        @click="openDropdown = !openDropdown"
+                        type="button"
+                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour)"
+                    >
+                        <span>{{ $selectedCycleName }}</span>
+                        <x-lucide-chevron-down class="w-(--size-16)"/>
+                    </button>
 
-                <div
-                    x-show="openDropdown"
-                    @click.outside="openDropdown = false"
-                    x-transition.opacity.duration.200ms
-                    class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-lg z-50"
-                    x-cloak
-                >
-                    @foreach($cycleData as $item)
-                        <button
-                            type="button"
-                            wire:click="selectCycle({{ $item->id }})"
-                            @click="openDropdown = false"
-                            class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 rounded"
-                        >
-                            <span class="font-semibold">Siklus {{ $item->id }}</span>
-                            <span class="text-sm text-(--outline-colour)">
-                                {{ $item->start_date->translatedFormat('l, d F Y') }} - {{ $item->end_date ? $item->end_date->translatedFormat('l, d F Y') : "Sekarang"}}
-                            </span>
-                        </button>
-                    @endforeach
+                    <div
+                        x-show="openDropdown"
+                        @click.outside="openDropdown = false"
+                        x-transition.opacity.duration.200ms
+                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-lg z-50"
+                        x-cloak
+                    >
+                        @foreach($cycleData as $item)
+                            <button
+                                type="button"
+                                wire:click="selectCycle({{ $item->id }})"
+                                @click="openDropdown = false"
+                                class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 rounded"
+                            >
+                                <span class="font-semibold">Siklus {{ $item->id }}</span>
+                                <span class="text-sm text-(--outline-colour)">
+                                    {{ $item->start_date->translatedFormat('l, d F Y') }} - {{ $item->end_date ? $item->end_date->translatedFormat('l, d F Y') : "Sekarang"}}
+                                </span>
+                            </button>
+                        @endforeach
+                    </div>
                 </div>
             </div>
+            <form wire:click="nextPhase" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
+                <div class="gap-(--size-6)">
+                    Fase terkini:
+                    <span class="font-bold">{{ $cycleData->firstWhere('id', $selectedCycleId)->current_phase ?? '-' }}</span>
+                </div>
+                <button
+                    type="button"
+                    class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour)"
+                >
+                    <x-lucide-chevrons-right class="w-(--size-26)"/>
+                </button>
+            </form>
         </div>
         @if($isSelectedCurrent)
         <button
@@ -153,7 +166,7 @@ new class extends Component
                 openForm = false
                 createObservation = false
             "
-            value="{{}}"
+            value=""
         >
             <span x-show="createObservation" class="text-(length:--size-26) text-(--prime-colour) font-bold">Tambah Catatan Baru</span>
             <span x-show="!createObservation" x-cloak class="text-(length:--size-26) text-(--prime-colour) font-bold">Ubah Catatan</span>
