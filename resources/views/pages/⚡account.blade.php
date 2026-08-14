@@ -20,9 +20,19 @@ new class extends Component
     public string $newPassword = '';
     public string $confirmPassword = '';
 
+    // State Modal User (Khusus Admin)
+    public bool $openUserModal = false;
+    public ?int $editingUserId = null;
+    public string $userFullName = '';
+    public string $userUsername = '';
+    public string $userRole = 'user';
+    public string $userPassword = '';
+    public string $userConfirmPassword = '';
+
     // Flash Messages
     public string $profileMessage = '';
     public string $passwordMessage = '';
+    public string $userMessage = '';
 
     public function mount()
     {
@@ -83,11 +93,129 @@ new class extends Component
         $this->passwordMessage = 'Password berhasil diubah.';
     }
 
+    // --- Manajemen Pengguna (Admin Only) ---
+
+    public function openCreateUserModal()
+    {
+        if (!Gate::allows('manage-accounts')) return;
+
+        $this->resetUserForm();
+        $this->editingUserId = null;
+        $this->openUserModal = true;
+    }
+
+    public function openEditUserModal($id)
+    {
+        if (!Gate::allows('manage-accounts')) return;
+
+        $user = User::findOrFail($id);
+        $this->editingUserId = $user->id;
+        $this->userFullName = $user->full_name;
+        $this->userUsername = $user->username;
+        $this->userRole = $user->role;
+        $this->userPassword = '';
+        $this->userConfirmPassword = '';
+        $this->openUserModal = true;
+    }
+
+    public function closeUserModal()
+    {
+        $this->resetUserForm();
+        $this->openUserModal = false;
+    }
+
+    public function resetUserForm()
+    {
+        $this->reset(['userFullName', 'userUsername', 'userRole', 'userPassword', 'userConfirmPassword', 'editingUserId']);
+        $this->resetErrorBag();
+    }
+
+    public function saveUser()
+    {
+        if (!Gate::allows('manage-accounts')) return;
+
+        $rules = [
+            'userFullName' => 'required|string|max:255',
+            'userUsername' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('users', 'username')->ignore($this->editingUserId),
+            ],
+            'userRole' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_USER])],
+        ];
+
+        if ($this->editingUserId) {
+            // Mode Edit: password bersifat opsional
+            if (!empty($this->userPassword)) {
+                $rules['userPassword'] = 'required|string|min:6';
+                $rules['userConfirmPassword'] = 'required|string|same:userPassword';
+            }
+        } else {
+            // Mode Tambah: password wajib diisi
+            $rules['userPassword'] = 'required|string|min:6';
+            $rules['userConfirmPassword'] = 'required|string|same:userPassword';
+        }
+
+        $this->validate($rules, [
+            'userFullName.required'        => 'Nama lengkap wajib diisi.',
+            'userUsername.required'        => 'Username wajib diisi.',
+            'userUsername.unique'          => 'Username sudah terdaftar.',
+            'userRole.required'            => 'Peran wajib dipilih.',
+            'userPassword.required'        => 'Password wajib diisi.',
+            'userPassword.min'             => 'Password minimal 6 karakter.',
+            'userConfirmPassword.required' => 'Konfirmasi password wajib diisi.',
+            'userConfirmPassword.same'     => 'Konfirmasi password tidak cocok.',
+        ]);
+
+        if ($this->editingUserId) {
+            $user = User::findOrFail($this->editingUserId);
+            $data = [
+                'full_name' => $this->userFullName,
+                'username'  => $this->userUsername,
+                'role'      => $this->userRole,
+            ];
+            if (!empty($this->userPassword)) {
+                $data['password_hash'] = Hash::make($this->userPassword);
+            }
+            $user->update($data);
+            $this->userMessage = "Data pengguna {$user->username} berhasil diperbarui.";
+        } else {
+            User::create([
+                'full_name'     => $this->userFullName,
+                'username'      => $this->userUsername,
+                'role'          => $this->userRole,
+                'password_hash' => Hash::make($this->userPassword),
+            ]);
+            $this->userMessage = "Pengguna baru {$this->userUsername} berhasil ditambahkan.";
+        }
+
+        $this->closeUserModal();
+        $this->resetPage();
+    }
+
+    public function deleteUser($id)
+    {
+        if (!Gate::allows('manage-accounts')) return;
+
+        if ($id == Auth::id()) {
+            $this->userMessage = 'Anda tidak dapat menghapus akun Anda sendiri.';
+            return;
+        }
+
+        $user = User::find($id);
+        if ($user) {
+            $username = $user->username;
+            $user->delete();
+            $this->userMessage = "Pengguna {$username} berhasil dihapus.";
+        }
+    }
+
     public function with(): array {
         $userData = [];
 
         if (Gate::allows('manage-accounts')) {
-            $userData = User::orderBy('full_name', 'asc')->paginate(10);
+            $userData = User::orderBy('id', 'asc')->paginate(10);
         }
 
         return [
@@ -219,12 +347,30 @@ new class extends Component
     <!-- Bagian Daftar Pengguna (Khusus Admin) -->
     @can('manage-accounts')
         <div class="flex flex-row justify-between items-center pt-2">
-            <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Daftar Pengguna</span>
-            <button class="input-button cursor-pointer flex items-center gap-2">
+            <div class="flex items-center gap-3">
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Daftar Pengguna</span>
+                @if ($userMessage)
+                    <div
+                        x-data="{ show: true }"
+                        x-show="show"
+                        x-init="setTimeout(() => show = false, 4000)"
+                        class="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold"
+                    >
+                        <x-lucide-check-circle class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span>{{ $userMessage }}</span>
+                    </div>
+                @endif
+            </div>
+            <button
+                wire:click="openCreateUserModal"
+                type="button"
+                class="input-button cursor-pointer flex items-center gap-2 hover:opacity-90"
+            >
                 <x-lucide-user-round-plus class="w-(--size-26)"/>
                 <span>Tambah Pengguna</span>
             </button>
         </div>
+
         <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full">
             <table class="w-full text-left border-collapse">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
@@ -236,30 +382,199 @@ new class extends Component
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($users as $item)
+                    @forelse($users as $item)
                     <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                        <td>{{ $item->full_name }}</td>
-                        <td>{{ $item->username}}</td>
+                        <td>
+                            <div class="font-medium text-gray-900 flex items-center gap-2">
+                                <span>{{ $item->full_name }}</span>
+                                @if($item->id === Auth::id())
+                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">Anda</span>
+                                @endif
+                            </div>
+                        </td>
+                        <td>{{ $item->username }}</td>
                         <td class="w-min">
-                            <span class="px-2.5 py-1 rounded-md text-xs font-semibold {{ $item->role === 'admin' ? 'bg-amber-100 text-amber-900' : 'bg-gray-100 text-gray-800' }}">
+                            <span class="px-2.5 py-1 rounded-md text-xs font-semibold {{ $item->role === 'admin' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-gray-100 text-gray-800' }}">
                                 {{ ($item->role === 'admin') ? 'Admin' : 'Pengguna' }}
                             </span>
                         </td>
                         <td class="border-r-0 flex flex-row gap-(--size-10) w-full justify-center py-2">
-                            <button class="input-button p-(--size-10) cursor-pointer">
+                            <button
+                                wire:click="openEditUserModal({{ $item->id }})"
+                                type="button"
+                                title="Ubah Pengguna"
+                                class="input-button p-(--size-10) cursor-pointer hover:bg-(--prime-light-colour)"
+                            >
                                 <x-lucide-square-pen class="w-(--size-16)"/>
                             </button>
-                            <button class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer">
-                                <x-lucide-trash-2 class="w-(--size-16)"/>
-                            </button>
+                            @if($item->id !== Auth::id())
+                                <button
+                                    wire:click="deleteUser({{ $item->id }})"
+                                    wire:confirm="Yakin ingin menghapus pengguna {{ $item->username }}?"
+                                    type="button"
+                                    title="Hapus Pengguna"
+                                    class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer"
+                                >
+                                    <x-lucide-trash-2 class="w-(--size-16)"/>
+                                </button>
+                            @else
+                                <button
+                                    type="button"
+                                    disabled
+                                    title="Akun Anda saat ini (tidak dapat dihapus)"
+                                    class="input-button p-(--size-10) opacity-30 cursor-not-allowed grayscale bg-red-600 pointer-events-none"
+                                >
+                                    <x-lucide-trash-2 class="w-(--size-16)"/>
+                                </button>
+                            @endif
                         </td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-gray-400">
+                            Tidak ada pengguna ditemukan.
+                        </td>
+                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
         <div class="m-0">
             {{ $users->links() }}
         </div>
+
+        <!-- Modal Tambah / Ubah Pengguna (Khusus Admin) -->
+        @if ($openUserModal)
+            <div
+                class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+                x-transition.opacity
+            >
+                <div
+                    @click.outside="$wire.closeUserModal()"
+                    class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) p-(--size-26) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
+                >
+                    <form wire:submit="saveUser" class="flex flex-col gap-(--size-26)">
+                        <!-- Header Modal -->
+                        <div class="flex items-center justify-between border-b pb-3">
+                            <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
+                                {{ $editingUserId ? 'Ubah Data Pengguna' : 'Tambah Pengguna Baru' }}
+                            </span>
+                            <button
+                                type="button"
+                                wire:click="closeUserModal"
+                                class="text-gray-400 hover:text-gray-600 cursor-pointer text-xl font-bold"
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <!-- Input Nama Lengkap & Username -->
+                        <div class="flex flex-row gap-(--size-16)">
+                            <div class="input-container w-full">
+                                <label for="userFullName">Nama Lengkap</label>
+                                <input
+                                    wire:model="userFullName"
+                                    id="userFullName"
+                                    type="text"
+                                    placeholder="Contoh: Ahmad Fadli"
+                                    class="input-text @error('userFullName') border-red-500 @enderror"
+                                />
+                                @error('userFullName')
+                                    <span class="text-xs text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="input-container w-full">
+                                <label for="userUsername">Username</label>
+                                <input
+                                    wire:model="userUsername"
+                                    id="userUsername"
+                                    type="text"
+                                    placeholder="Contoh: ahmad"
+                                    class="input-text @error('userUsername') border-red-500 @enderror"
+                                />
+                                @error('userUsername')
+                                    <span class="text-xs text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Pilihan Peran (Role) -->
+                        <div class="input-container w-full">
+                            <label for="userRole">Peran Pengguna</label>
+                            <select
+                                wire:model="userRole"
+                                id="userRole"
+                                class="input-text cursor-pointer"
+                            >
+                                <option value="user">Pengguna (Siswa / Operator)</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                            @error('userRole')
+                                <span class="text-xs text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <!-- Input Password & Konfirmasi Password -->
+                        <div class="flex flex-row gap-(--size-16)">
+                            <div class="input-container w-full">
+                                <label for="userPassword">
+                                    {{ $editingUserId ? 'Password Baru (Opsional)' : 'Password' }}
+                                </label>
+                                <input
+                                    wire:model="userPassword"
+                                    id="userPassword"
+                                    type="password"
+                                    placeholder="{{ $editingUserId ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter' }}"
+                                    class="input-text @error('userPassword') border-red-500 @enderror"
+                                />
+                                @error('userPassword')
+                                    <span class="text-xs text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="input-container w-full">
+                                <label for="userConfirmPassword">Konfirmasi Password</label>
+                                <input
+                                    wire:model="userConfirmPassword"
+                                    id="userConfirmPassword"
+                                    type="password"
+                                    placeholder="Ulangi password"
+                                    class="input-text @error('userConfirmPassword') border-red-500 @enderror"
+                                />
+                                @error('userConfirmPassword')
+                                    <span class="text-xs text-red-500">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Tombol Batal & Simpan -->
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                wire:click="closeUserModal"
+                                class="px-4 py-2 border border-gray-300 rounded-(--size-16) text-gray-700 font-medium hover:bg-gray-100 cursor-pointer"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                wire:loading.attr="disabled"
+                                class="input-button cursor-pointer flex items-center gap-2 hover:opacity-90"
+                            >
+                                @if ($editingUserId)
+                                    <x-lucide-square-pen class="w-(--size-16)"/>
+                                    <span wire:loading.remove wire:target="saveUser">Simpan Perubahan</span>
+                                @else
+                                    <x-lucide-user-round-plus class="w-(--size-16)"/>
+                                    <span wire:loading.remove wire:target="saveUser">Tambah Pengguna</span>
+                                @endif
+                                <span wire:loading wire:target="saveUser">Menyimpan...</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
     @endcan
 </div>
