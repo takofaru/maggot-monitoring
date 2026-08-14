@@ -184,16 +184,16 @@ new class extends Component
     </div>
 
     <!-- Toolbar: Selector Siklus, Status Siklus, & Tombol Aksi (Harmonized with observation.blade.php) -->
-    <div class="inline-flex gap-(--size-10) justify-between w-full flex-wrap">
-        <div class="flex flex-row items-center gap-(--size-10)">
+    <div class="inline-flex gap-(--size-10) justify-between w-full flex-wrap items-center">
+        <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
             <!-- Dropdown Pilihan Siklus -->
-            <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs">
+            <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                 <span>Siklus ke:</span>
                 <div class="relative inline-block">
                     <button
                         @click="openDropdown = !openDropdown"
                         type="button"
-                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer"
+                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
                     >
                         <span>{{ $selectedCycleName }}</span>
                         <x-lucide-chevron-down class="w-(--size-16)"/>
@@ -231,7 +231,7 @@ new class extends Component
             </div>
 
             <!-- Status Siklus Pill -->
-            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm">
+            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm whitespace-nowrap shrink-0">
                 <div class="gap-(--size-6)">
                     Status:
                     <span class="font-bold text-(--prime-colour)">
@@ -243,11 +243,11 @@ new class extends Component
         </div>
 
         <!-- Tombol Ekspor CSV & Cetak -->
-        <div class="flex flex-row items-center gap-(--size-10)">
+        <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
             <button
                 wire:click="exportCsv"
                 type="button"
-                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center"
+                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0"
             >
                 <x-lucide-download class="w-(--size-26)"/>
                 <span>Ekspor CSV</span>
@@ -256,7 +256,7 @@ new class extends Component
             <button
                 onclick="window.print()"
                 type="button"
-                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center"
+                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0"
             >
                 <x-lucide-printer class="w-(--size-26)"/>
                 <span>Cetak Laporan</span>
@@ -347,8 +347,8 @@ new class extends Component
             </div>
         </div>
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full shadow-xs mt-2">
-            <table class="w-full text-left border-collapse">
+        <div class="overflow-x-auto border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <table class="w-full text-left border-collapse min-w-full">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
                         <th class="min-w-[140px]">Fase Budidaya</th>
@@ -408,8 +408,8 @@ new class extends Component
             </div>
         </div>
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full shadow-xs mt-2">
-            <table class="w-full text-left border-collapse">
+        <div class="overflow-x-auto border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <table class="w-full text-left border-collapse min-w-full">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
                         <th class="min-w-[200px]">Tanggal</th>
@@ -442,7 +442,6 @@ new class extends Component
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
         </div>
 
         @if($observationLogs->hasPages())

@@ -238,17 +238,17 @@ new class extends Component
     </div>
 
     <!-- Status Alat & Waktu Terakhir Terhubung (Persis settings.png) -->
-    <div wire:poll.10s class="flex flex-row items-center justify-between text-sm py-1">
+    <div wire:poll.10s class="flex flex-row items-center justify-between text-sm py-1 flex-wrap gap-2">
         <!-- Status Alat -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 whitespace-nowrap shrink-0">
             <span class="font-bold text-(--text-colour) text-base">Status Alat:</span>
             @if($isOnline)
-                <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1.5">
+                <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                     Online
                 </span>
             @else
-                <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 inline-flex items-center gap-1.5">
+                <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                     <span class="w-2 h-2 rounded-full bg-red-500"></span>
                     Offline
                 </span>
@@ -256,7 +256,7 @@ new class extends Component
         </div>
 
         <!-- Terakhir Terhubung -->
-        <div class="text-xs text-gray-400 font-medium">
+        <div class="text-xs text-gray-400 font-medium whitespace-nowrap shrink-0">
             @if($lastSeen)
                 Terakhir terhubung pada {{ $lastSeen->translatedFormat('l, d F Y - H:i:s') }}
                 @if($diffInSeconds !== null)

@@ -52,6 +52,7 @@
         font-weight: 600;
         color: var(--fg-colour);
         text-align: center;
+        white-space: nowrap;
     }
 
     td {
@@ -60,6 +61,7 @@
         padding-inline: var(--size-16);
         padding-block: var(--size-10);
         text-align: center;
+        white-space: nowrap;
     }
 }
 
@@ -76,6 +78,7 @@
     .input-container label {
         font-weight: 600;
         color: var(--text-colour);
+        white-space: nowrap;
     }
 
     .input-text {
@@ -98,6 +101,8 @@
         background-color: var(--prime-colour);
         color: var(--fg-colour);
         border-radius: var(--size-16);
+        white-space: nowrap;
+        flex-shrink: 0;
     }
 
     .input-button:disabled {

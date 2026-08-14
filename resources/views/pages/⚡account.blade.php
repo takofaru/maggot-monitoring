@@ -386,8 +386,8 @@ new class extends Component
             </button>
         </div>
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full shadow-xs">
-            <table class="w-full text-left border-collapse">
+        <div class="overflow-x-auto border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
+            <table class="w-full text-left border-collapse min-w-full">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
                         <th>Nama Lengkap</th>
