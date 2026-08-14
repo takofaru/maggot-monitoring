@@ -219,8 +219,8 @@ new class extends Component
         // 4. Hitung selisih waktu antara jam sekarang dengan data terakhir (dalam detik)
         $diffInSeconds = $lastSeen ? (int) abs($currentTime->diffInSeconds($lastSeen, false)) : null;
 
-        // Status Perangkat: Online jika data masuk <= 40 detik yang lalu (interval normal 10 detik/data)
-        $isOnline = ($diffInSeconds !== null && $diffInSeconds <= 40);
+        // Status Perangkat: Online jika data masuk <= 20 detik yang lalu (interval normal 10 detik/data)
+        $isOnline = ($diffInSeconds !== null && $diffInSeconds <= 20);
 
         return [
             'currentTime'   => $currentTime,
@@ -282,7 +282,7 @@ new class extends Component
                             <span class="font-medium text-gray-700">Sensor: {{ $latestEnv->temperature }}&deg;C &bull; {{ $latestEnv->humidity }}%</span>
                         @endif
                     @else
-                        <span class="text-gray-500">Tidak ada data sensor baru dari topik <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px] text-gray-700">environmentData</code> (&gt; 40 detik).</span>
+                        <span class="text-gray-500">Tidak ada data sensor baru dari topik <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px] text-gray-700">environmentData</code> (&gt; 20 detik).</span>
                     @endif
                 </div>
             </div>
