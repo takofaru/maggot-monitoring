@@ -17,54 +17,193 @@ new class extends Component
 };
 ?>
 
-<aside class="bg-(--bg2-colour) border-r-[1.5px] border-(--outline-colour) flex flex-col justify-between shrink-0 max-h-screen">
-    <div class="space-y-(--size-26) px-(--size-26) py-(--size-42) w-[300px]">
-        <!-- Logo -->
-        <div class="flex items-center py-(--size-26)">
-            <div class="w-20 h-20 bg-[#163428] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md">
-                MAGGOT
+<aside 
+    x-data="{
+        hoverMode: false,
+        isHovered: false,
+        toggleHoverMode() {
+            this.hoverMode = !this.hoverMode;
+            localStorage.setItem('maggot_sidebar_hover', this.hoverMode ? 'true' : 'false');
+        },
+        init() {
+            this.hoverMode = localStorage.getItem('maggot_sidebar_hover') === 'true';
+        }
+    }"
+    @mouseenter="if (hoverMode) isHovered = true"
+    @mouseleave="if (hoverMode) isHovered = false"
+    :class="(hoverMode && !isHovered) ? 'w-[76px]' : 'w-[300px]'"
+    class="bg-(--bg2-colour) border-r-[1.5px] border-(--outline-colour) flex flex-col justify-between shrink-0 h-screen transition-all duration-300 ease-in-out select-none relative z-30 overflow-hidden"
+>
+    <!-- Bagian Atas: Logo (26px, tanpa padding atas-bawah berlebih) & Toggle Hover Mode & Menu Navigasi -->
+    <div class="flex flex-col flex-1 min-h-0">
+        <!-- Area Logo (26px) & Tombol Toggle Mode Hover di sampingnya -->
+        <div 
+            class="flex items-center px-4 py-4 border-b border-(--outline-colour)/40"
+            :class="(hoverMode && !isHovered) ? 'justify-center' : 'justify-between'"
+        >
+            <!-- Logo 26px & Nama Aplikasi -->
+            <div class="flex items-center gap-2.5 overflow-hidden">
+                <div class="w-[26px] h-[26px] bg-[#163428] rounded-full flex items-center justify-center text-white font-bold text-[11px] shadow-sm shrink-0">
+                    M
+                </div>
+                <span 
+                    x-show="!hoverMode || isHovered" 
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 translate-x--2"
+                    x-transition:enter-end="opacity-100 translate-x-0"
+                    class="font-extrabold text-[#163428] text-base tracking-wider whitespace-nowrap"
+                >
+                    MAGGOT
+                </span>
             </div>
+
+            <!-- Tombol Toggle Mode Hover di Samping Logo -->
+            <button 
+                type="button"
+                @click="toggleHoverMode()"
+                :title="hoverMode ? 'Mode Hover: Aktif (Klik untuk Kunci Lebar Penuh)' : 'Mode Hover: Nonaktif (Klik untuk Mode Otomatis Mengecil)'"
+                class="p-1.5 rounded-xl text-gray-500 hover:text-[#163428] hover:bg-gray-300/60 transition cursor-pointer shrink-0"
+                x-show="!hoverMode || isHovered"
+            >
+                <template x-if="hoverMode">
+                    <x-lucide-panel-left-close class="w-4 h-4 text-emerald-700"/>
+                </template>
+                <template x-if="!hoverMode">
+                    <x-lucide-panel-left class="w-4 h-4"/>
+                </template>
+            </button>
         </div>
 
-        <!-- Navigation Links -->
-        <nav class="space-y-(--size-16)">
-            <livewire:nav-link route="dashboard.index" icon="layout-dashboard">
-                Dashboard
-            </livewire:nav-link>
+        <!-- Tombol Toggle khusus saat dalam mode collapsed (jika diperlukan) -->
+        <div x-show="hoverMode && !isHovered" class="flex justify-center pt-2">
+            <button 
+                type="button"
+                @click="toggleHoverMode()"
+                title="Buka Penuh Sidebar"
+                class="p-1.5 rounded-lg text-gray-400 hover:text-[#163428] hover:bg-gray-300/60 transition cursor-pointer"
+            >
+                <x-lucide-panel-left-open class="w-3.5 h-3.5"/>
+            </button>
+        </div>
 
-            <livewire:nav-link route="observation.index" icon="notebook-text">
-                Catatan Observasi
-            </livewire:nav-link>
+        <!-- Navigation Links Menu -->
+        <nav class="space-y-(--size-10) px-3 py-4 flex-1 overflow-y-auto overflow-x-hidden">
+            @php
+                $navItems = [
+                    [
+                        'route' => 'dashboard.index',
+                        'label' => 'Dashboard',
+                        'icon'  => 'lucide-layout-dashboard',
+                    ],
+                    [
+                        'route' => 'observation.index',
+                        'label' => 'Catatan Observasi',
+                        'icon'  => 'lucide-notebook-text',
+                    ],
+                    [
+                        'route' => 'reports.index',
+                        'label' => 'Laporan dan Analisis',
+                        'icon'  => 'lucide-chart-column',
+                    ],
+                    [
+                        'route' => 'settings.index',
+                        'label' => 'Pengaturan Perangkat',
+                        'icon'  => 'lucide-bolt',
+                    ],
+                    [
+                        'route' => 'account.index',
+                        'label' => 'Manajemen Akun',
+                        'icon'  => 'lucide-square-user-round',
+                    ],
+                ];
+            @endphp
 
-            <livewire:nav-link route="reports.index" icon="chart-column">
-                Laporan dan Analisis
-            </livewire:nav-link>
-
-            <livewire:nav-link route="settings.index" icon="bolt">
-                Pengaturan Perangkat
-            </livewire:nav-link>
-
-            <livewire:nav-link route="account.index" icon="square-user-round">
-                Manajemen Akun
-            </livewire:nav-link>
+            @foreach($navItems as $item)
+                @php
+                    $isActive = request()->routeIs($item['route'] . '*');
+                @endphp
+                <div class="w-full rounded-(--size-16) border-[1.5px] transition-all {{ $isActive ? 'text-(--fg-colour) bg-(--prime-colour) border-transparent shadow-xs font-semibold' : 'text-(--text-colour) hover:bg-(--bg-colour) border-transparent hover:border-(--outline-colour)' }}">
+                    <a 
+                        href="{{ route($item['route']) }}" 
+                        title="{{ $item['label'] }}"
+                        class="flex items-center gap-(--size-10) py-(--size-10) font-medium text-sm overflow-hidden whitespace-nowrap transition-all"
+                        :class="(hoverMode && !isHovered) ? 'justify-center px-0' : 'px-3.5'"
+                    >
+                        <x-dynamic-component :component="$item['icon']" class="w-5 h-5 shrink-0" />
+                        
+                        <span 
+                            x-show="!hoverMode || isHovered"
+                            x-transition:enter="transition ease-out duration-150"
+                            x-transition:enter-start="opacity-0"
+                            x-transition:enter-end="opacity-100"
+                            class="truncate"
+                        >
+                            {{ $item['label'] }}
+                        </span>
+                    </a>
+                </div>
+            @endforeach
         </nav>
     </div>
 
-    <!-- Tombol Logout / Login -->
-    <div class="pt-6 border-t border-gray-200">
+    <!-- Bagian Bawah: Profil User (Avatar, Full Name, Username) & Tombol Logout di Sampingnya -->
+    <div class="p-3 border-t border-(--outline-colour) bg-(--bg2-colour)/90">
         @auth
-            <form action="{{ route('logout') }}" method="POST">
-                @csrf
-                <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    <span>Keluar</span>
-                </button>
-            </form>
+            <div 
+                class="flex items-center gap-2.5" 
+                :class="(hoverMode && !isHovered) ? 'justify-center' : 'justify-between'"
+            >
+                <!-- Icon Profile (Avatar) -->
+                <div 
+                    class="w-9 h-9 rounded-full bg-emerald-100 text-[#163428] flex items-center justify-center font-bold text-sm shrink-0 border border-emerald-300 shadow-xs"
+                    title="{{ Auth::user()?->full_name ?? Auth::user()?->username }}"
+                >
+                    <x-lucide-user class="w-4 h-4 text-[#163428]"/>
+                </div>
+
+                <!-- Di sampingnya: full_name dan di bawahnya username -->
+                <div 
+                    x-show="!hoverMode || isHovered" 
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    class="flex-1 min-w-0 flex flex-col justify-center overflow-hidden"
+                >
+                    <span class="text-xs font-bold text-gray-900 truncate leading-tight">
+                        {{ Auth::user()?->full_name ?? Auth::user()?->username ?? 'Petugas' }}
+                    </span>
+                    <span class="text-[11px] text-gray-500 truncate leading-tight mt-0.5">
+                        {{ '@' . (Auth::user()?->username ?? 'user') }}
+                    </span>
+                </div>
+
+                <!-- Di sampingnya: Tombol Logout -->
+                <div 
+                    x-show="!hoverMode || isHovered"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    class="shrink-0"
+                >
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button 
+                            type="submit" 
+                            title="Keluar dari Aplikasi" 
+                            class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition cursor-pointer flex items-center justify-center"
+                        >
+                            <x-lucide-log-out class="w-4 h-4"/>
+                        </button>
+                    </form>
+                </div>
+            </div>
         @else
-            <a href="{{ route('login') }}" class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-[#163428] hover:bg-emerald-50 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-                <span>Login</span>
-            </a>
+            <div class="flex items-center" :class="(hoverMode && !isHovered) ? 'justify-center' : 'justify-between'">
+                <a href="{{ route('login') }}" class="flex items-center gap-2 p-2 rounded-xl text-xs font-bold text-[#163428] hover:bg-emerald-50 transition w-full" title="Login">
+                    <x-lucide-log-in class="w-4 h-4 shrink-0"/>
+                    <span x-show="!hoverMode || isHovered">Masuk</span>
+                </a>
+            </div>
         @endauth
     </div>
 </aside>
