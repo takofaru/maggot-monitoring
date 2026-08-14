@@ -6,6 +6,7 @@ use App\Models\Cycle;
 use App\Models\ObservationLog;
 use App\Models\EnvironmentLog;
 use App\Models\PhaseSetting;
+use App\Services\MqttService;
 use Carbon\Carbon;
 
 new class extends Component
@@ -82,6 +83,10 @@ new class extends Component
             $this->selectedCycleName = "Siklus {$newCycle->id}";
             $this->isSelectedCurrent = true;
             $this->flashMessage = "Siklus {$cycle->id} telah selesai (Panen). Siklus baru (Siklus {$newCycle->id}) berhasil dimulai dengan fase Penetasan.";
+            
+            // Sinkronkan batas lingkungan fase penetasan ke MQTT
+            MqttService::syncActivePhaseLimit('penetasan');
+
             $this->resetPage();
             return;
         }
@@ -98,6 +103,10 @@ new class extends Component
         }
 
         $cycle->update(['current_phase' => $nextPhase]);
+        
+        // Sinkronkan batas lingkungan fase baru ke MQTT
+        MqttService::syncActivePhaseLimit($nextPhase);
+
         $this->flashMessage = "Fase berhasil diubah menjadi " . ucfirst($nextPhase) . ".";
     }
 
