@@ -199,13 +199,10 @@ new class extends Component
 
     public function with(): array
     {
-        // 1. Cek data telemetri mutakhir dari broker MQTT
-        MqttService::fetchRetainedEnvironmentData();
-
-        // 2. Ambil waktu server saat ini
+        // 1. Ambil waktu server saat ini
         $currentTime = now();
 
-        // 3. Ambil data terakhir dari cache atau database
+        // 2. Ambil data terakhir dari cache atau database
         $cachedLastSeenStr = Cache::get('device_last_seen');
         $cachedLastSeen = $cachedLastSeenStr ? Carbon::parse($cachedLastSeenStr) : null;
 

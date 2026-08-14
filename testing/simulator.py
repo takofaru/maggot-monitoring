@@ -147,7 +147,7 @@ def publish_environment_data(client):
     }
 
     payload_json = json.dumps(payload)
-    client.publish(TOPIC_PUB, payload_json, qos=1, retain=True)
+    client.publish(TOPIC_PUB, payload_json, qos=1)
 
     now_time = datetime.now().strftime("%H:%M:%S")
     print(f"{C_CYAN}[{now_time}]{C_RESET} 📤 {C_BOLD}[KIRIM -> {TOPIC_PUB}]{C_RESET} #{msg_count:04d} | Suhu: {C_BOLD}{temp:>5.2f}°C{C_RESET} | Kelembapan: {C_BOLD}{humid:>5.2f}%{C_RESET} | {C_DIM}JSON: {payload_json}{C_RESET}", flush=True)
