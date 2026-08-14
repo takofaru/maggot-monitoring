@@ -12,7 +12,7 @@ new class extends Component
 {
     public function with(): array
     {
-        // 1. Query Siklus Aktif
+        // 1. Inisiasi Query Siklus Aktif dari Database
         $activeCycle = Cycle::where('is_active', true)->first() ?? Cycle::latest('id')->first();
         $cycleId = $activeCycle?->id;
         $cycleNumber = $cycleId ?? 1;
@@ -24,7 +24,7 @@ new class extends Component
 
         $currentPhase = $activeCycle ? ucfirst($activeCycle->current_phase) : 'Penetasan';
 
-        // 2. Query Catatan Observasi untuk 3 Kartu KPI
+        // 2. Query Catatan Observasi untuk 3 Kartu KPI dari Database
         $obsLogs = ObservationLog::where('cycle_id', $cycleId)->orderBy('timestamp', 'asc')->orderBy('id', 'asc')->get();
         $totalFeed = (float) $obsLogs->sum('feed_weight');
 
@@ -41,8 +41,8 @@ new class extends Component
             ? Carbon::parse($latestObs->timestamp)->translatedFormat('l, d F Y')
             : now()->translatedFormat('l, d F Y');
 
-        // 3. Query Telemetri Lingkungan (10 Data Terakhir)
-        $envLogs = EnvironmentLog::latest('timestamp')->latest('id')->take(10)->get()->reverse()->values();
+        // 3. Inisiasi Data Telemetri dari Database (15 Data Terakhir Secara Kronologis)
+        $envLogs = EnvironmentLog::latest('timestamp')->latest('id')->take(15)->get()->reverse()->values();
 
         $latestEnv = $envLogs->last();
         $tempVal = $latestEnv ? (float) $latestEnv->temperature : 0.0;
@@ -51,7 +51,7 @@ new class extends Component
             ? Carbon::parse($latestEnv->timestamp ?? $latestEnv->created_at)->translatedFormat('l, d F Y - H:i:s')
             : now()->translatedFormat('l, d F Y - H:i:s');
 
-        // Threshold fase aktif
+        // Batas Ideal Fase Aktif
         $phaseSetting = PhaseSetting::where('phase_name', strtolower($activeCycle->current_phase ?? 'penetasan'))->first();
         $tempMin = $phaseSetting ? (float) $phaseSetting->temp_bottom : 27.0;
         $tempMax = $phaseSetting ? (float) $phaseSetting->temp_top : 30.0;
@@ -73,9 +73,9 @@ new class extends Component
                 $chartHumid[] = (float) $log->humidity;
             }
         } else {
-            $chartLabels = ['00:00', '00:00', '00:00', '00:00', '00:00'];
-            $chartTemp = [0, 0, 0, 0, 0];
-            $chartHumid = [0, 0, 0, 0, 0];
+            $chartLabels = ['00:00:00'];
+            $chartTemp = [0];
+            $chartHumid = [0];
         }
 
         // 4. Status Perangkat IoT (Liveness Check)
@@ -93,7 +93,6 @@ new class extends Component
         // 5. Log Aktivitas & Peringatan Terkini
         $activities = [];
 
-        // Deteksi kondisi telemetri terbaru
         if ($latestEnv) {
             if ($tempVal < $tempMin) {
                 $activities[] = [
@@ -128,7 +127,6 @@ new class extends Component
             }
         }
 
-        // Tambahkan histori aktivitas observasi terkini jika tersedia
         if ($latestObs) {
             $activities[] = [
                 'type' => 'feed',
@@ -150,6 +148,10 @@ new class extends Component
             'lastUpdateDate'     => $lastUpdateDate,
             'tempVal'            => $tempVal,
             'humidVal'           => $humidVal,
+            'tempMin'            => $tempMin,
+            'tempMax'            => $tempMax,
+            'humidMin'           => $humidMin,
+            'humidMax'           => $humidMax,
             'isTempNormal'       => $isTempNormal,
             'isHumidNormal'      => $isHumidNormal,
             'envUpdateDate'      => $envUpdateDate,
@@ -163,7 +165,7 @@ new class extends Component
 };
 ?>
 
-<div wire:poll.10s class="space-y-(--size-26) min-w-[922px]">
+<div wire:poll.5s class="space-y-(--size-26) min-w-[922px]">
     <!-- Header Dashboard & Status Indikator -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
@@ -281,7 +283,7 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Layout 2 Kolom: Kiri (Grafik Suhu & Kelembapan), Kanan (Aktivitas) -->
+    <!-- Layout 2 Kolom: Kiri (Grafik Suhu & Kelembapan dengan Garis Batas), Kanan (Aktivitas) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-(--size-26) w-full items-start">
         
         <!-- Kolom Kiri: 2 Grafik Sensor Telemetri (Span 2) -->
@@ -289,14 +291,30 @@ new class extends Component
             
             <!-- 1. Box Grafik Suhu -->
             <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-thermometer class="w-(--size-26) h-(--size-26)"/>
+                <div class="flex flex-row items-center justify-between">
+                    <div class="flex flex-row items-center gap-(--size-16)">
+                        <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                            <x-lucide-thermometer class="w-(--size-26) h-(--size-26)"/>
+                        </div>
+                        <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
+                            Suhu
+                        </span>
                     </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
-                        Suhu
-                    </span>
+
+                    <!-- Keterangan Garis Batas Suhu -->
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="flex items-center gap-1 text-gray-600 font-medium">
+                            <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
+                        </span>
+                        <span class="flex items-center gap-1 text-red-600 font-medium">
+                            <span class="w-3 h-0.5 bg-red-500 border-b border-dashed border-red-500"></span> Maks ({{ $tempMax }}&deg;C)
+                        </span>
+                        <span class="flex items-center gap-1 text-blue-600 font-medium">
+                            <span class="w-3 h-0.5 bg-blue-500 border-b border-dashed border-blue-500"></span> Min ({{ $tempMin }}&deg;C)
+                        </span>
+                    </div>
                 </div>
+
                 <div>
                     <div class="flex items-center gap-3">
                         <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
@@ -313,7 +331,7 @@ new class extends Component
                     </p>
                 </div>
 
-                <!-- Canvas Chart Suhu (0 - 100°C) -->
+                <!-- Canvas Chart Suhu dengan Garis Batas Ideal -->
                 <div class="relative w-full h-64 border border-gray-100 rounded-xl p-3 bg-gray-50/50" wire:ignore>
                     <canvas x-data="{
                         chart: null,
@@ -323,6 +341,12 @@ new class extends Component
                         renderChart() {
                             let labels = {{ json_encode($chartLabels) }};
                             let data = {{ json_encode($chartTemp) }};
+                            let tMin = {{ (float) $tempMin }};
+                            let tMax = {{ (float) $tempMax }};
+
+                            let minLine = Array(labels.length).fill(tMin);
+                            let maxLine = Array(labels.length).fill(tMax);
+
                             let existing = Chart.getChart(this.$el);
                             if (existing) existing.destroy();
 
@@ -330,18 +354,41 @@ new class extends Component
                                 type: 'line',
                                 data: {
                                     labels: labels,
-                                    datasets: [{
-                                        label: 'Suhu (°C)',
-                                        data: data,
-                                        borderColor: '#163428',
-                                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                        borderWidth: 2.5,
-                                        pointRadius: 4,
-                                        pointHoverRadius: 6,
-                                        pointBackgroundColor: '#163428',
-                                        tension: 0.3,
-                                        fill: true
-                                    }]
+                                    datasets: [
+                                        {
+                                            label: 'Suhu Aktual (°C)',
+                                            data: data,
+                                            borderColor: '#163428',
+                                            backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                                            borderWidth: 2.5,
+                                            pointRadius: 4,
+                                            pointHoverRadius: 6,
+                                            pointBackgroundColor: '#163428',
+                                            tension: 0.3,
+                                            fill: true,
+                                            order: 1
+                                        },
+                                        {
+                                            label: 'Batas Maksimum (' + tMax + '°C)',
+                                            data: maxLine,
+                                            borderColor: '#EF4444',
+                                            borderWidth: 1.5,
+                                            borderDash: [6, 4],
+                                            pointRadius: 0,
+                                            fill: false,
+                                            order: 2
+                                        },
+                                        {
+                                            label: 'Batas Minimum (' + tMin + '°C)',
+                                            data: minLine,
+                                            borderColor: '#3B82F6',
+                                            borderWidth: 1.5,
+                                            borderDash: [6, 4],
+                                            pointRadius: 0,
+                                            fill: false,
+                                            order: 3
+                                        }
+                                    ]
                                 },
                                 options: {
                                     responsive: true,
@@ -351,7 +398,7 @@ new class extends Component
                                         tooltip: {
                                             backgroundColor: '#163428',
                                             callbacks: {
-                                                label: (ctx) => ' Suhu: ' + ctx.parsed.y.toFixed(1) + '°C'
+                                                label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '°C'
                                             }
                                         }
                                     },
@@ -380,14 +427,30 @@ new class extends Component
 
             <!-- 2. Box Grafik Kelembapan -->
             <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
+                <div class="flex flex-row items-center justify-between">
+                    <div class="flex flex-row items-center gap-(--size-16)">
+                        <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                            <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
+                        </div>
+                        <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
+                            Kelembapan
+                        </span>
                     </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
-                        Kelembapan
-                    </span>
+
+                    <!-- Keterangan Garis Batas Kelembapan -->
+                    <div class="flex items-center gap-3 text-xs">
+                        <span class="flex items-center gap-1 text-gray-600 font-medium">
+                            <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
+                        </span>
+                        <span class="flex items-center gap-1 text-red-600 font-medium">
+                            <span class="w-3 h-0.5 bg-red-500 border-b border-dashed border-red-500"></span> Maks ({{ $humidMax }}%)
+                        </span>
+                        <span class="flex items-center gap-1 text-blue-600 font-medium">
+                            <span class="w-3 h-0.5 bg-blue-500 border-b border-dashed border-blue-500"></span> Min ({{ $humidMin }}%)
+                        </span>
+                    </div>
                 </div>
+
                 <div>
                     <div class="flex items-center gap-3">
                         <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
@@ -404,7 +467,7 @@ new class extends Component
                     </p>
                 </div>
 
-                <!-- Canvas Chart Kelembapan (0 - 100%) -->
+                <!-- Canvas Chart Kelembapan dengan Garis Batas Ideal -->
                 <div class="relative w-full h-64 border border-gray-100 rounded-xl p-3 bg-gray-50/50" wire:ignore>
                     <canvas x-data="{
                         chart: null,
@@ -414,6 +477,12 @@ new class extends Component
                         renderChart() {
                             let labels = {{ json_encode($chartLabels) }};
                             let data = {{ json_encode($chartHumid) }};
+                            let hMin = {{ (float) $humidMin }};
+                            let hMax = {{ (float) $humidMax }};
+
+                            let minLine = Array(labels.length).fill(hMin);
+                            let maxLine = Array(labels.length).fill(hMax);
+
                             let existing = Chart.getChart(this.$el);
                             if (existing) existing.destroy();
 
@@ -421,18 +490,41 @@ new class extends Component
                                 type: 'line',
                                 data: {
                                     labels: labels,
-                                    datasets: [{
-                                        label: 'Kelembapan (%)',
-                                        data: data,
-                                        borderColor: '#163428',
-                                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                        borderWidth: 2.5,
-                                        pointRadius: 4,
-                                        pointHoverRadius: 6,
-                                        pointBackgroundColor: '#163428',
-                                        tension: 0.3,
-                                        fill: true
-                                    }]
+                                    datasets: [
+                                        {
+                                            label: 'Kelembapan Aktual (%)',
+                                            data: data,
+                                            borderColor: '#163428',
+                                            backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                                            borderWidth: 2.5,
+                                            pointRadius: 4,
+                                            pointHoverRadius: 6,
+                                            pointBackgroundColor: '#163428',
+                                            tension: 0.3,
+                                            fill: true,
+                                            order: 1
+                                        },
+                                        {
+                                            label: 'Batas Maksimum (' + hMax + '%)',
+                                            data: maxLine,
+                                            borderColor: '#EF4444',
+                                            borderWidth: 1.5,
+                                            borderDash: [6, 4],
+                                            pointRadius: 0,
+                                            fill: false,
+                                            order: 2
+                                        },
+                                        {
+                                            label: 'Batas Minimum (' + hMin + '%)',
+                                            data: minLine,
+                                            borderColor: '#3B82F6',
+                                            borderWidth: 1.5,
+                                            borderDash: [6, 4],
+                                            pointRadius: 0,
+                                            fill: false,
+                                            order: 3
+                                        }
+                                    ]
                                 },
                                 options: {
                                     responsive: true,
@@ -442,7 +534,7 @@ new class extends Component
                                         tooltip: {
                                             backgroundColor: '#163428',
                                             callbacks: {
-                                                label: (ctx) => ' Kelembapan: ' + ctx.parsed.y.toFixed(1) + '%'
+                                                label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
                                             }
                                         }
                                     },
