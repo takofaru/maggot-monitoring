@@ -283,14 +283,12 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Layout 2 Kolom: Kiri (Grafik Suhu & Kelembapan dengan Garis Batas), Kanan (Aktivitas) -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-(--size-26) w-full items-start">
+    <!-- Baris 1: Suhu (Kiri) & Aktivitas (Kanan) Persis dashboard.png -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-(--size-26) w-full items-stretch">
         
-        <!-- Kolom Kiri: 2 Grafik Sensor Telemetri (Span 2) -->
-        <div class="lg:col-span-2 space-y-(--size-26)">
-            
-            <!-- 1. Box Grafik Suhu -->
-            <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <!-- 1. Box Grafik Suhu (Span 2) -->
+        <div class="lg:col-span-2 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div>
                 <div class="flex flex-row items-center justify-between">
                     <div class="flex flex-row items-center gap-(--size-16)">
                         <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
@@ -315,7 +313,7 @@ new class extends Component
                     </div>
                 </div>
 
-                <div>
+                <div class="mt-2">
                     <div class="flex items-center gap-3">
                         <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
                             {{ number_format($tempVal, 1) }}&deg;C
@@ -330,261 +328,119 @@ new class extends Component
                         Diperbaharui pada {{ $envUpdateDate }}
                     </p>
                 </div>
-
-                <!-- Canvas Chart Suhu dengan Garis Batas Ideal (Height Dioptimalkan) -->
-                <div class="relative w-full h-48 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
-                    <canvas x-data="{
-                        chart: null,
-                        init() {
-                            this.$nextTick(() => this.renderChart());
-                        },
-                        renderChart() {
-                            let labels = @js($chartLabels);
-                            let data = @js($chartTemp);
-                            let tMin = {{ (float) $tempMin }};
-                            let tMax = {{ (float) $tempMax }};
-
-                            let minLine = Array(labels.length).fill(tMin);
-                            let maxLine = Array(labels.length).fill(tMax);
-
-                            if (this.chart) {
-                                this.chart.data.labels = labels;
-                                this.chart.data.datasets[0].data = data;
-                                this.chart.data.datasets[1].data = maxLine;
-                                this.chart.data.datasets[1].label = 'Batas Maksimum (' + tMax + '°C)';
-                                this.chart.data.datasets[2].data = minLine;
-                                this.chart.data.datasets[2].label = 'Batas Minimum (' + tMin + '°C)';
-                                this.chart.update('none');
-                                return;
-                            }
-
-                            if (typeof Chart === 'undefined') {
-                                setTimeout(() => this.renderChart(), 100);
-                                return;
-                            }
-
-                            this.chart = new Chart(this.$el, {
-                                type: 'line',
-                                data: {
-                                    labels: labels,
-                                    datasets: [
-                                        {
-                                            label: 'Suhu Aktual (°C)',
-                                            data: data,
-                                            borderColor: '#163428',
-                                            backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                            borderWidth: 2.5,
-                                            pointRadius: 4,
-                                            pointHoverRadius: 6,
-                                            pointBackgroundColor: '#163428',
-                                            tension: 0.3,
-                                            fill: true
-                                        },
-                                        {
-                                            label: 'Batas Maksimum (' + tMax + '°C)',
-                                            data: maxLine,
-                                            borderColor: '#EF4444',
-                                            borderWidth: 1.5,
-                                            borderDash: [6, 4],
-                                            pointRadius: 0,
-                                            fill: false
-                                        },
-                                        {
-                                            label: 'Batas Minimum (' + tMin + '°C)',
-                                            data: minLine,
-                                            borderColor: '#3B82F6',
-                                            borderWidth: 1.5,
-                                            borderDash: [6, 4],
-                                            pointRadius: 0,
-                                            fill: false
-                                        }
-                                    ]
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: { display: false },
-                                        tooltip: {
-                                            backgroundColor: '#163428',
-                                            callbacks: {
-                                                label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '°C'
-                                            }
-                                        }
-                                    },
-                                    scales: {
-                                        y: {
-                                            min: 0,
-                                            max: 100,
-                                            ticks: {
-                                                stepSize: 10,
-                                                callback: (v) => v + '°C'
-                                            },
-                                            grid: { color: '#E5E7EB' }
-                                        },
-                                        x: {
-                                            grid: { color: '#F3F4F6' }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }"
-                    x-on:livewire:updated.window="renderChart()"
-                    style="width: 100%; height: 100%;"></canvas>
-                </div>
             </div>
 
-            <!-- 2. Box Grafik Kelembapan -->
-            <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center justify-between">
-                    <div class="flex flex-row items-center gap-(--size-16)">
-                        <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                            <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
-                        </div>
-                        <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
-                            Kelembapan
-                        </span>
-                    </div>
+            <!-- Canvas Chart Suhu dengan Range 0 sampai Suhu Tertinggi -->
+            <div class="relative w-full h-44 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
+                <canvas x-data="{
+                    chart: null,
+                    init() {
+                        this.$nextTick(() => this.renderChart());
+                    },
+                    renderChart() {
+                        let labels = @js($chartLabels);
+                        let data = @js($chartTemp);
+                        let tMin = {{ (float) $tempMin }};
+                        let tMax = {{ (float) $tempMax }};
 
-                    <!-- Keterangan Garis Batas Kelembapan -->
-                    <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
-                        <span class="flex items-center gap-1 text-gray-600 font-medium">
-                            <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
-                        </span>
-                        <span class="flex items-center gap-1 text-red-600 font-medium">
-                            <span class="w-3 h-0.5 bg-red-500 border-b border-dashed border-red-500"></span> Maks ({{ $humidMax }}%)
-                        </span>
-                        <span class="flex items-center gap-1 text-blue-600 font-medium">
-                            <span class="w-3 h-0.5 bg-blue-500 border-b border-dashed border-blue-500"></span> Min ({{ $humidMin }}%)
-                        </span>
-                    </div>
-                </div>
+                        let minLine = Array(labels.length).fill(tMin);
+                        let maxLine = Array(labels.length).fill(tMax);
 
-                <div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
-                            {{ number_format($humidVal, 1) }}%
-                        </span>
-                        @if($isHumidNormal)
-                            <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Normal</span>
-                        @else
-                            <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Peringatan</span>
-                        @endif
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1 mb-1">
-                        Diperbaharui pada {{ $envUpdateDate }}
-                    </p>
-                </div>
+                        // Hitung suhu tertinggi untuk rentang sumbu Y dinamis (0 s/d tertinggi)
+                        let maxObserved = Math.max(...data, tMax, 0);
+                        let yMax = Math.max(35, Math.ceil(maxObserved / 5) * 5);
 
-                <!-- Canvas Chart Kelembapan dengan Garis Batas Ideal (Height Dioptimalkan) -->
-                <div class="relative w-full h-48 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
-                    <canvas x-data="{
-                        chart: null,
-                        init() {
-                            this.$nextTick(() => this.renderChart());
-                        },
-                        renderChart() {
-                            let labels = @js($chartLabels);
-                            let data = @js($chartHumid);
-                            let hMin = {{ (float) $humidMin }};
-                            let hMax = {{ (float) $humidMax }};
+                        if (this.chart) {
+                            this.chart.data.labels = labels;
+                            this.chart.data.datasets[0].data = data;
+                            this.chart.data.datasets[1].data = maxLine;
+                            this.chart.data.datasets[1].label = 'Batas Maksimum (' + tMax + '°C)';
+                            this.chart.data.datasets[2].data = minLine;
+                            this.chart.data.datasets[2].label = 'Batas Minimum (' + tMin + '°C)';
+                            this.chart.options.scales.y.max = yMax;
+                            this.chart.update('none');
+                            return;
+                        }
 
-                            let minLine = Array(labels.length).fill(hMin);
-                            let maxLine = Array(labels.length).fill(hMax);
+                        if (typeof Chart === 'undefined') {
+                            setTimeout(() => this.renderChart(), 100);
+                            return;
+                        }
 
-                            if (this.chart) {
-                                this.chart.data.labels = labels;
-                                this.chart.data.datasets[0].data = data;
-                                this.chart.data.datasets[1].data = maxLine;
-                                this.chart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
-                                this.chart.data.datasets[2].data = minLine;
-                                this.chart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
-                                this.chart.update('none');
-                                return;
-                            }
-
-                            if (typeof Chart === 'undefined') {
-                                setTimeout(() => this.renderChart(), 100);
-                                return;
-                            }
-
-                            this.chart = new Chart(this.$el, {
-                                type: 'line',
-                                data: {
-                                    labels: labels,
-                                    datasets: [
-                                        {
-                                            label: 'Kelembapan Aktual (%)',
-                                            data: data,
-                                            borderColor: '#163428',
-                                            backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                            borderWidth: 2.5,
-                                            pointRadius: 4,
-                                            pointHoverRadius: 6,
-                                            pointBackgroundColor: '#163428',
-                                            tension: 0.3,
-                                            fill: true
-                                        },
-                                        {
-                                            label: 'Batas Maksimum (' + hMax + '%)',
-                                            data: maxLine,
-                                            borderColor: '#EF4444',
-                                            borderWidth: 1.5,
-                                            borderDash: [6, 4],
-                                            pointRadius: 0,
-                                            fill: false
-                                        },
-                                        {
-                                            label: 'Batas Minimum (' + hMin + '%)',
-                                            data: minLine,
-                                            borderColor: '#3B82F6',
-                                            borderWidth: 1.5,
-                                            borderDash: [6, 4],
-                                            pointRadius: 0,
-                                            fill: false
-                                        }
-                                    ]
-                                },
-                                options: {
-                                    responsive: true,
-                                    maintainAspectRatio: false,
-                                    plugins: {
-                                        legend: { display: false },
-                                        tooltip: {
-                                            backgroundColor: '#163428',
-                                            callbacks: {
-                                                label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
-                                            }
-                                        }
+                        this.chart = new Chart(this.$el, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Suhu Aktual (°C)',
+                                        data: data,
+                                        borderColor: '#163428',
+                                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                                        borderWidth: 2.5,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        pointBackgroundColor: '#163428',
+                                        tension: 0.3,
+                                        fill: true
                                     },
-                                    scales: {
-                                        y: {
-                                            min: 0,
-                                            max: 100,
-                                            ticks: {
-                                                stepSize: 10,
-                                                callback: (v) => v + '%'
-                                            },
-                                            grid: { color: '#E5E7EB' }
-                                        },
-                                        x: {
-                                            grid: { color: '#F3F4F6' }
+                                    {
+                                        label: 'Batas Maksimum (' + tMax + '°C)',
+                                        data: maxLine,
+                                        borderColor: '#EF4444',
+                                        borderWidth: 1.5,
+                                        borderDash: [6, 4],
+                                        pointRadius: 0,
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Batas Minimum (' + tMin + '°C)',
+                                        data: minLine,
+                                        borderColor: '#3B82F6',
+                                        borderWidth: 1.5,
+                                        borderDash: [6, 4],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: '#163428',
+                                        callbacks: {
+                                            label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '°C'
                                         }
                                     }
+                                },
+                                scales: {
+                                    y: {
+                                        min: 0,
+                                        max: yMax,
+                                        ticks: {
+                                            stepSize: yMax <= 40 ? 5 : 10,
+                                            callback: (v) => v + '°C'
+                                        },
+                                        grid: { color: '#E5E7EB' }
+                                    },
+                                    x: {
+                                        grid: { color: '#F3F4F6' }
+                                    }
                                 }
-                            });
-                        }
-                    }"
-                    x-on:livewire:updated.window="renderChart()"
-                    style="width: 100%; height: 100%;"></canvas>
-                </div>
+                            }
+                        });
+                    }
+                }"
+                x-on:livewire:updated.window="renderChart()"
+                style="width: 100%; height: 100%;"></canvas>
             </div>
-
         </div>
 
-        <!-- Kolom Kanan: Sidebar Aktivitas (Span 1) -->
-        <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <!-- 2. Box Aktivitas (Span 1) Persis dashboard.png -->
+        <div class="lg:col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16) border-b pb-3">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-activity class="w-(--size-26) h-(--size-26)"/>
@@ -594,10 +450,10 @@ new class extends Component
                 </span>
             </div>
 
-            <!-- List Item Aktivitas & Peringatan -->
-            <div class="flex flex-col gap-(--size-10) max-h-[500px] overflow-y-auto pr-1">
+            <!-- List Item Aktivitas & Peringatan (Max 4 items or compact scroll) -->
+            <div class="flex flex-col gap-2.5 max-h-[300px] overflow-y-auto pr-1">
                 @forelse($activities as $act)
-                    <div class="p-3.5 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-3 shadow-2xs">
+                    <div class="p-3 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-2.5 shadow-2xs">
                         <div class="p-2 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
                             @if($act['type'] === 'temp_low')
                                 <x-lucide-thermometer-snowflake class="w-4 h-4"/>
@@ -616,7 +472,7 @@ new class extends Component
                             <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
                                 {{ $act['desc'] }}
                             </p>
-                            <span class="text-[10px] text-gray-400 font-medium mt-1 block">
+                            <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
                                 {{ $act['time'] }}
                             </span>
                         </div>
@@ -629,5 +485,153 @@ new class extends Component
             </div>
         </div>
 
+    </div>
+
+    <!-- Baris 2: Kelembapan Persis dashboard.png -->
+    <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs w-full">
+        <div>
+            <div class="flex flex-row items-center justify-between">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
+                        Kelembapan
+                    </span>
+                </div>
+
+                <!-- Keterangan Garis Batas Kelembapan -->
+                <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
+                    <span class="flex items-center gap-1 text-gray-600 font-medium">
+                        <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
+                    </span>
+                    <span class="flex items-center gap-1 text-red-600 font-medium">
+                        <span class="w-3 h-0.5 bg-red-500 border-b border-dashed border-red-500"></span> Maks ({{ $humidMax }}%)
+                    </span>
+                    <span class="flex items-center gap-1 text-blue-600 font-medium">
+                        <span class="w-3 h-0.5 bg-blue-500 border-b border-dashed border-blue-500"></span> Min ({{ $humidMin }}%)
+                    </span>
+                </div>
+            </div>
+
+            <div class="mt-2">
+                <div class="flex items-center gap-3">
+                    <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
+                        {{ number_format($humidVal, 1) }}%
+                    </span>
+                    @if($isHumidNormal)
+                        <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Normal</span>
+                    @else
+                        <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Peringatan</span>
+                    @endif
+                </div>
+                <p class="text-xs text-gray-400 mt-1 mb-1">
+                    Diperbaharui pada {{ $envUpdateDate }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Canvas Chart Kelembapan dengan Range 0 - 100% -->
+        <div class="relative w-full h-44 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
+            <canvas x-data="{
+                chart: null,
+                init() {
+                    this.$nextTick(() => this.renderChart());
+                },
+                renderChart() {
+                    let labels = @js($chartLabels);
+                    let data = @js($chartHumid);
+                    let hMin = {{ (float) $humidMin }};
+                    let hMax = {{ (float) $humidMax }};
+
+                    let minLine = Array(labels.length).fill(hMin);
+                    let maxLine = Array(labels.length).fill(hMax);
+
+                    if (this.chart) {
+                        this.chart.data.labels = labels;
+                        this.chart.data.datasets[0].data = data;
+                        this.chart.data.datasets[1].data = maxLine;
+                        this.chart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
+                        this.chart.data.datasets[2].data = minLine;
+                        this.chart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
+                        this.chart.update('none');
+                        return;
+                    }
+
+                    if (typeof Chart === 'undefined') {
+                        setTimeout(() => this.renderChart(), 100);
+                        return;
+                    }
+
+                    this.chart = new Chart(this.$el, {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: [
+                                {
+                                    label: 'Kelembapan Aktual (%)',
+                                    data: data,
+                                    borderColor: '#163428',
+                                    backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                                    borderWidth: 2.5,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6,
+                                    pointBackgroundColor: '#163428',
+                                    tension: 0.3,
+                                    fill: true
+                                },
+                                {
+                                    label: 'Batas Maksimum (' + hMax + '%)',
+                                    data: maxLine,
+                                    borderColor: '#EF4444',
+                                    borderWidth: 1.5,
+                                    borderDash: [6, 4],
+                                    pointRadius: 0,
+                                    fill: false
+                                },
+                                {
+                                    label: 'Batas Minimum (' + hMin + '%)',
+                                    data: minLine,
+                                    borderColor: '#3B82F6',
+                                    borderWidth: 1.5,
+                                    borderDash: [6, 4],
+                                    pointRadius: 0,
+                                    fill: false
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#163428',
+                                    callbacks: {
+                                        label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    min: 0,
+                                    max: 100,
+                                    ticks: {
+                                        stepSize: 10,
+                                        callback: (v) => v + '%'
+                                    },
+                                    grid: { color: '#E5E7EB' }
+                                },
+                                x: {
+                                    grid: { color: '#F3F4F6' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }"
+            x-on:livewire:updated.window="renderChart()"
+            style="width: 100%; height: 100%;"></canvas>
+        </div>
     </div>
 </div>
