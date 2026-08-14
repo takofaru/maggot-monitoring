@@ -83,7 +83,7 @@ new class extends Component
             $this->selectedCycleName = "Siklus {$newCycle->id}";
             $this->isSelectedCurrent = true;
             $this->flashMessage = "Siklus {$cycle->id} telah selesai (Panen). Siklus baru (Siklus {$newCycle->id}) berhasil dimulai dengan fase Penetasan.";
-            
+
             // Sinkronkan batas lingkungan fase penetasan ke MQTT
             MqttService::syncActivePhaseLimit('penetasan');
 
@@ -103,7 +103,7 @@ new class extends Component
         }
 
         $cycle->update(['current_phase' => $nextPhase]);
-        
+
         // Sinkronkan batas lingkungan fase baru ke MQTT
         MqttService::syncActivePhaseLimit($nextPhase);
 
