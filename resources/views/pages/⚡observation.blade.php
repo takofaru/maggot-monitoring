@@ -107,7 +107,7 @@ new class extends Component
 
         $this->resetForm();
         $this->useManualEnvLog = false;
-        
+
         // Ambil data telemetri otomatis terkini dari siklus
         $latestEnv = EnvironmentLog::where('cycle_id', $this->selectedCycleId)->latest('id')->first();
         if ($latestEnv) {
@@ -128,7 +128,7 @@ new class extends Component
             $this->flashMessage = 'Catatan pada siklus yang sudah selesai tidak dapat diubah.';
             return;
         }
-        
+
         $this->editingId = $log->id;
         $this->feed = $log->feed_weight;
         $this->maggot = $log->maggot_weight;
@@ -352,7 +352,7 @@ new class extends Component
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
-            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
+            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] h-full">
                 <div class="gap-(--size-6)">
                     Fase terkini:
                     <span class="font-bold text-(--prime-colour) capitalize">{{ $activeCycleObj->current_phase ?? '-' }}</span>
@@ -478,7 +478,7 @@ new class extends Component
             >
                 <form wire:submit="save" class="flex flex-col gap-(--size-26)">
                     <!-- Header Modal -->
-                    <div class="flex items-center justify-between border-b pb-3">
+                    <div class="flex items-center justify-between">
                         <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
                             {{ $editingId ? 'Ubah Catatan Observasi' : 'Tambah Catatan Baru' }}
                         </span>
