@@ -230,11 +230,11 @@ new class extends Component
         Manajemen Akun
     </h1>
 
-    <div class="flex flex-row gap-(--size-26)">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-(--size-26) w-full">
         <!-- Box Profil Saya -->
-        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full">
+        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
             <div class="flex flex-row gap-(--size-16) items-center">
-                <x-lucide-user-round class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16)"/>
+                <x-lucide-user-round class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                 <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Profil Saya</span>
             </div>
 
@@ -250,29 +250,29 @@ new class extends Component
                 </div>
             @endif
 
-            <form wire:submit="changeProfile" id="changeProfileForm" class="flex flex-col gap-(--size-16) min-w-(--size-492) w-full">
-                <div class="flex flex-row gap-(--size-16)">
-                    <div class="input-container w-full">
+            <form wire:submit="changeProfile" id="changeProfileForm" class="flex flex-col gap-(--size-16) w-full min-w-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                    <div class="input-container w-full min-w-0">
                         <label for="fullName">Nama Lengkap</label>
                         <input
                             wire:model="fullName"
                             id="fullName"
                             type="text"
                             placeholder="Masukkan Nama Lengkap"
-                            class="input-text @error('fullName') border-red-500 @enderror"
+                            class="input-text @error('fullName') border-red-500 @enderror w-full min-w-0"
                         />
                         @error('fullName')
                             <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div class="input-container w-full">
+                    <div class="input-container w-full min-w-0">
                         <label for="userName">Username</label>
                         <input
                             wire:model="userName"
                             id="userName"
                             type="text"
                             placeholder="Masukkan Username"
-                            class="input-text @error('userName') border-red-500 @enderror"
+                            class="input-text @error('userName') border-red-500 @enderror w-full min-w-0"
                         />
                         @error('userName')
                             <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
@@ -288,9 +288,9 @@ new class extends Component
         </div>
 
         <!-- Box Ubah Password -->
-        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) min-w-(--size-492) w-full">
+        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
             <div class="flex flex-row gap-(--size-16) items-center">
-                <x-lucide-square-asterisk class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16)"/>
+                <x-lucide-square-asterisk class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                 <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Ubah Password</span>
             </div>
 
@@ -306,30 +306,45 @@ new class extends Component
                 </div>
             @endif
 
-            <form wire:submit="changePassword" id="changePasswordForm" class="flex flex-col gap-(--size-16)">
-                <div class="flex flex-row gap-(--size-16)">
-                    <div class="input-container w-full">
+            <form wire:submit="changePassword" id="changePasswordForm" class="flex flex-col gap-(--size-16) w-full min-w-0">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                    <!-- Password Baru dengan Toggle Show/Hide -->
+                    <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
                         <label for="newPassword">Password Baru</label>
-                        <input
-                            wire:model="newPassword"
-                            id="newPassword"
-                            type="password"
-                            placeholder="Masukkan Password Baru"
-                            class="input-text @error('newPassword') border-red-500 @enderror"
-                        />
+                        <div class="flex flex-row items-center justify-between input-text @error('newPassword') border-red-500 @enderror">
+                            <input
+                                wire:model="newPassword"
+                                id="newPassword"
+                                :type="showPass ? 'text' : 'password'"
+                                placeholder="Masukkan Password Baru"
+                                class="w-full bg-transparent focus:outline-none min-w-0"
+                            />
+                            <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
+                                <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
+                                <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
+                            </button>
+                        </div>
                         @error('newPassword')
                             <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                         @enderror
                     </div>
-                    <div class="input-container w-full">
+
+                    <!-- Konfirmasi Password dengan Toggle Show/Hide -->
+                    <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
                         <label for="confirmPassword">Konfirmasi Password</label>
-                        <input
-                            wire:model="confirmPassword"
-                            id="confirmPassword"
-                            type="password"
-                            placeholder="Konfirmasi Password Baru"
-                            class="input-text @error('confirmPassword') border-red-500 @enderror"
-                        />
+                        <div class="flex flex-row items-center justify-between input-text @error('confirmPassword') border-red-500 @enderror">
+                            <input
+                                wire:model="confirmPassword"
+                                id="confirmPassword"
+                                :type="showPass ? 'text' : 'password'"
+                                placeholder="Konfirmasi Password Baru"
+                                class="w-full bg-transparent focus:outline-none min-w-0"
+                            />
+                            <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
+                                <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
+                                <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
+                            </button>
+                        </div>
                         @error('confirmPassword')
                             <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                         @enderror
@@ -453,7 +468,7 @@ new class extends Component
                     @click.outside="$wire.closeUserModal()"
                     class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) p-(--size-26) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
                 >
-                    <form wire:submit="saveUser" class="flex flex-col gap-(--size-26)">
+                    <form wire:submit="saveUser" class="flex flex-col gap-(--size-26) w-full">
                         <!-- Header Modal -->
                         <div class="flex items-center justify-between border-b pb-3">
                             <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
@@ -468,84 +483,96 @@ new class extends Component
                             </button>
                         </div>
 
-                        <!-- Input Nama Lengkap & Username -->
-                        <div class="flex flex-row gap-(--size-16)">
-                            <div class="input-container w-full">
+                        <!-- 1. Baris 1: Nama Lengkap dan Username -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                            <div class="input-container w-full min-w-0">
                                 <label for="userFullName">Nama Lengkap</label>
                                 <input
                                     wire:model="userFullName"
                                     id="userFullName"
                                     type="text"
                                     placeholder="Contoh: Ahmad Fadli"
-                                    class="input-text @error('userFullName') border-red-500 @enderror"
+                                    class="input-text @error('userFullName') border-red-500 @enderror w-full min-w-0"
                                 />
                                 @error('userFullName')
-                                    <span class="text-xs text-red-500">{{ $message }}</span>
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                                 @enderror
                             </div>
 
-                            <div class="input-container w-full">
+                            <div class="input-container w-full min-w-0">
                                 <label for="userUsername">Username</label>
                                 <input
                                     wire:model="userUsername"
                                     id="userUsername"
                                     type="text"
                                     placeholder="Contoh: ahmad"
-                                    class="input-text @error('userUsername') border-red-500 @enderror"
+                                    class="input-text @error('userUsername') border-red-500 @enderror w-full min-w-0"
                                 />
                                 @error('userUsername')
-                                    <span class="text-xs text-red-500">{{ $message }}</span>
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
 
-                        <!-- Pilihan Peran (Role) -->
-                        <div class="input-container w-full">
-                            <label for="userRole">Peran Pengguna</label>
+                        <!-- 2. Baris 2: Password dan Konfirmasi Password (dengan Toggle Lihat Password) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                            <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
+                                <label for="userPassword">
+                                    {{ $editingUserId ? 'Password Baru (Opsional)' : 'Password' }}
+                                </label>
+                                <div class="flex flex-row items-center justify-between input-text @error('userPassword') border-red-500 @enderror">
+                                    <input
+                                        wire:model="userPassword"
+                                        id="userPassword"
+                                        :type="showPass ? 'text' : 'password'"
+                                        placeholder="{{ $editingUserId ? 'Kosongkan jika sama' : 'Minimal 6 karakter' }}"
+                                        class="w-full bg-transparent focus:outline-none min-w-0"
+                                    />
+                                    <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
+                                        <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
+                                        <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
+                                    </button>
+                                </div>
+                                @error('userPassword')
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
+                                <label for="userConfirmPassword">Konfirmasi Password</label>
+                                <div class="flex flex-row items-center justify-between input-text @error('userConfirmPassword') border-red-500 @enderror">
+                                    <input
+                                        wire:model="userConfirmPassword"
+                                        id="userConfirmPassword"
+                                        :type="showPass ? 'text' : 'password'"
+                                        placeholder="Ulangi password"
+                                        class="w-full bg-transparent focus:outline-none min-w-0"
+                                    />
+                                    <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
+                                        <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
+                                        <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
+                                    </button>
+                                </div>
+                                @error('userConfirmPassword')
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- 3. Baris 3: Peran (Role) -->
+                        <div class="input-container w-full min-w-0">
+                            <label for="userRole">Peran</label>
                             <select
                                 wire:model="userRole"
                                 id="userRole"
-                                class="input-text cursor-pointer"
+                                class="input-text cursor-pointer w-full bg-(--bg-colour)"
                             >
                                 <option value="user">Pengguna (Siswa / Operator)</option>
                                 <option value="admin">Administrator</option>
                             </select>
                             @error('userRole')
-                                <span class="text-xs text-red-500">{{ $message }}</span>
+                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                             @enderror
-                        </div>
-
-                        <!-- Input Password & Konfirmasi Password -->
-                        <div class="flex flex-row gap-(--size-16)">
-                            <div class="input-container w-full">
-                                <label for="userPassword">
-                                    {{ $editingUserId ? 'Password Baru (Opsional)' : 'Password' }}
-                                </label>
-                                <input
-                                    wire:model="userPassword"
-                                    id="userPassword"
-                                    type="password"
-                                    placeholder="{{ $editingUserId ? 'Kosongkan jika tidak diubah' : 'Minimal 6 karakter' }}"
-                                    class="input-text @error('userPassword') border-red-500 @enderror"
-                                />
-                                @error('userPassword')
-                                    <span class="text-xs text-red-500">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="input-container w-full">
-                                <label for="userConfirmPassword">Konfirmasi Password</label>
-                                <input
-                                    wire:model="userConfirmPassword"
-                                    id="userConfirmPassword"
-                                    type="password"
-                                    placeholder="Ulangi password"
-                                    class="input-text @error('userConfirmPassword') border-red-500 @enderror"
-                                />
-                                @error('userConfirmPassword')
-                                    <span class="text-xs text-red-500">{{ $message }}</span>
-                                @enderror
-                            </div>
                         </div>
 
                         <!-- Tombol Batal & Simpan -->
