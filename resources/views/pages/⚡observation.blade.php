@@ -86,17 +86,18 @@ new class extends Component
                 </div>
             </div>
         </div>
+        @if($isSelectedCurrent)
         <button
             @click="
                 openForm = !openForm
                 createObservation = !createObservation;
             "
             class="gap-(--size-10) input-button"
-            @disabled(!$isSelectedCurrent)
         >
             <x-lucide-plus class="w-(--size-26)"/>
             Tambah Catatan Baru
         </button>
+        @endif
     </div>
     <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full">
         <table class="w-full text-left border-collapse">
@@ -185,7 +186,7 @@ new class extends Component
                     </div>
                 </div>
             </div>
-            <div class="flex flex-row gap-(--size-10)">
+            <div class="flex flex-row gap-(--size-10) items-center">
                 <div class="relative inline-block w-9 h-5">
                     <input wire:mode="useNewEnvironmentLog" id="switch-component" type="checkbox" class="peer appearance-none w-9 h-5 bg-(--bg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-6) checked:bg-(--prime-colour) checked:border-(--prime-colour) cursor-pointer transition-colors duration-300" />
                     <label for="switch-component" class="absolute top-0 left-0 w-5 h-5 bg-white rounded-(--size-6) border border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-4 peer-checked:border-slate-800 cursor-pointer">

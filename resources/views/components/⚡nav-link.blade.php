@@ -35,7 +35,7 @@ new class extends Component
 };
 ?>
 
-<div class="rounded-(--size-16) border-[1.5px] transition-all {{ $isActive ? 'text-(--fg-colour) bg-(--prime-colour) border-hidden' : 'text-(--text-colour) hover:bg-(--bg-colour) border-(--bg2-colour) hover:border-(--outline-colour) hover:border-solid' }}">
+<div class="w-full rounded-(--size-16) border-[1.5px] transition-all {{ $isActive ? 'text-(--fg-colour) bg-(--prime-colour) border-hidden' : 'text-(--text-colour) hover:bg-(--bg-colour) border-(--bg2-colour) hover:border-(--outline-colour) hover:border-solid' }}">
     @php
         $iconName = $icon ? (str_starts_with($icon, 'lucide-') ? $icon : 'lucide-' . $icon) : null;
     @endphp
