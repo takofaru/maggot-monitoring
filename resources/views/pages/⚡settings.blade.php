@@ -3,7 +3,9 @@
 use Livewire\Component;
 use App\Models\PhaseSetting;
 use App\Models\Cycle;
+use App\Models\EnvironmentLog;
 use App\Services\MqttService;
+use Carbon\Carbon;
 
 new class extends Component
 {
@@ -193,10 +195,28 @@ new class extends Component
             $this->flashMessage = "Pengaturan fase berhasil disimpan (Tidak ada perubahan pada batas fase aktif '{$phaseLabel}', data MQTT tidak dikirim).";
         }
     }
+
+    public function with(): array
+    {
+        // Ambil data telemetri lingkungan paling mutakhir dari database
+        $latestEnv = EnvironmentLog::orderBy('timestamp', 'desc')->orderBy('id', 'desc')->first();
+        $lastSeen = $latestEnv ? Carbon::parse($latestEnv->timestamp ?? $latestEnv->created_at) : null;
+        $diffInSeconds = $lastSeen ? $lastSeen->diffInSeconds(now()) : null;
+
+        // Status Perangkat: Online jika data masuk <= 40 detik yang lalu (interval normal 10 detik/data)
+        $isOnline = ($diffInSeconds !== null && $diffInSeconds <= 40);
+
+        return [
+            'latestEnv'     => $latestEnv,
+            'lastSeen'      => $lastSeen,
+            'diffInSeconds' => $diffInSeconds,
+            'isOnline'      => $isOnline,
+        ];
+    }
 };
 ?>
 
-<div class="space-y-(--size-26)">
+<div wire:poll.5s class="space-y-(--size-26)">
     <!-- Header & Notifikasi Flash -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
@@ -213,6 +233,51 @@ new class extends Component
                 <span>{{ $flashMessage }}</span>
             </div>
         @endif
+    </div>
+
+    <!-- Status Perangkat IoT & Datetime Terakhir Terhubung (Dibawah Judul) -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-(--size-16) px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <div class="flex items-center gap-(--size-16)">
+            <div class="p-3 bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0">
+                <x-lucide-cpu class="w-(--size-26) h-(--size-26)" />
+            </div>
+            <div>
+                <div class="flex items-center gap-2.5">
+                    <span class="text-sm font-bold text-gray-900">Status Perangkat:</span>
+                    @if($isOnline)
+                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Online
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            Offline
+                        </span>
+                    @endif
+                </div>
+                <div class="text-xs text-gray-500 mt-1">
+                    @if($isOnline)
+                        <span>Perangkat aktif mengirimkan data telemetri lingkungan secara normal.</span>
+                    @else
+                        <span>Tidak ada data sensor baru dari topik <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px] text-gray-700">environmentData</code> dalam 40 detik terakhir.</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <!-- Datetime Terakhir Terhubung -->
+        <div class="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0">
+            <span class="text-xs text-gray-400 font-medium block">Terakhir Terhubung:</span>
+            <div class="text-sm font-bold text-(--prime-colour)">
+                {{ $lastSeen ? $lastSeen->translatedFormat('d F Y, H:i:s') : 'Belum pernah terhubung' }}
+            </div>
+            @if($lastSeen)
+                <div class="text-[11px] text-gray-500 font-medium">
+                    ({{ $lastSeen->diffForHumans() }})
+                </div>
+            @endif
+        </div>
     </div>
 
     <form wire:submit="changePhaseSettings" id="changePhaseSettingsForm" class="space-y-(--size-26)">
