@@ -289,7 +289,7 @@ new class extends Component
         </div>
         <button type="submit" class="input-button w-full">
             <x-lucide-save class="w-(--size-26)"/>
-            Simpang Pengaturan
+            Simpan Pengaturan
         </button>
     </form>
 </div>

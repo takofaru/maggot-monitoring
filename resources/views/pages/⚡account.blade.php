@@ -482,155 +482,156 @@ new class extends Component
                                 &times;
                             </button>
                         </div>
-
-                        <!-- 1. Baris 1: Nama Lengkap dan Username -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
-                            <div class="input-container w-full min-w-0">
-                                <label for="userFullName">Nama Lengkap</label>
-                                <input
-                                    wire:model="userFullName"
-                                    id="userFullName"
-                                    type="text"
-                                    placeholder="Contoh: Ahmad Fadli"
-                                    class="input-text @error('userFullName') border-red-500 @enderror w-full min-w-0"
-                                />
-                                @error('userFullName')
-                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="input-container w-full min-w-0">
-                                <label for="userUsername">Username</label>
-                                <input
-                                    wire:model="userUsername"
-                                    id="userUsername"
-                                    type="text"
-                                    placeholder="Contoh: ahmad"
-                                    class="input-text @error('userUsername') border-red-500 @enderror w-full min-w-0"
-                                />
-                                @error('userUsername')
-                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <!-- 2. Baris 2: Password dan Konfirmasi Password (dengan Toggle Lihat Password) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
-                            <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
-                                <label for="userPassword">
-                                    {{ $editingUserId ? 'Password Baru (Opsional)' : 'Password' }}
-                                </label>
-                                <div class="flex flex-row items-center justify-between input-text @error('userPassword') border-red-500 @enderror">
+                        <div class="flex flex-col gap-(--size-16)">
+                            <!-- 1. Baris 1: Nama Lengkap dan Username -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                                <div class="input-container w-full min-w-0">
+                                    <label for="userFullName">Nama Lengkap</label>
                                     <input
-                                        wire:model="userPassword"
-                                        id="userPassword"
-                                        :type="showPass ? 'text' : 'password'"
-                                        placeholder="{{ $editingUserId ? 'Kosongkan jika sama' : 'Minimal 6 karakter' }}"
-                                        class="w-full bg-transparent focus:outline-none min-w-0"
+                                        wire:model="userFullName"
+                                        id="userFullName"
+                                        type="text"
+                                        placeholder="Contoh: Ahmad Fadli"
+                                        class="input-text @error('userFullName') border-red-500 @enderror w-full min-w-0"
                                     />
-                                    <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
-                                        <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
-                                        <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
-                                    </button>
+                                    @error('userFullName')
+                                        <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                    @enderror
                                 </div>
-                                @error('userPassword')
-                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                                @enderror
-                            </div>
 
-                            <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
-                                <label for="userConfirmPassword">Konfirmasi Password</label>
-                                <div class="flex flex-row items-center justify-between input-text @error('userConfirmPassword') border-red-500 @enderror">
+                                <div class="input-container w-full min-w-0">
+                                    <label for="userUsername">Username</label>
                                     <input
-                                        wire:model="userConfirmPassword"
-                                        id="userConfirmPassword"
-                                        :type="showPass ? 'text' : 'password'"
-                                        placeholder="Ulangi password"
-                                        class="w-full bg-transparent focus:outline-none min-w-0"
+                                        wire:model="userUsername"
+                                        id="userUsername"
+                                        type="text"
+                                        placeholder="Contoh: ahmad"
+                                        class="input-text @error('userUsername') border-red-500 @enderror w-full min-w-0"
                                     />
-                                    <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
-                                        <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
-                                        <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
-                                    </button>
+                                    @error('userUsername')
+                                        <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                    @enderror
                                 </div>
-                                @error('userConfirmPassword')
+                            </div>
+
+                            <!-- 2. Baris 2: Password dan Konfirmasi Password (dengan Toggle Lihat Password) -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                                <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
+                                    <label for="userPassword">
+                                        {{ $editingUserId ? 'Password Baru (Opsional)' : 'Password' }}
+                                    </label>
+                                    <div class="flex flex-row items-center justify-between input-text @error('userPassword') border-red-500 @enderror">
+                                        <input
+                                            wire:model="userPassword"
+                                            id="userPassword"
+                                            :type="showPass ? 'text' : 'password'"
+                                            placeholder="{{ $editingUserId ? 'Kosongkan jika sama' : 'Minimal 6 karakter' }}"
+                                            class="w-full bg-transparent focus:outline-none min-w-0"
+                                        />
+                                        <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
+                                            <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
+                                            <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
+                                        </button>
+                                    </div>
+                                    @error('userPassword')
+                                        <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
+                                    <label for="userConfirmPassword">Konfirmasi Password</label>
+                                    <div class="flex flex-row items-center justify-between input-text @error('userConfirmPassword') border-red-500 @enderror">
+                                        <input
+                                            wire:model="userConfirmPassword"
+                                            id="userConfirmPassword"
+                                            :type="showPass ? 'text' : 'password'"
+                                            placeholder="Ulangi password"
+                                            class="w-full bg-transparent focus:outline-none min-w-0"
+                                        />
+                                        <button type="button" @click="showPass = !showPass" class="cursor-pointer text-gray-500 hover:text-gray-700 shrink-0 ml-2">
+                                            <x-lucide-eye x-show="!showPass" class="w-(--size-16)"/>
+                                            <x-lucide-eye-off x-show="showPass" x-cloak class="w-(--size-16)"/>
+                                        </button>
+                                    </div>
+                                    @error('userConfirmPassword')
+                                        <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                            </div>
+
+                            <!-- 3. Baris 3: Peran (Role) dengan Custom Dropdown Alpine -->
+                            <div class="input-container w-full min-w-0" x-data="{ openRoleDropdown: false }">
+                                <label>Peran</label>
+                                <div class="relative w-full">
+                                    <button
+                                        @click="openRoleDropdown = !openRoleDropdown"
+                                        type="button"
+                                        class="w-full rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer"
+                                    >
+                                        <span>{{ $userRole === 'admin' ? 'Administrator' : 'Pengguna (Siswa / Operator)' }}</span>
+                                        <x-lucide-chevron-down class="w-(--size-16) shrink-0"/>
+                                    </button>
+
+                                    <div
+                                        x-show="openRoleDropdown"
+                                        @click.outside="openRoleDropdown = false"
+                                        x-transition.opacity.duration.200ms
+                                        class="absolute left-0 top-full mt-(--size-10) w-full bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
+                                        x-cloak
+                                    >
+                                        <button
+                                            type="button"
+                                            wire:click="$set('userRole', 'user')"
+                                            @click="openRoleDropdown = false"
+                                            class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $userRole === 'user' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                        >
+                                            <span class="font-semibold">Pengguna (Siswa / Operator)</span>
+                                            @if($userRole === 'user')
+                                                <x-lucide-check class="w-4 h-4 text-emerald-700 shrink-0" />
+                                            @endif
+                                        </button>
+                                        <button
+                                            type="button"
+                                            wire:click="$set('userRole', 'admin')"
+                                            @click="openRoleDropdown = false"
+                                            class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $userRole === 'admin' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                        >
+                                            <span class="font-semibold">Administrator</span>
+                                            @if($userRole === 'admin')
+                                                <x-lucide-check class="w-4 h-4 text-emerald-700 shrink-0" />
+                                            @endif
+                                        </button>
+                                    </div>
+                                </div>
+                                @error('userRole')
                                     <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                                 @enderror
                             </div>
-                        </div>
 
-                        <!-- 3. Baris 3: Peran (Role) dengan Custom Dropdown Alpine -->
-                        <div class="input-container w-full min-w-0" x-data="{ openRoleDropdown: false }">
-                            <label>Peran</label>
-                            <div class="relative w-full">
+                            <!-- Tombol Batal & Simpan (Symmetric Grid Full Width) -->
+                            <div class="grid grid-cols-2 gap-(--size-16) w-full pt-2">
                                 <button
-                                    @click="openRoleDropdown = !openRoleDropdown"
                                     type="button"
-                                    class="w-full rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer"
+                                    wire:click="closeUserModal"
+                                    class="w-full rounded-(--size-16) py-(--size-16) px-(--size-26) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) font-medium hover:bg-(--bg2-colour) cursor-pointer flex items-center justify-center transition-colors"
                                 >
-                                    <span>{{ $userRole === 'admin' ? 'Administrator' : 'Pengguna (Siswa / Operator)' }}</span>
-                                    <x-lucide-chevron-down class="w-(--size-16) shrink-0"/>
+                                    Batal
                                 </button>
-
-                                <div
-                                    x-show="openRoleDropdown"
-                                    @click.outside="openRoleDropdown = false"
-                                    x-transition.opacity.duration.200ms
-                                    class="absolute left-0 top-full mt-(--size-10) w-full bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
-                                    x-cloak
+                                <button
+                                    type="submit"
+                                    wire:loading.attr="disabled"
+                                    class="w-full input-button cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                                 >
-                                    <button
-                                        type="button"
-                                        wire:click="$set('userRole', 'user')"
-                                        @click="openRoleDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $userRole === 'user' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span class="font-semibold">Pengguna (Siswa / Operator)</span>
-                                        @if($userRole === 'user')
-                                            <x-lucide-check class="w-4 h-4 text-emerald-700 shrink-0" />
-                                        @endif
-                                    </button>
-                                    <button
-                                        type="button"
-                                        wire:click="$set('userRole', 'admin')"
-                                        @click="openRoleDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $userRole === 'admin' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span class="font-semibold">Administrator</span>
-                                        @if($userRole === 'admin')
-                                            <x-lucide-check class="w-4 h-4 text-emerald-700 shrink-0" />
-                                        @endif
-                                    </button>
-                                </div>
+                                    @if ($editingUserId)
+                                        <x-lucide-square-pen class="w-(--size-16)"/>
+                                        <span wire:loading.remove wire:target="saveUser">Simpan Perubahan</span>
+                                    @else
+                                        <x-lucide-user-round-plus class="w-(--size-16)"/>
+                                        <span wire:loading.remove wire:target="saveUser">Tambah Pengguna</span>
+                                    @endif
+                                    <span wire:loading wire:target="saveUser">Menyimpan...</span>
+                                </button>
                             </div>
-                            @error('userRole')
-                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                            @enderror
-                        </div>
-
-                        <!-- Tombol Batal & Simpan (Symmetric Grid Full Width) -->
-                        <div class="grid grid-cols-2 gap-(--size-16) w-full pt-2">
-                            <button
-                                type="button"
-                                wire:click="closeUserModal"
-                                class="w-full rounded-(--size-16) py-(--size-16) px-(--size-26) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) font-medium hover:bg-(--bg2-colour) cursor-pointer flex items-center justify-center transition-colors"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="submit"
-                                wire:loading.attr="disabled"
-                                class="w-full input-button cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                            >
-                                @if ($editingUserId)
-                                    <x-lucide-square-pen class="w-(--size-16)"/>
-                                    <span wire:loading.remove wire:target="saveUser">Simpan Perubahan</span>
-                                @else
-                                    <x-lucide-user-round-plus class="w-(--size-16)"/>
-                                    <span wire:loading.remove wire:target="saveUser">Tambah Pengguna</span>
-                                @endif
-                                <span wire:loading wire:target="saveUser">Menyimpan...</span>
-                            </button>
                         </div>
                     </form>
                 </div>

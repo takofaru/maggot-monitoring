@@ -107,7 +107,7 @@ new class extends Component
 
         $this->resetForm();
         $this->useManualEnvLog = false;
-        
+
         // Ambil data telemetri otomatis terkini dari siklus
         $latestEnv = EnvironmentLog::where('cycle_id', $this->selectedCycleId)->latest('id')->first();
         if ($latestEnv) {
@@ -128,7 +128,7 @@ new class extends Component
             $this->flashMessage = 'Catatan pada siklus yang sudah selesai tidak dapat diubah.';
             return;
         }
-        
+
         $this->editingId = $log->id;
         $this->feed = $log->feed_weight;
         $this->maggot = $log->maggot_weight;
@@ -490,123 +490,124 @@ new class extends Component
                             &times;
                         </button>
                     </div>
-
-                    <!-- Input Suhu & Kelembapan (Enabled/Disabled berdasarkan Switch) -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
-                        <div class="input-container w-full min-w-0">
-                            <label for="temp">Suhu yang Diamati</label>
-                            <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('temp') border-red-500 @enderror">
-                                <input
-                                    wire:model="temp"
-                                    id="temp"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Contoh: 28.5"
-                                    @disabled(!$useManualEnvLog)
-                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed min-w-0"
-                                />
-                                <span class="text-gray-500 font-medium ml-1">&deg;C</span>
+                    <div class="flex flex-col gap-(--size-16)">
+                        <!-- Input Suhu & Kelembapan (Enabled/Disabled berdasarkan Switch) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                            <div class="input-container w-full min-w-0">
+                                <label for="temp">Suhu yang Diamati</label>
+                                <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('temp') border-red-500 @enderror">
+                                    <input
+                                        wire:model="temp"
+                                        id="temp"
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Contoh: 28.5"
+                                        @disabled(!$useManualEnvLog)
+                                        class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed min-w-0"
+                                    />
+                                    <span class="text-gray-500 font-medium ml-1">&deg;C</span>
+                                </div>
+                                @error('temp')
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                @enderror
                             </div>
-                            @error('temp')
-                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                            @enderror
+
+                            <div class="input-container w-full min-w-0">
+                                <label for="humid">Kelembapan yang Diamati</label>
+                                <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('humid') border-red-500 @enderror">
+                                    <input
+                                        wire:model="humid"
+                                        id="humid"
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Contoh: 70"
+                                        @disabled(!$useManualEnvLog)
+                                        class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed min-w-0"
+                                    />
+                                    <span class="text-gray-500 font-medium ml-1">%</span>
+                                </div>
+                                @error('humid')
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                @enderror
+                            </div>
                         </div>
 
-                        <div class="input-container w-full min-w-0">
-                            <label for="humid">Kelembapan yang Diamati</label>
-                            <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('humid') border-red-500 @enderror">
+                        <!-- Switch Penggunaan Data Manual -->
+                        <div class="flex flex-row gap-(--size-10) items-center">
+                            <label class="relative inline-flex items-center cursor-pointer">
                                 <input
-                                    wire:model="humid"
-                                    id="humid"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Contoh: 70"
-                                    @disabled(!$useManualEnvLog)
-                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed min-w-0"
+                                    wire:model.live="useManualEnvLog"
+                                    type="checkbox"
+                                    class="sr-only peer"
                                 />
-                                <span class="text-gray-500 font-medium ml-1">%</span>
-                            </div>
-                            @error('humid')
-                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <!-- Switch Penggunaan Data Manual -->
-                    <div class="flex flex-row gap-(--size-10) items-center">
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input
-                                wire:model.live="useManualEnvLog"
-                                type="checkbox"
-                                class="sr-only peer"
-                            />
-                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-(--prime-colour)"></div>
-                        </label>
-                        <span class="text-sm font-medium text-gray-700">Menggunakan data suhu dan kelembapan secara manual</span>
-                    </div>
-
-                    <!-- Input Berat Pakan & Maggot -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
-                        <div class="input-container w-full min-w-0">
-                            <label for="feed">Berat Pakan yang Diberikan</label>
-                            <div class="flex flex-row items-center justify-between input-text @error('feed') border-red-500 @enderror">
-                                <input
-                                    wire:model="feed"
-                                    id="feed"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Contoh: 5.5"
-                                    class="w-full bg-transparent focus:outline-none min-w-0"
-                                />
-                                <span class="text-gray-500 font-medium ml-1">kg</span>
-                            </div>
-                            @error('feed')
-                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                            @enderror
+                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-(--prime-colour)"></div>
+                            </label>
+                            <span class="text-sm font-medium text-gray-700">Menggunakan data suhu dan kelembapan secara manual</span>
                         </div>
 
-                        <div class="input-container w-full min-w-0">
-                            <label for="maggot">Berat Maggot yang Diamati</label>
-                            <div class="flex flex-row items-center justify-between input-text @error('maggot') border-red-500 @enderror">
-                                <input
-                                    wire:model="maggot"
-                                    id="maggot"
-                                    type="number"
-                                    step="0.01"
-                                    placeholder="Contoh: 1.2"
-                                    class="w-full bg-transparent focus:outline-none min-w-0"
-                                />
-                                <span class="text-gray-500 font-medium ml-1">kg</span>
+                        <!-- Input Berat Pakan & Maggot -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                            <div class="input-container w-full min-w-0">
+                                <label for="feed">Berat Pakan yang Diberikan</label>
+                                <div class="flex flex-row items-center justify-between input-text @error('feed') border-red-500 @enderror">
+                                    <input
+                                        wire:model="feed"
+                                        id="feed"
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Contoh: 5.5"
+                                        class="w-full bg-transparent focus:outline-none min-w-0"
+                                    />
+                                    <span class="text-gray-500 font-medium ml-1">kg</span>
+                                </div>
+                                @error('feed')
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                @enderror
                             </div>
-                            @error('maggot')
-                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
-                            @enderror
-                        </div>
-                    </div>
 
-                    <!-- Tombol Simpan & Batal (Symmetric Grid Full Width) -->
-                    <div class="grid grid-cols-2 gap-(--size-16) w-full pt-2">
-                        <button
-                            type="button"
-                            wire:click="closeForm"
-                            class="w-full rounded-(--size-16) py-(--size-16) px-(--size-26) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) font-medium hover:bg-(--bg2-colour) cursor-pointer flex items-center justify-center transition-colors"
-                        >
-                            Batal
-                        </button>
-                        <button
-                            type="submit"
-                            wire:loading.attr="disabled"
-                            class="w-full input-button cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-                        >
-                            @if ($editingId)
-                                <x-lucide-square-pen class="w-(--size-16)"/>
-                                <span wire:loading.remove wire:target="save">Simpan Perubahan</span>
-                            @else
-                                <x-lucide-plus class="w-(--size-16)"/>
-                                <span wire:loading.remove wire:target="save">Tambah Catatan</span>
-                            @endif
-                            <span wire:loading wire:target="save">Menyimpan...</span>
-                        </button>
+                            <div class="input-container w-full min-w-0">
+                                <label for="maggot">Berat Maggot yang Diamati</label>
+                                <div class="flex flex-row items-center justify-between input-text @error('maggot') border-red-500 @enderror">
+                                    <input
+                                        wire:model="maggot"
+                                        id="maggot"
+                                        type="number"
+                                        step="0.01"
+                                        placeholder="Contoh: 1.2"
+                                        class="w-full bg-transparent focus:outline-none min-w-0"
+                                    />
+                                    <span class="text-gray-500 font-medium ml-1">kg</span>
+                                </div>
+                                @error('maggot')
+                                    <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <!-- Tombol Simpan & Batal (Symmetric Grid Full Width) -->
+                        <div class="grid grid-cols-2 gap-(--size-16) w-full pt-2">
+                            <button
+                                type="button"
+                                wire:click="closeForm"
+                                class="w-full rounded-(--size-16) py-(--size-16) px-(--size-26) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) font-medium hover:bg-(--bg2-colour) cursor-pointer flex items-center justify-center transition-colors"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="submit"
+                                wire:loading.attr="disabled"
+                                class="w-full input-button cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                            >
+                                @if ($editingId)
+                                    <x-lucide-square-pen class="w-(--size-16)"/>
+                                    <span wire:loading.remove wire:target="save">Simpan Perubahan</span>
+                                @else
+                                    <x-lucide-plus class="w-(--size-16)"/>
+                                    <span wire:loading.remove wire:target="save">Tambah Catatan</span>
+                                @endif
+                                <span wire:loading wire:target="save">Menyimpan...</span>
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
