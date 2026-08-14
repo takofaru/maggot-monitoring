@@ -347,8 +347,8 @@ new class extends Component
             </div>
         </div>
 
-        <div class="overflow-x-auto border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
-            <table class="w-full text-left border-collapse min-w-full">
+        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <table class="w-full text-left border-collapse">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
                         <th class="min-w-[140px]">Fase Budidaya</th>
@@ -408,8 +408,8 @@ new class extends Component
             </div>
         </div>
 
-        <div class="overflow-x-auto border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
-            <table class="w-full text-left border-collapse min-w-full">
+        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <table class="w-full text-left border-collapse">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
                         <th class="min-w-[200px]">Tanggal</th>
@@ -442,6 +442,7 @@ new class extends Component
                         </tr>
                     @endforelse
                 </tbody>
+            </table>
         </div>
 
         @if($observationLogs->hasPages())
