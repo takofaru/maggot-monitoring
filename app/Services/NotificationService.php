@@ -18,7 +18,7 @@ class NotificationService
     public static function logObservation(ObservationLog $obs, ?User $user = null, bool $isUpdate = false): ActivityLog
     {
         $author = $user ?? auth()->user();
-        $authorName = $author?->name ?? 'Petugas';
+        $authorName = $author?->full_name ? explode(' ', trim($author->full_name))[0] : ($author?->username ?? 'Petugas');
         $action = $isUpdate ? 'diperbarui' : 'dicatat';
         $title = $isUpdate ? 'Pembaruan Catatan Observasi' : 'Pencatatan Observasi Baru';
 
