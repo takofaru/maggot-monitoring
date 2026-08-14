@@ -2,35 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use App\Models\PhaseSetting;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Akun Pengguna (Admin & Siswa)
-        User::firstOrCreate(
-            ['username' => 'admin2'],
-            [
-                'full_name'     => 'Admin Dua',
-                'password_hash' => Hash::make('password123'),
-                'role'          => 'admin',
-            ]
-        );
-
-        User::firstOrCreate(
-            ['username' => 'siswa2'],
-            [
-                'full_name'     => 'Siswa Dua',
-                'password_hash' => Hash::make('password123'),
-                'role'          => 'user',
-            ]
-        );
-
-        // 2. Pengaturan Fase Budidaya (Phase Settings - Skala Kelembapan 0-100)
+        // 1. Pengaturan Fase Budidaya (Phase Settings - Skala Kelembapan 0-100)
         $phaseSettings = [
             [
                 'order'        => 1,
@@ -65,8 +44,9 @@ class DatabaseSeeder extends Seeder
             );
         }
 
-        // 3. Panggil Seeder Cycle, EnvironmentLog, dan ObservationLog
+        // 2. Panggil Seluruh Seeder (User, Cycle, EnvironmentLog, ObservationLog)
         $this->call([
+            UserSeeder::class,
             CycleSeeder::class,
             EnvironmentLogSeeder::class,
             ObservationLogSeeder::class,

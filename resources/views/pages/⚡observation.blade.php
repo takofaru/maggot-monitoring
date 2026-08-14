@@ -45,7 +45,7 @@ new class extends Component
 };
 ?>
 
-<div x-data="{ openForm: false, createObservation: false }" class="space-y-(--size-26)">
+<div x-data="{ openForm: false, createObservation: false }" class="space-y-(--size-26) min-w-[922px]">
     <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
         Catatan Observasi
     </h1>

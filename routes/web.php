@@ -13,7 +13,7 @@ use App\Models\User;
 */
 
 Route::get('/', function () {
-    return redirect()->route('dashboard');
+    return redirect()->route('dashboard.index');
 });
 
 // Guest Routes

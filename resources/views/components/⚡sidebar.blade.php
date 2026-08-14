@@ -45,7 +45,7 @@ new class extends Component
             </livewire:nav-link>
 
             <livewire:nav-link route="account.index" icon="square-user-round">
-                {{ $isAdmin ? 'Manajemen Akun' : 'Akun Saya' }}
+                Manajemen Akun
             </livewire:nav-link>
         </nav>
     </div>
