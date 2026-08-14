@@ -107,7 +107,7 @@ new class extends Component
 
         $this->resetForm();
         $this->useManualEnvLog = false;
-
+        
         // Ambil data telemetri otomatis terkini dari siklus
         $latestEnv = EnvironmentLog::where('cycle_id', $this->selectedCycleId)->latest('id')->first();
         if ($latestEnv) {
@@ -128,7 +128,7 @@ new class extends Component
             $this->flashMessage = 'Catatan pada siklus yang sudah selesai tidak dapat diubah.';
             return;
         }
-
+        
         $this->editingId = $log->id;
         $this->feed = $log->feed_weight;
         $this->maggot = $log->maggot_weight;
@@ -352,7 +352,7 @@ new class extends Component
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
-            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] h-full">
+            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
                 <div class="gap-(--size-6)">
                     Fase terkini:
                     <span class="font-bold text-(--prime-colour) capitalize">{{ $activeCycleObj->current_phase ?? '-' }}</span>
@@ -476,17 +476,24 @@ new class extends Component
                 @click.outside="$wire.closeForm()"
                 class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) px-(--size-26) py-(--size-42) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
             >
-                <form wire:submit="save" class="flex flex-col gap-(--size-26)">
+                <form wire:submit="save" class="flex flex-col gap-(--size-26) w-full">
                     <!-- Header Modal -->
                     <div class="flex items-center justify-between">
                         <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
                             {{ $editingId ? 'Ubah Catatan Observasi' : 'Tambah Catatan Baru' }}
                         </span>
+                        <button
+                            type="button"
+                            wire:click="closeForm"
+                            class="text-gray-400 hover:text-gray-600 cursor-pointer text-xl font-bold"
+                        >
+                            &times;
+                        </button>
                     </div>
 
                     <!-- Input Suhu & Kelembapan (Enabled/Disabled berdasarkan Switch) -->
-                    <div class="flex flex-row gap-(--size-16)">
-                        <div class="input-container w-full">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                        <div class="input-container w-full min-w-0">
                             <label for="temp">Suhu yang Diamati</label>
                             <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('temp') border-red-500 @enderror">
                                 <input
@@ -496,16 +503,16 @@ new class extends Component
                                     step="0.01"
                                     placeholder="Contoh: 28.5"
                                     @disabled(!$useManualEnvLog)
-                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed"
+                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed min-w-0"
                                 />
-                                <span class="text-gray-500 font-medium">&deg;C</span>
+                                <span class="text-gray-500 font-medium ml-1">&deg;C</span>
                             </div>
                             @error('temp')
-                                <span class="text-xs text-red-500">{{ $message }}</span>
+                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                             @enderror
                         </div>
 
-                        <div class="input-container w-full">
+                        <div class="input-container w-full min-w-0">
                             <label for="humid">Kelembapan yang Diamati</label>
                             <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('humid') border-red-500 @enderror">
                                 <input
@@ -515,12 +522,12 @@ new class extends Component
                                     step="0.01"
                                     placeholder="Contoh: 70"
                                     @disabled(!$useManualEnvLog)
-                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed"
+                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed min-w-0"
                                 />
-                                <span class="text-gray-500 font-medium">%</span>
+                                <span class="text-gray-500 font-medium ml-1">%</span>
                             </div>
                             @error('humid')
-                                <span class="text-xs text-red-500">{{ $message }}</span>
+                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
@@ -539,8 +546,8 @@ new class extends Component
                     </div>
 
                     <!-- Input Berat Pakan & Maggot -->
-                    <div class="flex flex-row gap-(--size-16)">
-                        <div class="input-container w-full">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                        <div class="input-container w-full min-w-0">
                             <label for="feed">Berat Pakan yang Diberikan</label>
                             <div class="flex flex-row items-center justify-between input-text @error('feed') border-red-500 @enderror">
                                 <input
@@ -549,16 +556,16 @@ new class extends Component
                                     type="number"
                                     step="0.01"
                                     placeholder="Contoh: 5.5"
-                                    class="w-full bg-transparent focus:outline-none"
+                                    class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
-                                <span class="text-gray-500 font-medium">kg</span>
+                                <span class="text-gray-500 font-medium ml-1">kg</span>
                             </div>
                             @error('feed')
-                                <span class="text-xs text-red-500">{{ $message }}</span>
+                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                             @enderror
                         </div>
 
-                        <div class="input-container w-full">
+                        <div class="input-container w-full min-w-0">
                             <label for="maggot">Berat Maggot yang Diamati</label>
                             <div class="flex flex-row items-center justify-between input-text @error('maggot') border-red-500 @enderror">
                                 <input
@@ -567,29 +574,29 @@ new class extends Component
                                     type="number"
                                     step="0.01"
                                     placeholder="Contoh: 1.2"
-                                    class="w-full bg-transparent focus:outline-none"
+                                    class="w-full bg-transparent focus:outline-none min-w-0"
                                 />
-                                <span class="text-gray-500 font-medium">kg</span>
+                                <span class="text-gray-500 font-medium ml-1">kg</span>
                             </div>
                             @error('maggot')
-                                <span class="text-xs text-red-500">{{ $message }}</span>
+                                <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                             @enderror
                         </div>
                     </div>
 
-                    <!-- Tombol Simpan & Batal -->
-                    <div class="flex justify-between gap-(--size-16)">
+                    <!-- Tombol Simpan & Batal (Symmetric Grid Full Width) -->
+                    <div class="grid grid-cols-2 gap-(--size-16) w-full pt-2">
                         <button
                             type="button"
                             wire:click="closeForm"
-                            class="px-4 py-2 border border-gray-300 rounded-(--size-16) text-gray-700 font-medium hover:bg-gray-100 cursor-pointer w-full"
+                            class="w-full rounded-(--size-16) py-(--size-16) px-(--size-26) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) font-medium hover:bg-(--bg2-colour) cursor-pointer flex items-center justify-center transition-colors"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
                             wire:loading.attr="disabled"
-                            class="input-button cursor-pointer flex items-center w-full"
+                            class="w-full input-button cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                         >
                             @if ($editingId)
                                 <x-lucide-square-pen class="w-(--size-16)"/>

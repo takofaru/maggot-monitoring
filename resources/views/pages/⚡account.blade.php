@@ -466,14 +466,21 @@ new class extends Component
             >
                 <div
                     @click.outside="$wire.closeUserModal()"
-                    class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) p-(--size-26) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
+                    class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) px-(--size-26) py-(--size-42) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
                 >
                     <form wire:submit="saveUser" class="flex flex-col gap-(--size-26) w-full">
                         <!-- Header Modal -->
-                        <div class="flex items-center justify-between border-b pb-3">
+                        <div class="flex items-center justify-between">
                             <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
                                 {{ $editingUserId ? 'Ubah Data Pengguna' : 'Tambah Pengguna Baru' }}
                             </span>
+                            <button
+                                type="button"
+                                wire:click="closeUserModal"
+                                class="text-gray-400 hover:text-gray-600 cursor-pointer text-xl font-bold"
+                            >
+                                &times;
+                            </button>
                         </div>
 
                         <!-- 1. Baris 1: Nama Lengkap dan Username -->
@@ -601,19 +608,19 @@ new class extends Component
                             @enderror
                         </div>
 
-                        <!-- Tombol Batal & Simpan -->
-                        <div class="flex justify-end gap-3 pt-2">
+                        <!-- Tombol Batal & Simpan (Symmetric Grid Full Width) -->
+                        <div class="grid grid-cols-2 gap-(--size-16) w-full pt-2">
                             <button
                                 type="button"
                                 wire:click="closeUserModal"
-                                class="px-4 py-2 border border-gray-300 rounded-(--size-16) text-gray-700 font-medium hover:bg-gray-100 cursor-pointer"
+                                class="w-full rounded-(--size-16) py-(--size-16) px-(--size-26) bg-(--bg-colour) border-[1.5px] border-(--outline-colour) text-(--text-colour) font-medium hover:bg-(--bg2-colour) cursor-pointer flex items-center justify-center transition-colors"
                             >
                                 Batal
                             </button>
                             <button
                                 type="submit"
                                 wire:loading.attr="disabled"
-                                class="input-button cursor-pointer flex items-center gap-2 hover:opacity-90"
+                                class="w-full input-button cursor-pointer flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
                             >
                                 @if ($editingUserId)
                                     <x-lucide-square-pen class="w-(--size-16)"/>
