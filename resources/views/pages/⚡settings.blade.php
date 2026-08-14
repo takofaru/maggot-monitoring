@@ -7,6 +7,8 @@ use App\Models\EnvironmentLog;
 use App\Services\MqttService;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\Cache;
+
 new class extends Component
 {
     // Fase 1: Penetasan
@@ -198,10 +200,21 @@ new class extends Component
 
     public function with(): array
     {
-        // Ambil data telemetri lingkungan paling mutakhir dari database
+        // Ambil data dari cache (jika subscriber aktif) atau database
+        $cachedLastSeenStr = Cache::get('device_last_seen');
+        $cachedLastSeen = $cachedLastSeenStr ? Carbon::parse($cachedLastSeenStr) : null;
+
         $latestEnv = EnvironmentLog::orderBy('timestamp', 'desc')->orderBy('id', 'desc')->first();
-        $lastSeen = $latestEnv ? Carbon::parse($latestEnv->timestamp ?? $latestEnv->created_at) : null;
-        $diffInSeconds = $lastSeen ? $lastSeen->diffInSeconds(now()) : null;
+        $dbLastSeen = $latestEnv ? Carbon::parse($latestEnv->timestamp ?? $latestEnv->created_at) : null;
+
+        $lastSeen = null;
+        if ($cachedLastSeen && $dbLastSeen) {
+            $lastSeen = $cachedLastSeen->greaterThan($dbLastSeen) ? $cachedLastSeen : $dbLastSeen;
+        } else {
+            $lastSeen = $cachedLastSeen ?? $dbLastSeen;
+        }
+
+        $diffInSeconds = $lastSeen ? abs(now()->diffInSeconds($lastSeen, false)) : null;
 
         // Status Perangkat: Online jika data masuk <= 40 detik yang lalu (interval normal 10 detik/data)
         $isOnline = ($diffInSeconds !== null && $diffInSeconds <= 40);
