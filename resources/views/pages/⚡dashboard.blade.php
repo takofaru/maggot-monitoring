@@ -141,6 +141,16 @@ new class extends Component
             ];
         }
 
+        $this->dispatch('telemetry-updated', [
+            'labels'   => $chartLabels,
+            'temp'     => $chartTemp,
+            'humid'    => $chartHumid,
+            'tempMin'  => (float) $tempMin,
+            'tempMax'  => (float) $tempMax,
+            'humidMin' => (float) $humidMin,
+            'humidMax' => (float) $humidMax,
+        ]);
+
         return [
             'cycleNumber'        => $cycleNumber,
             'dayNumber'          => $dayNumber,
@@ -419,114 +429,8 @@ new class extends Component
             </div>
 
             <!-- Canvas Chart Suhu dengan Range 0 sampai Suhu Tertinggi (Tinggi Tetap 320px, Lebar Fleksibel & Live Updating) -->
-            <div 
-                x-data="{
-                    chart: null,
-                    updateData(labels, data, minVal, maxVal) {
-                        if (!this.chart) {
-                            this.initChart(labels, data, minVal, maxVal);
-                            return;
-                        }
-                        let minLine = Array(labels.length).fill(minVal);
-                        let maxLine = Array(labels.length).fill(maxVal);
-                        let maxObserved = Math.max(...data, maxVal, 0);
-                        let yMax = Math.max(35, Math.ceil(maxObserved / 5) * 5);
-
-                        this.chart.data.labels = labels;
-                        this.chart.data.datasets[0].data = data;
-                        this.chart.data.datasets[1].data = maxLine;
-                        this.chart.data.datasets[1].label = 'Batas Maksimum (' + maxVal + '°C)';
-                        this.chart.data.datasets[2].data = minLine;
-                        this.chart.data.datasets[2].label = 'Batas Minimum (' + minVal + '°C)';
-                        this.chart.options.scales.y.max = yMax;
-                        this.chart.options.scales.y.ticks.stepSize = yMax <= 40 ? 5 : 10;
-                        this.chart.update('none');
-                    },
-                    initChart(labels, data, minVal, maxVal) {
-                        if (typeof Chart === 'undefined') {
-                            setTimeout(() => this.initChart(labels, data, minVal, maxVal), 100);
-                            return;
-                        }
-                        let minLine = Array(labels.length).fill(minVal);
-                        let maxLine = Array(labels.length).fill(maxVal);
-                        let maxObserved = Math.max(...data, maxVal, 0);
-                        let yMax = Math.max(35, Math.ceil(maxObserved / 5) * 5);
-
-                        this.chart = new Chart(this.$refs.canvas, {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [
-                                    {
-                                        label: 'Suhu Aktual (°C)',
-                                        data: data,
-                                        borderColor: '#163428',
-                                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                        borderWidth: 2.5,
-                                        pointRadius: 4,
-                                        pointHoverRadius: 6,
-                                        pointBackgroundColor: '#163428',
-                                        tension: 0.3,
-                                        fill: true
-                                    },
-                                    {
-                                        label: 'Batas Maksimum (' + maxVal + '°C)',
-                                        data: maxLine,
-                                        borderColor: '#EF4444',
-                                        borderWidth: 1.5,
-                                        borderDash: [6, 4],
-                                        pointRadius: 0,
-                                        fill: false
-                                    },
-                                    {
-                                        label: 'Batas Minimum (' + minVal + '°C)',
-                                        data: minLine,
-                                        borderColor: '#3B82F6',
-                                        borderWidth: 1.5,
-                                        borderDash: [6, 4],
-                                        pointRadius: 0,
-                                        fill: false
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                animation: false,
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        backgroundColor: '#163428',
-                                        callbacks: {
-                                            label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '°C'
-                                        }
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        min: 0,
-                                        max: yMax,
-                                        ticks: {
-                                            stepSize: yMax <= 40 ? 5 : 10,
-                                            callback: (v) => v + '°C'
-                                        },
-                                        grid: { color: '#E5E7EB' }
-                                    },
-                                    x: {
-                                        grid: { color: '#F3F4F6' }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }"
-                x-init="initChart(@js($chartLabels), @js($chartTemp), {{ (float)$tempMin }}, {{ (float)$tempMax }})"
-                x-effect="updateData(@js($chartLabels), @js($chartTemp), {{ (float)$tempMin }}, {{ (float)$tempMax }})"
-                class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50"
-            >
-                <div wire:ignore class="w-full h-full">
-                    <canvas x-ref="canvas" style="width: 100%; height: 100%;"></canvas>
-                </div>
+            <div wire:ignore class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50">
+                <canvas id="tempChartCanvas" style="width: 100%; height: 100%;"></canvas>
             </div>
         </div>
 
@@ -575,110 +479,222 @@ new class extends Component
             </div>
 
             <!-- Canvas Chart Kelembapan dengan Range 0 - 100% (Tinggi Tetap 320px, Lebar Fleksibel & Live Updating) -->
-            <div 
-                x-data="{
-                    chart: null,
-                    updateData(labels, data, minVal, maxVal) {
-                        if (!this.chart) {
-                            this.initChart(labels, data, minVal, maxVal);
-                            return;
-                        }
-                        let minLine = Array(labels.length).fill(minVal);
-                        let maxLine = Array(labels.length).fill(maxVal);
-
-                        this.chart.data.labels = labels;
-                        this.chart.data.datasets[0].data = data;
-                        this.chart.data.datasets[1].data = maxLine;
-                        this.chart.data.datasets[1].label = 'Batas Maksimum (' + maxVal + '%)';
-                        this.chart.data.datasets[2].data = minLine;
-                        this.chart.data.datasets[2].label = 'Batas Minimum (' + minVal + '%)';
-                        this.chart.update('none');
-                    },
-                    initChart(labels, data, minVal, maxVal) {
-                        if (typeof Chart === 'undefined') {
-                            setTimeout(() => this.initChart(labels, data, minVal, maxVal), 100);
-                            return;
-                        }
-                        let minLine = Array(labels.length).fill(minVal);
-                        let maxLine = Array(labels.length).fill(maxVal);
-
-                        this.chart = new Chart(this.$refs.canvas, {
-                            type: 'line',
-                            data: {
-                                labels: labels,
-                                datasets: [
-                                    {
-                                        label: 'Kelembapan Aktual (%)',
-                                        data: data,
-                                        borderColor: '#163428',
-                                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                        borderWidth: 2.5,
-                                        pointRadius: 4,
-                                        pointHoverRadius: 6,
-                                        pointBackgroundColor: '#163428',
-                                        tension: 0.3,
-                                        fill: true
-                                    },
-                                    {
-                                        label: 'Batas Maksimum (' + maxVal + '%)',
-                                        data: maxLine,
-                                        borderColor: '#EF4444',
-                                        borderWidth: 1.5,
-                                        borderDash: [6, 4],
-                                        pointRadius: 0,
-                                        fill: false
-                                    },
-                                    {
-                                        label: 'Batas Minimum (' + minVal + '%)',
-                                        data: minLine,
-                                        borderColor: '#3B82F6',
-                                        borderWidth: 1.5,
-                                        borderDash: [6, 4],
-                                        pointRadius: 0,
-                                        fill: false
-                                    }
-                                ]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false,
-                                animation: false,
-                                plugins: {
-                                    legend: { display: false },
-                                    tooltip: {
-                                        backgroundColor: '#163428',
-                                        callbacks: {
-                                            label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
-                                        }
-                                    }
-                                },
-                                scales: {
-                                    y: {
-                                        min: 0,
-                                        max: 100,
-                                        ticks: {
-                                            stepSize: 10,
-                                            callback: (v) => v + '%'
-                                        },
-                                        grid: { color: '#E5E7EB' }
-                                    },
-                                    x: {
-                                        grid: { color: '#F3F4F6' }
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }"
-                x-init="initChart(@js($chartLabels), @js($chartHumid), {{ (float)$humidMin }}, {{ (float)$humidMax }})"
-                x-effect="updateData(@js($chartLabels), @js($chartHumid), {{ (float)$humidMin }}, {{ (float)$humidMax }})"
-                class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50"
-            >
-                <div wire:ignore class="w-full h-full">
-                    <canvas x-ref="canvas" style="width: 100%; height: 100%;"></canvas>
-                </div>
+            <div wire:ignore class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50">
+                <canvas id="humidChartCanvas" style="width: 100%; height: 100%;"></canvas>
             </div>
         </div>
 
     </div>
 </div>
+
+@script
+<script>
+    let tempChart = null;
+    let humidChart = null;
+
+    function initOrUpdateTempChart(labels, data, tMin, tMax) {
+        const canvas = document.getElementById('tempChartCanvas');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        let minLine = Array(labels.length).fill(tMin);
+        let maxLine = Array(labels.length).fill(tMax);
+        let maxObserved = Math.max(...data, tMax, 0);
+        let yMax = Math.max(35, Math.ceil(maxObserved / 5) * 5);
+
+        if (tempChart) {
+            tempChart.data.labels = labels;
+            tempChart.data.datasets[0].data = data;
+            tempChart.data.datasets[1].data = maxLine;
+            tempChart.data.datasets[1].label = 'Batas Maksimum (' + tMax + '°C)';
+            tempChart.data.datasets[2].data = minLine;
+            tempChart.data.datasets[2].label = 'Batas Minimum (' + tMin + '°C)';
+            tempChart.options.scales.y.max = yMax;
+            tempChart.options.scales.y.ticks.stepSize = yMax <= 40 ? 5 : 10;
+            tempChart.update('none');
+            return;
+        }
+
+        const existing = Chart.getChart(canvas);
+        if (existing) {
+            existing.destroy();
+        }
+
+        tempChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Suhu Aktual (°C)',
+                        data: data,
+                        borderColor: '#163428',
+                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#163428',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Batas Maksimum (' + tMax + '°C)',
+                        data: maxLine,
+                        borderColor: '#EF4444',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Batas Minimum (' + tMin + '°C)',
+                        data: minLine,
+                        borderColor: '#3B82F6',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#163428',
+                        callbacks: {
+                            label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '°C'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: yMax,
+                        ticks: {
+                            stepSize: yMax <= 40 ? 5 : 10,
+                            callback: (v) => v + '°C'
+                        },
+                        grid: { color: '#E5E7EB' }
+                    },
+                    x: {
+                        grid: { color: '#F3F4F6' }
+                    }
+                }
+            }
+        });
+    }
+
+    function initOrUpdateHumidChart(labels, data, hMin, hMax) {
+        const canvas = document.getElementById('humidChartCanvas');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        let minLine = Array(labels.length).fill(hMin);
+        let maxLine = Array(labels.length).fill(hMax);
+
+        if (humidChart) {
+            humidChart.data.labels = labels;
+            humidChart.data.datasets[0].data = data;
+            humidChart.data.datasets[1].data = maxLine;
+            humidChart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
+            humidChart.data.datasets[2].data = minLine;
+            humidChart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
+            humidChart.update('none');
+            return;
+        }
+
+        const existing = Chart.getChart(canvas);
+        if (existing) {
+            existing.destroy();
+        }
+
+        humidChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Kelembapan Aktual (%)',
+                        data: data,
+                        borderColor: '#163428',
+                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#163428',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Batas Maksimum (' + hMax + '%)',
+                        data: maxLine,
+                        borderColor: '#EF4444',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'Batas Minimum (' + hMin + '%)',
+                        data: minLine,
+                        borderColor: '#3B82F6',
+                        borderWidth: 1.5,
+                        borderDash: [6, 4],
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#163428',
+                        callbacks: {
+                            label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            stepSize: 10,
+                            callback: (v) => v + '%'
+                        },
+                        grid: { color: '#E5E7EB' }
+                    },
+                    x: {
+                        grid: { color: '#F3F4F6' }
+                    }
+                }
+            }
+        });
+    }
+
+    const checkAndInit = () => {
+        initOrUpdateTempChart(@js($chartLabels), @js($chartTemp), {{ (float)$tempMin }}, {{ (float)$tempMax }});
+        initOrUpdateHumidChart(@js($chartLabels), @js($chartHumid), {{ (float)$humidMin }}, {{ (float)$humidMax }});
+    };
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        setTimeout(checkAndInit, 50);
+    } else {
+        document.addEventListener('DOMContentLoaded', checkAndInit);
+    }
+
+    $wire.on('telemetry-updated', (event) => {
+        const payload = Array.isArray(event) ? event[0] : event;
+        if (payload) {
+            initOrUpdateTempChart(payload.labels, payload.temp, payload.tempMin, payload.tempMax);
+            initOrUpdateHumidChart(payload.labels, payload.humid, payload.humidMin, payload.humidMax);
+        }
+    });
+</script>
+@endscript
