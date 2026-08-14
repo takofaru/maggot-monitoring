@@ -336,21 +336,34 @@ new class extends Component
                     <canvas x-data="{
                         chart: null,
                         init() {
-                            this.renderChart();
+                            this.$nextTick(() => this.renderChart());
                         },
                         renderChart() {
-                            let labels = {{ json_encode($chartLabels) }};
-                            let data = {{ json_encode($chartTemp) }};
+                            let labels = @js($chartLabels);
+                            let data = @js($chartTemp);
                             let tMin = {{ (float) $tempMin }};
                             let tMax = {{ (float) $tempMax }};
 
                             let minLine = Array(labels.length).fill(tMin);
                             let maxLine = Array(labels.length).fill(tMax);
 
-                            let existing = Chart.getChart(this.$el);
-                            if (existing) existing.destroy();
+                            if (this.chart) {
+                                this.chart.data.labels = labels;
+                                this.chart.data.datasets[0].data = data;
+                                this.chart.data.datasets[1].data = maxLine;
+                                this.chart.data.datasets[1].label = 'Batas Maksimum (' + tMax + '°C)';
+                                this.chart.data.datasets[2].data = minLine;
+                                this.chart.data.datasets[2].label = 'Batas Minimum (' + tMin + '°C)';
+                                this.chart.update('none');
+                                return;
+                            }
 
-                            this.chart = new Chart(this.$el.getContext('2d'), {
+                            if (typeof Chart === 'undefined') {
+                                setTimeout(() => this.renderChart(), 100);
+                                return;
+                            }
+
+                            this.chart = new Chart(this.$el, {
                                 type: 'line',
                                 data: {
                                     labels: labels,
@@ -365,8 +378,7 @@ new class extends Component
                                             pointHoverRadius: 6,
                                             pointBackgroundColor: '#163428',
                                             tension: 0.3,
-                                            fill: true,
-                                            order: 1
+                                            fill: true
                                         },
                                         {
                                             label: 'Batas Maksimum (' + tMax + '°C)',
@@ -375,8 +387,7 @@ new class extends Component
                                             borderWidth: 1.5,
                                             borderDash: [6, 4],
                                             pointRadius: 0,
-                                            fill: false,
-                                            order: 2
+                                            fill: false
                                         },
                                         {
                                             label: 'Batas Minimum (' + tMin + '°C)',
@@ -385,8 +396,7 @@ new class extends Component
                                             borderWidth: 1.5,
                                             borderDash: [6, 4],
                                             pointRadius: 0,
-                                            fill: false,
-                                            order: 3
+                                            fill: false
                                         }
                                     ]
                                 },
@@ -472,21 +482,34 @@ new class extends Component
                     <canvas x-data="{
                         chart: null,
                         init() {
-                            this.renderChart();
+                            this.$nextTick(() => this.renderChart());
                         },
                         renderChart() {
-                            let labels = {{ json_encode($chartLabels) }};
-                            let data = {{ json_encode($chartHumid) }};
+                            let labels = @js($chartLabels);
+                            let data = @js($chartHumid);
                             let hMin = {{ (float) $humidMin }};
                             let hMax = {{ (float) $humidMax }};
 
                             let minLine = Array(labels.length).fill(hMin);
                             let maxLine = Array(labels.length).fill(hMax);
 
-                            let existing = Chart.getChart(this.$el);
-                            if (existing) existing.destroy();
+                            if (this.chart) {
+                                this.chart.data.labels = labels;
+                                this.chart.data.datasets[0].data = data;
+                                this.chart.data.datasets[1].data = maxLine;
+                                this.chart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
+                                this.chart.data.datasets[2].data = minLine;
+                                this.chart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
+                                this.chart.update('none');
+                                return;
+                            }
 
-                            this.chart = new Chart(this.$el.getContext('2d'), {
+                            if (typeof Chart === 'undefined') {
+                                setTimeout(() => this.renderChart(), 100);
+                                return;
+                            }
+
+                            this.chart = new Chart(this.$el, {
                                 type: 'line',
                                 data: {
                                     labels: labels,
@@ -501,8 +524,7 @@ new class extends Component
                                             pointHoverRadius: 6,
                                             pointBackgroundColor: '#163428',
                                             tension: 0.3,
-                                            fill: true,
-                                            order: 1
+                                            fill: true
                                         },
                                         {
                                             label: 'Batas Maksimum (' + hMax + '%)',
@@ -511,8 +533,7 @@ new class extends Component
                                             borderWidth: 1.5,
                                             borderDash: [6, 4],
                                             pointRadius: 0,
-                                            fill: false,
-                                            order: 2
+                                            fill: false
                                         },
                                         {
                                             label: 'Batas Minimum (' + hMin + '%)',
@@ -521,8 +542,7 @@ new class extends Component
                                             borderWidth: 1.5,
                                             borderDash: [6, 4],
                                             pointRadius: 0,
-                                            fill: false,
-                                            order: 3
+                                            fill: false
                                         }
                                     ]
                                 },
