@@ -4,60 +4,247 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Cycle;
 use App\Models\ObservationLog;
+use App\Models\EnvironmentLog;
+use App\Models\PhaseSetting;
+use Carbon\Carbon;
 
 new class extends Component
 {
     use WithPagination;
 
     public $selectedCycleId;
-    public $selectedCycleName = '#'; // Menyimpan teks yang tampil di tombol
+    public $selectedCycleName = '#';
     public $latestCycle;
-    public $observationData;
-    public $isSelectedCurrent = True;
+    public $isSelectedCurrent = true;
+
+    // State Modal Form
+    public bool $openForm = false;
+    public ?int $editingId = null;
+
+    // Form Field Properties
+    public $temp = '';
+    public $humid = '';
+    public bool $useNewEnvironmentLog = false;
+    public $feed = '';
+    public $maggot = '';
+
+    // Feedback message
+    public string $flashMessage = '';
 
     public function mount()
     {
-        $latest = Cycle::latest('id')->first();
+        $latest = Cycle::where('is_active', true)->first() ?? Cycle::latest('id')->first();
         if ($latest) {
             $this->latestCycle = $latest->id;
-            $this->selectedCycleName = $this->selectedCycleId = $latest->id;
-            $this->isSelectedCurrent = True;
+            $this->selectedCycleId = $latest->id;
+            $this->selectedCycleName = "Siklus {$latest->id}";
+            $this->isSelectedCurrent = (bool) $latest->is_active;
         }
     }
 
     public function selectCycle($id)
     {
-        $this->selectedCycleName = $this->selectedCycleId = $id;
-        $this->isSelectedCurrent = $this->selectedCycleId == $this->latestCycle;
+        $this->selectedCycleId = $id;
+        $this->selectedCycleName = "Siklus {$id}";
+        $cycle = Cycle::find($id);
+        $this->isSelectedCurrent = $cycle ? (bool) $cycle->is_active : false;
         $this->resetPage();
+    }
+
+    public function nextPhase()
+    {
+        if (!$this->selectedCycleId) return;
+
+        $cycle = Cycle::find($this->selectedCycleId);
+        if (!$cycle) return;
+
+        $phases = PhaseSetting::orderBy('order')->pluck('phase_name')->toArray();
+        if (empty($phases)) {
+            $phases = ['Penetasan', 'Grow Out', 'Prepupa', 'Panen'];
+        } elseif (!in_array('Panen', $phases)) {
+            $phases[] = 'Panen';
+        }
+
+        $currentIndex = array_search($cycle->current_phase, $phases);
+        if ($currentIndex === false) {
+            $nextPhase = $phases[0];
+        } else {
+            $nextIndex = ($currentIndex + 1) % count($phases);
+            $nextPhase = $phases[$nextIndex];
+        }
+
+        $cycle->update(['current_phase' => $nextPhase]);
+        $this->flashMessage = "Fase berhasil diubah menjadi {$nextPhase}.";
+    }
+
+    public function openCreateModal()
+    {
+        $this->resetForm();
+        
+        // Ambil data lingkungan terkini sebagai saran awal
+        $latestEnv = EnvironmentLog::where('cycle_id', $this->selectedCycleId)->latest('id')->first();
+        if ($latestEnv) {
+            $this->temp = $latestEnv->temperature;
+            $this->humid = $latestEnv->humidity;
+        }
+
+        $this->editingId = null;
+        $this->openForm = true;
+    }
+
+    public function openEditModal($id)
+    {
+        $log = ObservationLog::with('environmentLog')->findOrFail($id);
+        
+        $this->editingId = $log->id;
+        $this->feed = $log->feed_weight;
+        $this->maggot = $log->maggot_weight;
+        $this->temp = $log->environmentLog?->temperature ?? '';
+        $this->humid = $log->environmentLog?->humidity ?? '';
+        $this->useNewEnvironmentLog = false;
+        $this->openForm = true;
+    }
+
+    public function closeForm()
+    {
+        $this->resetForm();
+        $this->openForm = false;
+    }
+
+    public function resetForm()
+    {
+        $this->reset(['temp', 'humid', 'feed', 'maggot', 'useNewEnvironmentLog', 'editingId']);
+        $this->resetErrorBag();
+    }
+
+    public function save()
+    {
+        $this->validate([
+            'feed'   => 'required|numeric|min:0',
+            'maggot' => 'required|numeric|min:0',
+            'temp'   => 'nullable|numeric|between:0,100',
+            'humid'  => 'nullable|numeric|between:0,100',
+        ], [
+            'feed.required'   => 'Berat pakan wajib diisi.',
+            'feed.numeric'    => 'Berat pakan harus berupa angka.',
+            'feed.min'        => 'Berat pakan minimal 0 kg.',
+            'maggot.required' => 'Berat maggot wajib diisi.',
+            'maggot.numeric'  => 'Berat maggot harus berupa angka.',
+            'maggot.min'      => 'Berat maggot minimal 0 kg.',
+            'temp.numeric'    => 'Suhu harus berupa angka.',
+            'temp.between'    => 'Suhu harus bernilai antara 0 - 100.',
+            'humid.numeric'   => 'Kelembapan harus berupa angka.',
+            'humid.between'   => 'Kelembapan harus bernilai antara 0 - 100.',
+        ]);
+
+        $cycle = Cycle::findOrFail($this->selectedCycleId);
+
+        // Penanganan EnvironmentLog
+        $envLogId = null;
+        if ($this->useNewEnvironmentLog || $this->editingId === null) {
+            // Buat entri environment log baru jika diaktifkan atau data baru
+            $envLog = EnvironmentLog::create([
+                'cycle_id'    => $cycle->id,
+                'timestamp'   => now(),
+                'temperature' => (float) ($this->temp !== '' ? $this->temp : 28.00),
+                'humidity'    => (float) ($this->humid !== '' ? $this->humid : 70.00),
+            ]);
+            $envLogId = $envLog->id;
+        } else {
+            // Gunakan EnvironmentLog terakhir yang ada
+            $latestEnv = EnvironmentLog::where('cycle_id', $cycle->id)->latest('id')->first();
+            if ($latestEnv) {
+                $envLogId = $latestEnv->id;
+            } else {
+                $envLog = EnvironmentLog::create([
+                    'cycle_id'    => $cycle->id,
+                    'timestamp'   => now(),
+                    'temperature' => (float) ($this->temp !== '' ? $this->temp : 28.00),
+                    'humidity'    => (float) ($this->humid !== '' ? $this->humid : 70.00),
+                ]);
+                $envLogId = $envLog->id;
+            }
+        }
+
+        if ($this->editingId) {
+            // Mode Update Catatan
+            $log = ObservationLog::findOrFail($this->editingId);
+            $log->update([
+                'feed_weight'        => $this->feed,
+                'maggot_weight'      => $this->maggot,
+                'environment_log_id' => $envLogId,
+            ]);
+            $this->flashMessage = 'Catatan observasi berhasil diperbarui.';
+        } else {
+            // Mode Tambah Catatan Baru
+            ObservationLog::create([
+                'cycle_id'           => $cycle->id,
+                'phase_name'         => $cycle->current_phase ?? 'Penetasan',
+                'environment_log_id' => $envLogId,
+                'timestamp'          => now()->toDateString(),
+                'feed_weight'        => $this->feed,
+                'maggot_weight'      => $this->maggot,
+            ]);
+            $this->flashMessage = 'Catatan observasi baru berhasil ditambahkan.';
+        }
+
+        $this->closeForm();
+        $this->resetPage();
+    }
+
+    public function deleteObservationLog($id)
+    {
+        $log = ObservationLog::find($id);
+        if ($log) {
+            $log->delete();
+            $this->flashMessage = 'Catatan observasi berhasil dihapus.';
+        }
     }
 
     public function with(): array
     {
         return [
-            'cycleData' => Cycle::orderBy('created_at', 'asc')->get(),
+            'cycleData' => Cycle::orderBy('id', 'asc')->get(),
             'observationData' => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
+                ->orderBy('id', 'desc')
                 ->paginate(10),
         ];
     }
 };
 ?>
 
-<div x-data="{ openForm: false, createObservation: false }" class="space-y-(--size-26) min-w-[922px]">
-    <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
-        Catatan Observasi
-    </h1>
+<div class="space-y-(--size-26) min-w-[922px]">
+    <!-- Judul & Flash Notification -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
+            Catatan Observasi
+        </h1>
+        @if ($flashMessage)
+            <div
+                x-data="{ show: true }"
+                x-show="show"
+                x-init="setTimeout(() => show = false, 4000)"
+                class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
+            >
+                <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{{ $flashMessage }}</span>
+            </div>
+        @endif
+    </div>
+
+    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah -->
     <div class="inline-flex gap-(--size-10) justify-between w-full">
         <div class="flex flex-row items-center gap-(--size-10)">
+            <!-- Dropdown Pilihan Siklus -->
             <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
                 Siklus ke:
                 <div class="relative inline-block">
                     <button
                         @click="openDropdown = !openDropdown"
                         type="button"
-                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour)"
+                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer"
                     >
                         <span>{{ $selectedCycleName }}</span>
                         <x-lucide-chevron-down class="w-(--size-16)"/>
@@ -67,7 +254,7 @@ new class extends Component
                         x-show="openDropdown"
                         @click.outside="openDropdown = false"
                         x-transition.opacity.duration.200ms
-                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-lg z-50"
+                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
                         x-cloak
                     >
                         @foreach($cycleData as $item)
@@ -75,46 +262,58 @@ new class extends Component
                                 type="button"
                                 wire:click="selectCycle({{ $item->id }})"
                                 @click="openDropdown = false"
-                                class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 rounded"
+                                class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 rounded border-b border-gray-100 last:border-0 cursor-pointer {{ $item->id == $selectedCycleId ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
                             >
-                                <span class="font-semibold">Siklus {{ $item->id }}</span>
-                                <span class="text-sm text-(--outline-colour)">
-                                    {{ $item->start_date->translatedFormat('l, d F Y') }} - {{ $item->end_date ? $item->end_date->translatedFormat('l, d F Y') : "Sekarang"}}
+                                <span class="font-semibold flex items-center gap-2">
+                                    Siklus {{ $item->id }}
+                                    @if($item->is_active)
+                                        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px]">Aktif</span>
+                                    @endif
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    {{ $item->start_date ? $item->start_date->translatedFormat('d M Y') : '-' }} &mdash; {{ $item->end_date ? $item->end_date->translatedFormat('d M Y') : 'Sekarang' }}
                                 </span>
                             </button>
                         @endforeach
                     </div>
                 </div>
             </div>
-            <form wire:click="nextPhase" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
+
+            <!-- Fase Terkini & Tombol Ganti Fase -->
+            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
                 <div class="gap-(--size-6)">
                     Fase terkini:
-                    <span class="font-bold">{{ $cycleData->firstWhere('id', $selectedCycleId)->current_phase ?? '-' }}</span>
+                    <span class="font-bold text-(--prime-colour)">{{ $cycleData->firstWhere('id', $selectedCycleId)->current_phase ?? '-' }}</span>
                 </div>
-                <button
-                    type="button"
-                    class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour)"
-                >
-                    <x-lucide-chevrons-right class="w-(--size-26)"/>
-                </button>
-            </form>
+                @if($isSelectedCurrent)
+                    <button
+                        wire:click="nextPhase"
+                        type="button"
+                        title="Ubah ke fase berikutnya"
+                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour) cursor-pointer hover:opacity-90"
+                    >
+                        <x-lucide-chevrons-right class="w-(--size-26)"/>
+                    </button>
+                @endif
+            </div>
         </div>
+
+        <!-- Tombol Tambah Catatan Baru (Hanya untuk Siklus Aktif) -->
         @if($isSelectedCurrent)
-        <button
-            @click="
-                openForm = !openForm
-                createObservation = !createObservation;
-            "
-            class="gap-(--size-10) input-button"
-        >
-            <x-lucide-plus class="w-(--size-26)"/>
-            Tambah Catatan Baru
-        </button>
+            <button
+                wire:click="openCreateModal"
+                type="button"
+                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center"
+            >
+                <x-lucide-plus class="w-(--size-26)"/>
+                <span>Tambah Catatan Baru</span>
+            </button>
         @endif
     </div>
-    <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full">
-        <table class="w-full text-left border-collapse">
 
+    <!-- Tabel Catatan Observasi -->
+    <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full shadow-xs">
+        <table class="w-full text-left border-collapse">
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>
                     <th class="min-w-[238px]">Tanggal</th>
@@ -126,130 +325,197 @@ new class extends Component
                     <th class="border-r-0 min-w-[114px]">Aksi</th>
                 </tr>
             </thead>
-
-
             <tbody>
-                @foreach($observationData as $item)
-                <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                    <td>{{ $item->timestamp->translatedFormat('l, d F Y') }}</td>
-                    <td>{{ $item->phase_name}}</td>
-                    <td>{{ $item->environmentLog->temperature ?? '-' }}&deg;C</td>
-                    <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
-                    <td>{{ $item->feed_weight}}kg</td>
-                    <td>{{ $item->maggot_weight}}kg</td>
-                    <td class="border-r-0 flex flex-row gap-(--size-10) w-full justify-center">
-                        <button class="input-button p-(--size-10)">
-                            <x-lucide-square-pen class="w-(--size-16)"/>
-                        </button>
-                        <button class="input-button p-(--size-10)">
-                            <x-lucide-trash-2 class="w-(--size-16)"/>
-                        </button>
-                    </td>
-                </tr>
-                @endforeach
+                @forelse($observationData as $item)
+                    <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                        <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y') : '-' }}</td>
+                        <td>
+                            <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs">
+                                {{ $item->phase_name }}
+                            </span>
+                        </td>
+                        <td>{{ $item->environmentLog->temperature ?? '-' }}&deg;C</td>
+                        <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
+                        <td>{{ $item->feed_weight }} kg</td>
+                        <td>{{ $item->maggot_weight }} kg</td>
+                        <td class="border-r-0 flex flex-row gap-(--size-10) w-full justify-center py-2">
+                            <button
+                                wire:click="openEditModal({{ $item->id }})"
+                                type="button"
+                                title="Ubah Catatan"
+                                class="input-button p-(--size-10) cursor-pointer hover:bg-(--prime-light-colour)"
+                            >
+                                <x-lucide-square-pen class="w-(--size-16)"/>
+                            </button>
+                            <button
+                                wire:click="deleteObservationLog({{ $item->id }})"
+                                wire:confirm="Yakin ingin menghapus catatan observasi ini?"
+                                type="button"
+                                title="Hapus Catatan"
+                                class="input-button p-(--size-10) bg-red-600 hover:bg-red-700 cursor-pointer"
+                            >
+                                <x-lucide-trash-2 class="w-(--size-16)"/>
+                            </button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center py-8 text-gray-400">
+                            Belum ada catatan observasi untuk siklus ini.
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
+
+    <!-- Pagination -->
     <div class="m-0">
         {{ $observationData->links() }}
     </div>
-    <div
-        x-show="openForm"
-        x-cloak
-        class="absolute inset-0 w-full h-screen backdrop-blur-sm"
-    >
-        <form
-            :wire:submit="createObservation ? 'createObservationLog' : 'updateObservationLog'"
-            id="loginForm"
-            class="flex flex-col gap-(--size-26) m-(--size-42) px-(--size-26) py-(--size-42) bg-(--fg-colour) rounded-(--size-16)"
-            @click.outside="
-                openForm = false
-                createObservation = false
-            "
-            value=""
-        >
-            <span x-show="createObservation" class="text-(length:--size-26) text-(--prime-colour) font-bold">Tambah Catatan Baru</span>
-            <span x-show="!createObservation" x-cloak class="text-(length:--size-26) text-(--prime-colour) font-bold">Ubah Catatan</span>
 
-            <div class="flex flex-row gap-(--size-16)">
-                <div class="input-container w-full">
-                    <label for="temp">Suhu yang Diamati</label>
-                    <div class="flex flex-row items-center justify-between input-text">
-                        <input
-                            wire:model="temp"
-                            id="temp"
-                            type=""
-                            placeholder="Masukkan Suhu yang Diamati"
-                            class="w-full bg-transparent focus:outline-none"
-                        />
-                        &deg;C
+    <!-- Modal Form Observasi (Create & Edit) -->
+    @if ($openForm)
+        <div
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4"
+            x-transition.opacity
+        >
+            <div
+                @click.outside="$wire.closeForm()"
+                class="w-full max-w-(--size-492) bg-(--fg-colour) rounded-(--size-16) p-(--size-26) border-[1.5px] border-(--outline-colour) shadow-2xl space-y-(--size-26) max-h-[90vh] overflow-y-auto"
+            >
+                <form wire:submit="save" class="flex flex-col gap-(--size-26)">
+                    <!-- Header Modal -->
+                    <div class="flex items-center justify-between border-b pb-3">
+                        <span class="text-(length:--size-26) text-(--prime-colour) font-bold">
+                            {{ $editingId ? 'Ubah Catatan Observasi' : 'Tambah Catatan Baru' }}
+                        </span>
+                        <button
+                            type="button"
+                            wire:click="closeForm"
+                            class="text-gray-400 hover:text-gray-600 cursor-pointer text-xl font-bold"
+                        >
+                            &times;
+                        </button>
                     </div>
-                </div>
-                <div class="input-container w-full">
-                    <label for="humid">Kelembapan yang Diamati</label>
-                    <div class="flex flex-row items-center justify-between input-text">
-                        <input
-                            wire:model="humid"
-                            id="humid"
-                            type=""
-                            placeholder="Masukkan Kelembapan yang Diamati"
-                            class="w-full bg-transparent focus:outline-none"
-                        />
-                        %
+
+                    <!-- Input Suhu & Kelembapan -->
+                    <div class="flex flex-row gap-(--size-16)">
+                        <div class="input-container w-full">
+                            <label for="temp">Suhu yang Diamati</label>
+                            <div class="flex flex-row items-center justify-between input-text @error('temp') border-red-500 @enderror">
+                                <input
+                                    wire:model="temp"
+                                    id="temp"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Contoh: 28.5"
+                                    class="w-full bg-transparent focus:outline-none"
+                                />
+                                <span class="text-gray-500 font-medium">&deg;C</span>
+                            </div>
+                            @error('temp')
+                                <span class="text-xs text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="input-container w-full">
+                            <label for="humid">Kelembapan yang Diamati</label>
+                            <div class="flex flex-row items-center justify-between input-text @error('humid') border-red-500 @enderror">
+                                <input
+                                    wire:model="humid"
+                                    id="humid"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Contoh: 70"
+                                    class="w-full bg-transparent focus:outline-none"
+                                />
+                                <span class="text-gray-500 font-medium">%</span>
+                            </div>
+                            @error('humid')
+                                <span class="text-xs text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="flex flex-row gap-(--size-10) items-center">
-                <div class="relative inline-block w-9 h-5">
-                    <input wire:mode="useNewEnvironmentLog" id="switch-component" type="checkbox" class="peer appearance-none w-9 h-5 bg-(--bg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-6) checked:bg-(--prime-colour) checked:border-(--prime-colour) cursor-pointer transition-colors duration-300" />
-                    <label for="switch-component" class="absolute top-0 left-0 w-5 h-5 bg-white rounded-(--size-6) border border-slate-300 shadow-sm transition-transform duration-300 peer-checked:translate-x-4 peer-checked:border-slate-800 cursor-pointer">
-                    </label>
-                </div>
-                Gunakan Data Suhu dan Kelembapan yang Baru
-            </div>
-            <div class="flex flex-row gap-(--size-16)">
-                <div class="input-container w-full">
-                    <label for="maggot">Berat Pakan yang Diberikan</label>
-                    <div class="flex flex-row items-center justify-between input-text">
-                        <input
-                            wire:model="feed"
-                            id="feed"
-                            type=""
-                            placeholder="Masukkan Berat Pakan yang Diberikan"
-                            class="w-full bg-transparent focus:outline-none"
-                        />
-                        kg
+
+                    <!-- Switch Penggunaan Data Lingkungan Baru -->
+                    <div class="flex flex-row gap-(--size-10) items-center">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input
+                                wire:model="useNewEnvironmentLog"
+                                type="checkbox"
+                                class="sr-only peer"
+                            />
+                            <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-(--prime-colour)"></div>
+                        </label>
+                        <span class="text-sm font-medium text-gray-700">Gunakan Data Suhu & Kelembapan Baru</span>
                     </div>
-                </div>
-                <div class="input-container w-full">
-                    <label for="maggot">Berat Maggot yang Diamati</label>
-                    <div class="flex flex-row items-center justify-between input-text">
-                        <input
-                            wire:model="maggot"
-                            id="maggot"
-                            type=""
-                            placeholder="Masukkan Berat Maggot yang Diamati"
-                            class="w-full bg-transparent focus:outline-none"
-                        />
-                        kg
+
+                    <!-- Input Berat Pakan & Maggot -->
+                    <div class="flex flex-row gap-(--size-16)">
+                        <div class="input-container w-full">
+                            <label for="feed">Berat Pakan yang Diberikan</label>
+                            <div class="flex flex-row items-center justify-between input-text @error('feed') border-red-500 @enderror">
+                                <input
+                                    wire:model="feed"
+                                    id="feed"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Contoh: 5.5"
+                                    class="w-full bg-transparent focus:outline-none"
+                                />
+                                <span class="text-gray-500 font-medium">kg</span>
+                            </div>
+                            @error('feed')
+                                <span class="text-xs text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="input-container w-full">
+                            <label for="maggot">Berat Maggot yang Diamati</label>
+                            <div class="flex flex-row items-center justify-between input-text @error('maggot') border-red-500 @enderror">
+                                <input
+                                    wire:model="maggot"
+                                    id="maggot"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Contoh: 1.2"
+                                    class="w-full bg-transparent focus:outline-none"
+                                />
+                                <span class="text-gray-500 font-medium">kg</span>
+                            </div>
+                            @error('maggot')
+                                <span class="text-xs text-red-500">{{ $message }}</span>
+                            @enderror
+                        </div>
                     </div>
-                </div>
+
+                    <!-- Tombol Simpan & Batal -->
+                    <div class="flex justify-end gap-3 pt-2">
+                        <button
+                            type="button"
+                            wire:click="closeForm"
+                            class="px-4 py-2 border border-gray-300 rounded-(--size-16) text-gray-700 font-medium hover:bg-gray-100 cursor-pointer"
+                        >
+                            Batal
+                        </button>
+                        <button
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            class="input-button cursor-pointer flex items-center gap-2"
+                        >
+                            @if ($editingId)
+                                <x-lucide-square-pen class="w-(--size-16)"/>
+                                <span wire:loading.remove wire:target="save">Simpan Perubahan</span>
+                            @else
+                                <x-lucide-plus class="w-(--size-16)"/>
+                                <span wire:loading.remove wire:target="save">Tambah Catatan</span>
+                            @endif
+                            <span wire:loading wire:target="save">Menyimpan...</span>
+                        </button>
+                    </div>
+                </form>
             </div>
-            <div>
-                <button
-                    class="input-button"
-                    @click="createObservation = False"
-                >
-                    <span x-show="createObservation" class="text-(length:--size-16) flex flex-row gap-(--size-10) items-center">
-                        <x-lucide-plus class="w-(--size-26)"/>
-                        Tambah Catatan
-                    </span>
-                    <span x-show="!createObservation" x-cloak class="text-(length:--size-26) flex flex-row gap-(--size-10) items-center">
-                        <x-lucide-square-pen class="w-(--size-26)"/>
-                        Ubah Catatan
-                    </span>
-                </button>
-            </div>
-        </form>
-    </div>
+        </div>
+    @endif
 </div>
