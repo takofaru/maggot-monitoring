@@ -6,7 +6,6 @@ use App\Models\Cycle;
 use App\Models\EnvironmentLog;
 use App\Services\MqttService;
 use Carbon\Carbon;
-
 use Illuminate\Support\Facades\Cache;
 
 new class extends Component
@@ -200,7 +199,13 @@ new class extends Component
 
     public function with(): array
     {
-        // Ambil data dari cache (jika subscriber aktif) atau database
+        // 1. Coba periksa data terbaru langsung dari broker MQTT jika memungkinkan
+        MqttService::checkBrokerEnvironmentData();
+
+        // 2. Ambil waktu server saat ini
+        $currentTime = now();
+
+        // 3. Ambil data terakhir dari cache atau database
         $cachedLastSeenStr = Cache::get('device_last_seen');
         $cachedLastSeen = $cachedLastSeenStr ? Carbon::parse($cachedLastSeenStr) : null;
 
@@ -214,12 +219,14 @@ new class extends Component
             $lastSeen = $cachedLastSeen ?? $dbLastSeen;
         }
 
-        $diffInSeconds = $lastSeen ? abs(now()->diffInSeconds($lastSeen, false)) : null;
+        // 4. Hitung selisih waktu antara jam sekarang dengan data terakhir (dalam detik)
+        $diffInSeconds = $lastSeen ? (int) abs($currentTime->diffInSeconds($lastSeen, false)) : null;
 
         // Status Perangkat: Online jika data masuk <= 40 detik yang lalu (interval normal 10 detik/data)
         $isOnline = ($diffInSeconds !== null && $diffInSeconds <= 40);
 
         return [
+            'currentTime'   => $currentTime,
             'latestEnv'     => $latestEnv,
             'lastSeen'      => $lastSeen,
             'diffInSeconds' => $diffInSeconds,
@@ -248,48 +255,75 @@ new class extends Component
         @endif
     </div>
 
-    <!-- Status Perangkat IoT & Datetime Terakhir Terhubung (Dibawah Judul) -->
-    <div wire:poll.5s class="flex flex-col sm:flex-row sm:items-center justify-between gap-(--size-16) px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+    <!-- Status Perangkat IoT, Jam Sekarang, Data Terakhir & Selisih Waktu (Check Setiap 10 Detik) -->
+    <div wire:poll.10s class="flex flex-col lg:flex-row lg:items-center justify-between gap-(--size-16) px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <!-- Bagian Kiri: Ikon & Status Online/Offline -->
         <div class="flex items-center gap-(--size-16)">
-            <div class="p-3 bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0">
+            <div class="p-3.5 bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0">
                 <x-lucide-cpu class="w-(--size-26) h-(--size-26)" />
             </div>
             <div>
                 <div class="flex items-center gap-2.5">
-                    <span class="text-sm font-bold text-gray-900">Status Perangkat:</span>
+                    <span class="text-sm font-bold text-gray-900">Status Perangkat IoT:</span>
                     @if($isOnline)
                         <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Online
+                            Online (Terhubung)
                         </span>
                     @else
                         <span class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300">
                             <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            Offline
+                            Offline (Terputus)
                         </span>
                     @endif
                 </div>
-                <div class="text-xs text-gray-500 mt-1">
+                <div class="text-xs text-gray-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                     @if($isOnline)
-                        <span>Perangkat aktif mengirimkan data telemetri lingkungan secara normal.</span>
+                        <span class="text-emerald-700 font-medium">Perangkat aktif mengirimkan data telemetri lingkungan.</span>
+                        @if($latestEnv)
+                            <span class="text-gray-400">|</span>
+                            <span class="font-medium text-gray-700">Sensor: {{ $latestEnv->temperature }}&deg;C &bull; {{ $latestEnv->humidity }}%</span>
+                        @endif
                     @else
-                        <span>Tidak ada data sensor baru dari topik <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px] text-gray-700">environmentData</code> dalam 40 detik terakhir.</span>
+                        <span class="text-gray-500">Tidak ada data sensor baru dari topik <code class="bg-gray-100 px-1 py-0.5 rounded font-mono text-[11px] text-gray-700">environmentData</code> (&gt; 40 detik).</span>
                     @endif
                 </div>
             </div>
         </div>
 
-        <!-- Datetime Terakhir Terhubung -->
-        <div class="text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0">
-            <span class="text-xs text-gray-400 font-medium block">Terakhir Terhubung:</span>
-            <div class="text-sm font-bold text-(--prime-colour)">
-                {{ $lastSeen ? $lastSeen->translatedFormat('d F Y, H:i:s') : 'Belum pernah terhubung' }}
+        <!-- Bagian Kanan: Jam Sekarang, Data Terakhir Masuk & Selisih Detik -->
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-4 lg:gap-6 border-t lg:border-t-0 pt-3 lg:pt-0 text-xs">
+            <!-- Jam Server Sekarang -->
+            <div class="flex flex-col">
+                <span class="text-gray-400 font-medium">Jam Sekarang:</span>
+                <span class="font-bold text-gray-800 font-mono text-xs">
+                    {{ $currentTime->translatedFormat('d M Y, H:i:s') }}
+                </span>
             </div>
-            @if($lastSeen)
-                <div class="text-[11px] text-gray-500 font-medium">
-                    ({{ $lastSeen->diffForHumans() }})
-                </div>
-            @endif
+
+            <div class="hidden sm:block w-px h-8 bg-gray-200"></div>
+
+            <!-- Data Terakhir Masuk -->
+            <div class="flex flex-col">
+                <span class="text-gray-400 font-medium">Data Terakhir:</span>
+                <span class="font-bold text-(--prime-colour) font-mono text-xs">
+                    {{ $lastSeen ? $lastSeen->translatedFormat('d M Y, H:i:s') : 'Belum ada data' }}
+                </span>
+            </div>
+
+            <div class="hidden sm:block w-px h-8 bg-gray-200"></div>
+
+            <!-- Selisih Waktu -->
+            <div class="flex flex-col">
+                <span class="text-gray-400 font-medium">Selisih Waktu:</span>
+                <span class="font-bold {{ $isOnline ? 'text-emerald-700' : 'text-red-600' }}">
+                    @if($diffInSeconds !== null)
+                        {{ $diffInSeconds }} detik yang lalu
+                    @else
+                        -
+                    @endif
+                </span>
+            </div>
         </div>
     </div>
 
