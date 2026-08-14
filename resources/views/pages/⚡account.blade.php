@@ -29,12 +29,12 @@ new class extends Component
         Manajemen Akun
     </h1>
     <div class="flex flex-row gap-(--size-26)">
-        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16)">
+        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full">
             <div class="flex flex-row gap-(--size-16) items-center">
                 <x-lucide-user-round class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16)"/>
                 <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Profil Saya</span>
             </div>
-            <form wire:submit="changeProfile" id="changeProfileForm" class="flex flex-col gap-(--size-16)">
+            <form wire:submit="changeProfile" id="changeProfileForm" class="flex flex-col gap-(--size-16) min-w-(--size-492) w-full">
                 <div class="flex flex-row gap-(--size-16)">
                     <div class="input-container w-full">
                         <label for="fullName">Nama Lengkap</label>
@@ -63,7 +63,7 @@ new class extends Component
                 </button>
             </form>
         </div>
-        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16)">
+        <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) min-w-(--size-492) w-full">
             <div class="flex flex-row gap-(--size-16) items-center">
                 <x-lucide-square-asterisk class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16)"/>
                 <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Ubah Password</span>
