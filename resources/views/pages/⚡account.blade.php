@@ -392,8 +392,8 @@ new class extends Component
                     <tr>
                         <th>Nama Lengkap</th>
                         <th>Username</th>
-                        <th class="w-[120px]">Peran</th>
-                        <th class="border-r-0 w-[132px]">Aksi</th>
+                        <th class="min-w-[120px]">Peran</th>
+                        <th class="border-r-0 min-w-[132px]">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>

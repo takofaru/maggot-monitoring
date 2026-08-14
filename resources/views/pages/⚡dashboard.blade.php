@@ -208,7 +208,7 @@ new class extends Component
     <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-(--size-26) w-full">
         <!-- 1. Total Pakan Kumulatif -->
-        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16)">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
@@ -218,23 +218,23 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2">
+                <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($totalFeed, 1) }}
                     </span>
                     <span class="text-base font-bold text-gray-500">kg</span>
-                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
                         {{ $feedDelta >= 0 ? '+' : '' }}{{ number_format($feedDelta, 1) }}kg dari sebelumnya
                     </span>
                 </div>
-                <p class="text-xs text-gray-400 mt-2">
+                <p class="text-xs text-gray-400 mt-1.5">
                     Diperbaharui pada {{ $lastUpdateDate }}
                 </p>
             </div>
         </div>
 
         <!-- 2. Berat Maggot -->
-        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16)">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
@@ -244,23 +244,23 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2">
+                <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($latestMaggotWeight, 1) }}
                     </span>
                     <span class="text-base font-bold text-gray-500">kg</span>
-                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
                         {{ $maggotDelta >= 0 ? '+' : '' }}{{ number_format($maggotDelta, 1) }}kg dari sebelumnya
                     </span>
                 </div>
-                <p class="text-xs text-gray-400 mt-2">
+                <p class="text-xs text-gray-400 mt-1.5">
                     Diperbaharui pada {{ $lastUpdateDate }}
                 </p>
             </div>
         </div>
 
         <!-- 3. Konversi Rasio Pakan Sementara (FCR) -->
-        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16)">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
@@ -270,13 +270,13 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2">
+                <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($fcr, 1) }}
                     </span>
                     <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
                 </div>
-                <p class="text-xs text-gray-400 mt-2">
+                <p class="text-xs text-gray-400 mt-1.5">
                     Diperbaharui pada {{ $lastUpdateDate }}
                 </p>
             </div>
@@ -290,7 +290,7 @@ new class extends Component
         <div class="lg:col-span-2 space-y-(--size-26)">
             
             <!-- 1. Box Grafik Suhu -->
-            <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div class="flex flex-row items-center justify-between">
                     <div class="flex flex-row items-center gap-(--size-16)">
                         <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
@@ -302,7 +302,7 @@ new class extends Component
                     </div>
 
                     <!-- Keterangan Garis Batas Suhu -->
-                    <div class="flex items-center gap-3 text-xs">
+                    <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
                         <span class="flex items-center gap-1 text-gray-600 font-medium">
                             <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
                         </span>
@@ -326,13 +326,13 @@ new class extends Component
                             <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Peringatan</span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-400 mt-1 mb-2">
+                    <p class="text-xs text-gray-400 mt-1 mb-1">
                         Diperbaharui pada {{ $envUpdateDate }}
                     </p>
                 </div>
 
-                <!-- Canvas Chart Suhu dengan Garis Batas Ideal -->
-                <div class="relative w-full h-64 border border-gray-100 rounded-xl p-3 bg-gray-50/50" wire:ignore>
+                <!-- Canvas Chart Suhu dengan Garis Batas Ideal (Height Dioptimalkan) -->
+                <div class="relative w-full h-48 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
                     <canvas x-data="{
                         chart: null,
                         init() {
@@ -436,7 +436,7 @@ new class extends Component
             </div>
 
             <!-- 2. Box Grafik Kelembapan -->
-            <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div class="flex flex-row items-center justify-between">
                     <div class="flex flex-row items-center gap-(--size-16)">
                         <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
@@ -448,7 +448,7 @@ new class extends Component
                     </div>
 
                     <!-- Keterangan Garis Batas Kelembapan -->
-                    <div class="flex items-center gap-3 text-xs">
+                    <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
                         <span class="flex items-center gap-1 text-gray-600 font-medium">
                             <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
                         </span>
@@ -472,13 +472,13 @@ new class extends Component
                             <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Peringatan</span>
                         @endif
                     </div>
-                    <p class="text-xs text-gray-400 mt-1 mb-2">
+                    <p class="text-xs text-gray-400 mt-1 mb-1">
                         Diperbaharui pada {{ $envUpdateDate }}
                     </p>
                 </div>
 
-                <!-- Canvas Chart Kelembapan dengan Garis Batas Ideal -->
-                <div class="relative w-full h-64 border border-gray-100 rounded-xl p-3 bg-gray-50/50" wire:ignore>
+                <!-- Canvas Chart Kelembapan dengan Garis Batas Ideal (Height Dioptimalkan) -->
+                <div class="relative w-full h-48 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
                     <canvas x-data="{
                         chart: null,
                         init() {
@@ -584,8 +584,8 @@ new class extends Component
         </div>
 
         <!-- Kolom Kanan: Sidebar Aktivitas (Span 1) -->
-        <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16) border-b pb-4">
+        <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16) border-b pb-3">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-activity class="w-(--size-26) h-(--size-26)"/>
                 </div>
@@ -595,34 +595,34 @@ new class extends Component
             </div>
 
             <!-- List Item Aktivitas & Peringatan -->
-            <div class="flex flex-col gap-(--size-10)">
+            <div class="flex flex-col gap-(--size-10) max-h-[500px] overflow-y-auto pr-1">
                 @forelse($activities as $act)
-                    <div class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-3 shadow-2xs">
-                        <div class="p-2.5 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
+                    <div class="p-3.5 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-3 shadow-2xs">
+                        <div class="p-2 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
                             @if($act['type'] === 'temp_low')
-                                <x-lucide-thermometer-snowflake class="w-5 h-5"/>
+                                <x-lucide-thermometer-snowflake class="w-4 h-4"/>
                             @elseif($act['type'] === 'temp_high')
-                                <x-lucide-thermometer-sun class="w-5 h-5"/>
+                                <x-lucide-thermometer-sun class="w-4 h-4"/>
                             @elseif(str_contains($act['type'], 'humid'))
-                                <x-lucide-droplets class="w-5 h-5"/>
+                                <x-lucide-droplets class="w-4 h-4"/>
                             @else
-                                <x-lucide-clipboard-check class="w-5 h-5"/>
+                                <x-lucide-clipboard-check class="w-4 h-4"/>
                             @endif
                         </div>
                         <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-sm text-gray-900 leading-tight">
+                            <h4 class="font-bold text-xs text-gray-900 leading-tight">
                                 {{ $act['title'] }}
                             </h4>
-                            <p class="text-xs text-gray-600 mt-1 leading-snug">
+                            <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
                                 {{ $act['desc'] }}
                             </p>
-                            <span class="text-[11px] text-gray-400 font-medium mt-1.5 block">
+                            <span class="text-[10px] text-gray-400 font-medium mt-1 block">
                                 {{ $act['time'] }}
                             </span>
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-10 text-gray-400 text-xs">
+                    <div class="text-center py-8 text-gray-400 text-xs">
                         Belum ada aktivitas atau peringatan tercatat.
                     </div>
                 @endforelse

@@ -351,12 +351,12 @@ new class extends Component
             <table class="w-full text-left border-collapse">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
-                        <th class="min-w-[140px]">Fase Budidaya</th>
-                        <th class="min-w-[100px]">Jumlah Log</th>
+                        <th class="min-w-[160px]">Fase Budidaya</th>
+                        <th class="min-w-[130px]">Jumlah Log</th>
                         <th class="min-w-[130px]">Total Pakan</th>
-                        <th class="min-w-[150px]">Bobot Maggot Fase</th>
-                        <th class="min-w-[130px]">Suhu Aktual (Ideal)</th>
-                        <th class="border-r-0 min-w-[150px]">Kelembapan Aktual (Ideal)</th>
+                        <th class="min-w-[160px]">Bobot Maggot Fase</th>
+                        <th class="min-w-[160px]">Suhu Aktual (Ideal)</th>
+                        <th class="border-r-0 min-w-[160px]">Kelembapan Aktual (Ideal)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -413,11 +413,11 @@ new class extends Component
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
                         <th class="min-w-[200px]">Tanggal</th>
-                        <th class="min-w-[110px]">Fase</th>
-                        <th class="min-w-[90px]">Suhu</th>
-                        <th class="min-w-[100px]">Kelembapan</th>
-                        <th class="min-w-[120px]">Pakan Diberikan</th>
-                        <th class="border-r-0 min-w-[120px]">Berat Maggot</th>
+                        <th class="min-w-[130px]">Fase</th>
+                        <th class="min-w-[100px]">Suhu</th>
+                        <th class="min-w-[120px]">Kelembapan</th>
+                        <th class="min-w-[140px]">Pakan Diberikan</th>
+                        <th class="border-r-0 min-w-[140px]">Berat Maggot</th>
                     </tr>
                 </thead>
                 <tbody>

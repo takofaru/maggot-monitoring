@@ -398,13 +398,13 @@ new class extends Component
         <table class="w-full text-left border-collapse">
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>
-                    <th class="min-w-[238px]">Tanggal</th>
-                    <th class="min-w-[109px]">Fase</th>
-                    <th class="min-w-[84px]">Suhu</th>
-                    <th class="min-w-[96px]">Kelembapan</th>
-                    <th class="min-w-[82px]">Berat Pakan</th>
-                    <th class="min-w-[79px]">Berat Maggot</th>
-                    <th class="border-r-0 min-w-[114px]">Aksi</th>
+                    <th class="min-w-[200px]">Tanggal</th>
+                    <th class="min-w-[130px]">Fase</th>
+                    <th class="min-w-[100px]">Suhu</th>
+                    <th class="min-w-[120px]">Kelembapan</th>
+                    <th class="min-w-[130px]">Berat Pakan</th>
+                    <th class="min-w-[130px]">Berat Maggot</th>
+                    <th class="border-r-0 min-w-[120px]">Aksi</th>
                 </tr>
             </thead>
             <tbody>
