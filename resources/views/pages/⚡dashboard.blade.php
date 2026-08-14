@@ -36,6 +36,11 @@ new class extends Component
         $maggotDelta = $latestObs && $prevObs ? round((float)$latestObs->maggot_weight - (float)$prevObs->maggot_weight, 2) : 0.0;
 
         $fcr = ($latestMaggotWeight > 0) ? round($totalFeed / $latestMaggotWeight, 2) : 0.0;
+        $prevFeedTotal = (float) $obsLogs->take(max(0, $obsLogs->count() - 1))->sum('feed_weight');
+        $prevFcr = ($prevObs && (float)$prevObs->maggot_weight > 0)
+            ? round($prevFeedTotal / (float)$prevObs->maggot_weight, 2)
+            : 0.0;
+        $fcrDelta = ($fcr > 0 && $prevFcr > 0) ? round($fcr - $prevFcr, 2) : 0.0;
 
         $lastUpdateDate = $latestObs && $latestObs->timestamp
             ? Carbon::parse($latestObs->timestamp)->translatedFormat('l, d F Y')
@@ -145,6 +150,7 @@ new class extends Component
             'latestMaggotWeight' => $latestMaggotWeight,
             'maggotDelta'        => $maggotDelta,
             'fcr'                => $fcr,
+            'fcrDelta'           => $fcrDelta,
             'lastUpdateDate'     => $lastUpdateDate,
             'tempVal'            => $tempVal,
             'humidVal'           => $humidVal,
@@ -166,21 +172,15 @@ new class extends Component
 ?>
 
 <div wire:poll.5s class="space-y-(--size-26) w-full">
-    <!-- Header Dashboard & Status Indikator -->
+    <!-- Header Dashboard & Status Indikator (Persis dashboard.png) -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
             Dashboard
         </h1>
 
-        <!-- Dot Status Perangkat IoT -->
-        <div class="flex items-center gap-2 px-3.5 py-1.5 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs">
-            @if($isDeviceOnline)
-                <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-xs font-bold text-emerald-800">Online</span>
-            @else
-                <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span class="text-xs font-bold text-red-800">Offline</span>
-            @endif
+        <!-- Dot Status Perangkat IoT Persis dashboard.png -->
+        <div class="w-8 h-8 rounded-full bg-[#E3EFE9] flex items-center justify-center shrink-0">
+            <span class="w-3 h-3 rounded-full {{ $isDeviceOnline ? 'bg-[#163428]' : 'bg-red-500' }}"></span>
         </div>
     </div>
 
@@ -205,7 +205,7 @@ new class extends Component
         </div>
     </div>
 
-    <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) -->
+    <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) Persis dashboard.png -->
     <div class="grid grid-cols-3 gap-(--size-26) w-full">
         <!-- 1. Total Pakan Kumulatif -->
         <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
@@ -270,11 +270,16 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2 flex-nowrap">
+                <div class="flex items-baseline gap-1.5 flex-nowrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($fcr, 1) }}
                     </span>
                     <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
+                </div>
+                <div class="mt-2">
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                        {{ $fcrDelta >= 0 ? '+' : '' }}{{ number_format($fcrDelta, 1) }} dari sebelumnya
+                    </span>
                 </div>
                 <p class="text-xs text-gray-400 mt-1.5">
                     Diperbaharui pada {{ $lastUpdateDate }}
