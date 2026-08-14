@@ -7,8 +7,8 @@ Fungsi:
   2. Subscribe ke topik 'environmentLimit':
      - Menerima batas suhu (temp_min, temp_max) & kelembapan (humid_min, humid_max).
      - Menampilkan log pembaruan batas lingkungan.
-  3. Publish ke topik 'environmentData' secara periodik (setiap 5 detik):
-     - Mengirimkan hanya 'temperature' dan 'humidity' tanpa redundansi atau field tambahan.
+  3. Publish ke topik 'environmentData' secara periodik (setiap 10 detik):
+     - Mengirimkan hanya 'temperature' dan 'humidity' dengan retain=True agar data selalu tersimpan di broker.
   4. Kontrol Keyboard:
      - [Enter] / [S] : Jeda (Pause) atau Lanjutkan (Resume) pengiriman data.
      - [N]           : Kirim 1 data telemetri sekarang (Send Now).
@@ -47,7 +47,7 @@ BROKER_HOST = os.getenv("MQTT_HOST", "localhost")
 BROKER_PORT = int(os.getenv("MQTT_PORT", 1883))
 TOPIC_PUB = "environmentData"
 TOPIC_SUB = "environmentLimit"
-DEFAULT_INTERVAL = 5.0
+DEFAULT_INTERVAL = 10.0
 
 # Kode Warna Terminal ANSI
 C_RESET = "\033[0m"
@@ -135,27 +135,26 @@ def generate_sensor_reading():
 
 
 def publish_environment_data(client):
-    """Mengirim hanya data temperature dan humidity bersih ke topik environmentData"""
+    """Mengirim data sensor ke topik environmentData dengan flag retain=True"""
     global msg_count
     msg_count += 1
 
     temp, humid = generate_sensor_reading()
 
-    # Payload bersih tanpa timestamp, seq, status, atau alias
     payload = {
         "temperature": temp,
         "humidity": humid
     }
 
     payload_json = json.dumps(payload)
-    client.publish(TOPIC_PUB, payload_json, qos=1)
+    client.publish(TOPIC_PUB, payload_json, qos=1, retain=True)
 
     now_time = datetime.now().strftime("%H:%M:%S")
     print(f"{C_CYAN}[{now_time}]{C_RESET} 📤 {C_BOLD}[KIRIM -> {TOPIC_PUB}]{C_RESET} #{msg_count:04d} | Suhu: {C_BOLD}{temp:>5.2f}°C{C_RESET} | Kelembapan: {C_BOLD}{humid:>5.2f}%{C_RESET} | {C_DIM}JSON: {payload_json}{C_RESET}", flush=True)
 
 
 def publisher_thread(client):
-    """Loop pengiriman data telemetri otomatis"""
+    """Loop pengiriman data telemetri otomatis setiap interval"""
     time.sleep(0.5)
     while is_running:
         if is_publishing:
@@ -200,8 +199,8 @@ def main():
     print(f"{C_BOLD}   SIMULATOR MIKROKONTROLER IOT MAGGOT (ESP32){C_RESET}", flush=True)
     print(f"{C_BOLD}{'=' * 70}{C_RESET}", flush=True)
     print(f" • Target Broker   : {C_CYAN}{BROKER_HOST}:{BROKER_PORT}{C_RESET}", flush=True)
-    print(f" • Topik Publish   : {C_GREEN}{TOPIC_PUB}{C_RESET} ({{\"temperature\": ..., \"humidity\": ...}})", flush=True)
-    print(f" • Topik Subscribe : {C_MAGENTA}{TOPIC_SUB}{C_RESET} (Batas lingkungan tanpa field redundan)", flush=True)
+    print(f" • Topik Publish   : {C_GREEN}{TOPIC_PUB}{C_RESET} (Setiap {DEFAULT_INTERVAL}s dengan retain=True)", flush=True)
+    print(f" • Topik Subscribe : {C_MAGENTA}{TOPIC_SUB}{C_RESET} (Batas lingkungan)", flush=True)
     print(f" • Kontrol         : Tekan {C_BOLD}[Enter]{C_RESET} Jeda/Lanjut | {C_BOLD}[N]{C_RESET} Kirim Instan | {C_BOLD}[Q]{C_RESET} Keluar", flush=True)
     print(f"{C_BOLD}{'=' * 70}{C_RESET}\n", flush=True)
 
