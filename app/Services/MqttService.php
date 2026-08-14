@@ -6,8 +6,6 @@ use PhpMqtt\Client\MqttClient;
 use PhpMqtt\Client\ConnectionSettings;
 use App\Models\PhaseSetting;
 use App\Models\Cycle;
-use App\Models\EnvironmentLog;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class MqttService
@@ -77,69 +75,5 @@ class MqttService
         ];
 
         return self::publish('environmentLimit', $payload);
-    }
-
-    /**
-     * Check and fetch latest environmentData from MQTT broker.
-     *
-     * @return array|null
-     */
-    public static function checkBrokerEnvironmentData(): ?array
-    {
-        $host = config('services.mqtt.host', env('MQTT_HOST', '127.0.0.1'));
-        $port = (int) config('services.mqtt.port', env('MQTT_PORT', 1883));
-        $clientId = 'maggot-checker-' . uniqid();
-        $received = null;
-
-        try {
-            $mqtt = new MqttClient($host, $port, $clientId);
-            $connectionSettings = (new ConnectionSettings)
-                ->setConnectTimeout(1)
-                ->setSocketTimeout(1);
-
-            $mqtt->connect($connectionSettings, true);
-
-            $mqtt->subscribe('environmentData', function (string $topic, string $message) use (&$received, $mqtt) {
-                $data = json_decode($message, true);
-                if (is_array($data)) {
-                    $temp = $data['temperature'] ?? $data['temp'] ?? null;
-                    $humid = $data['humidity'] ?? $data['humid'] ?? null;
-
-                    if ($temp !== null && $humid !== null) {
-                        $now = now();
-                        $received = [
-                            'temperature' => (float) $temp,
-                            'humidity'    => (float) $humid,
-                            'timestamp'   => $now,
-                        ];
-
-                        $activeCycle = Cycle::where('is_active', true)->first() ?? Cycle::latest('id')->first();
-                        
-                        $latestLog = EnvironmentLog::latest('id')->first();
-                        $shouldInsert = !$latestLog ||
-                            abs($now->diffInSeconds($latestLog->timestamp ?? $latestLog->created_at, false)) >= 8;
-
-                        if ($shouldInsert) {
-                            EnvironmentLog::create([
-                                'cycle_id'    => $activeCycle?->id,
-                                'temperature' => (float) $temp,
-                                'humidity'    => (float) $humid,
-                                'timestamp'   => $now,
-                            ]);
-                        }
-
-                        Cache::put('device_last_seen', $now->toIso8601String(), 120);
-                    }
-                }
-                $mqtt->interrupt();
-            }, 0);
-
-            $mqtt->loop(true, true, 1);
-            $mqtt->disconnect();
-        } catch (\Throwable $e) {
-            // Broker offline / timeout
-        }
-
-        return $received;
     }
 }
