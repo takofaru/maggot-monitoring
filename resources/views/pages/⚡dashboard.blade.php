@@ -224,7 +224,7 @@ new class extends Component
     <div class="grid grid-cols-3 gap-(--size-26) w-full">
         <!-- 1. Total Pakan Kumulatif -->
         <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
+            <div class="flex flex-row items-center gap-(--size-16) h-full">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
                 </div>
@@ -250,7 +250,7 @@ new class extends Component
 
         <!-- 2. Berat Maggot -->
         <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
+            <div class="flex flex-row items-center gap-(--size-16) h-full">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
                 </div>
@@ -276,7 +276,7 @@ new class extends Component
 
         <!-- 3. Konversi Rasio Pakan Sementara (FCR) -->
         <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
+            <div class="flex flex-row items-center gap-(--size-16) h-full">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                     <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
                 </div>
@@ -290,8 +290,6 @@ new class extends Component
                         {{ number_format($fcr, 1) }}
                     </span>
                     <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
-                </div>
-                <div class="mt-2">
                     <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
                         {{ $fcrDelta >= 0 ? '+' : '' }}{{ number_format($fcrDelta, 1) }} dari sebelumnya
                     </span>
