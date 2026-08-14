@@ -312,7 +312,7 @@ new class extends Component
     <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
         <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
             <!-- Dropdown Pilihan Siklus -->
-            <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+            <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                 <span>Siklus ke:</span>
                 <div class="relative inline-block">
                     <button
@@ -355,7 +355,7 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Fase Terkini & Tombol Ganti Fase dengan Konfirmasi -->
+            <!-- Fase Terkini & Tombol Ganti Fase dengan Konfirmasi (Tinggi Sama Persis dengan Siklus) -->
             @php
                 $activeCycleObj = $cycleData->firstWhere('id', $selectedCycleId);
                 $currPhase = strtolower($activeCycleObj->current_phase ?? '');
@@ -366,10 +366,10 @@ new class extends Component
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
-            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                <div class="gap-(--size-6)">
+            <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                <div class="gap-(--size-6) flex items-center">
                     Fase terkini:
-                    <span class="font-bold text-(--prime-colour) capitalize">{{ $activeCycleObj->current_phase ?? '-' }}</span>
+                    <span class="font-bold text-(--prime-colour) capitalize ml-1">{{ $activeCycleObj->current_phase ?? '-' }}</span>
                 </div>
                 @if($isSelectedCurrent && $currPhase !== 'panen')
                     <button
@@ -384,9 +384,9 @@ new class extends Component
                             onConfirm: () => $wire.nextPhase()
                         })"
                         title="{{ $currPhase === 'prepupa' ? 'Selesaikan siklus ini dan mulai siklus baru' : 'Lanjut ke fase berikutnya' }}"
-                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour) cursor-pointer hover:opacity-90 whitespace-nowrap shrink-0"
+                        class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-3 py-1.5 bg-(--prime-colour) text-(--fg-colour) cursor-pointer hover:opacity-90 whitespace-nowrap shrink-0 shadow-2xs"
                     >
-                        <x-lucide-chevrons-right class="w-(--size-26)"/>
+                        <x-lucide-chevrons-right class="w-5 h-5"/>
                     </button>
                 @endif
             </div>
@@ -397,7 +397,7 @@ new class extends Component
             <button
                 wire:click="openCreateModal"
                 type="button"
-                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0"
+                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
             >
                 <x-lucide-plus class="w-(--size-26)"/>
                 <span>Tambah Catatan Baru</span>

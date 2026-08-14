@@ -188,7 +188,7 @@ new class extends Component
     <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
         <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
             <!-- Dropdown Pilihan Siklus -->
-            <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+            <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                 <span>Siklus ke:</span>
                 <div class="relative inline-block">
                     <button
@@ -231,11 +231,11 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Status Siklus Pill -->
-            <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm whitespace-nowrap shrink-0">
-                <div class="gap-(--size-6)">
-                    Status:
-                    <span class="font-bold text-(--prime-colour)">
+            <!-- Status Siklus Pill (Tinggi Sama Persis dengan Siklus) -->
+            <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm whitespace-nowrap shrink-0">
+                <div class="gap-(--size-6) flex items-center">
+                    <span>Status:</span>
+                    <span class="font-bold text-(--prime-colour) ml-1">
                         {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
                     </span>
                     <span class="text-xs text-gray-400 ml-1">({{ $durationDays }} Hari)</span>
@@ -248,7 +248,7 @@ new class extends Component
             <button
                 wire:click="exportCsv"
                 type="button"
-                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0"
+                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
             >
                 <x-lucide-download class="w-(--size-26)"/>
                 <span>Ekspor CSV</span>
@@ -257,7 +257,7 @@ new class extends Component
             <button
                 onclick="window.print()"
                 type="button"
-                class="gap-(--size-10) input-button cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0"
+                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
             >
                 <x-lucide-printer class="w-(--size-26)"/>
                 <span>Cetak Laporan</span>
