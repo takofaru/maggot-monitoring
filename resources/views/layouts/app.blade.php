@@ -17,8 +17,8 @@
         <livewire:sidebar />
 
         <!-- Karena main punya overflow-y-auto, HANYA area ini yang akan bisa di-scroll -->
-        <main class="flex-1 overflow-y-auto">
-            <div class="p-(--size-42) min-w-max relative">
+        <main class="flex-1 overflow-y-auto overflow-x-hidden">
+            <div class="p-(--size-42) w-full max-w-full relative box-border">
                 {{ $slot }}
             </div>
         </main>

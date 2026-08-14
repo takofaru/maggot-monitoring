@@ -225,7 +225,7 @@ new class extends Component
 };
 ?>
 
-<div class="space-y-(--size-26)">
+<div class="space-y-(--size-26) w-full max-w-full">
     <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
         Manajemen Akun
     </h1>

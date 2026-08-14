@@ -175,7 +175,7 @@ new class extends Component
 };
 ?>
 
-<div class="space-y-(--size-26) min-w-[922px]">
+<div class="space-y-(--size-26) w-full max-w-full">
     <!-- Header Halaman -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
