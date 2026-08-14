@@ -175,15 +175,11 @@ new class extends Component
 
         if ($activePhaseChanged) {
             $activePhaseData = [
-                'phase_name'  => $currentPhase,
-                'temp_min'    => $activeNewTMin,
-                'temp_max'    => $activeNewTMax,
-                'humid_min'   => $activeNewHMin,
-                'humid_max'   => $activeNewHMax,
-                'TempBottom'  => $activeNewTMin,
-                'TempTop'     => $activeNewTMax,
-                'HumidBottom' => $activeNewHMin,
-                'HumidTop'    => $activeNewHMax,
+                'phase_name' => $currentPhase,
+                'temp_min'   => $activeNewTMin,
+                'temp_max'   => $activeNewTMax,
+                'humid_min'  => $activeNewHMin,
+                'humid_max'  => $activeNewHMax,
             ];
 
             $mqttPublished = MqttService::publish('environmentLimit', $activePhaseData);

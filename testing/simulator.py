@@ -5,13 +5,13 @@ Microcontroller Simulator (ESP32) - Maggot Monitoring System
 Fungsi:
   1. Terhubung ke Broker MQTT di localhost:1883.
   2. Subscribe ke topik 'environmentLimit':
-     - Menerima pembaruan batas suhu (min & max) dan kelembapan (min & max) dari Web App.
-     - Menampilkan log highlight perubahan batas fase.
-  3. Publish ke topik 'environmentData' secara periodik (setiap 5/10 detik):
-     - Mengirim data sensor suhu & kelembapan dalam format JSON.
+     - Menerima batas suhu (temp_min, temp_max) & kelembapan (humid_min, humid_max).
+     - Menampilkan log pembaruan batas lingkungan.
+  3. Publish ke topik 'environmentData' secara periodik (setiap 5 detik):
+     - Mengirimkan hanya 'temperature' dan 'humidity' tanpa redundansi atau field tambahan.
   4. Kontrol Keyboard:
      - [Enter] / [S] : Jeda (Pause) atau Lanjutkan (Resume) pengiriman data.
-     - [N]           : Kirim 1 data sensor sekarang (Send Now).
+     - [N]           : Kirim 1 data telemetri sekarang (Send Now).
      - [Q]           : Keluar dari simulator.
 """
 
@@ -42,7 +42,7 @@ except ImportError:
         print("[ERROR] Library 'paho-mqtt' tidak ditemukan. Jalankan: pip install paho-mqtt", flush=True)
         sys.exit(1)
 
-# Konfigurasi MQTT Default
+# Konfigurasi MQTT
 BROKER_HOST = os.getenv("MQTT_HOST", "localhost")
 BROKER_PORT = int(os.getenv("MQTT_PORT", 1883))
 TOPIC_PUB = "environmentData"
@@ -55,15 +55,14 @@ C_BOLD = "\033[1m"
 C_GREEN = "\033[92m"
 C_YELLOW = "\033[93m"
 C_CYAN = "\033[96m"
-C_BLUE = "\033[94m"
-C_RED = "\033[91m"
 C_MAGENTA = "\033[95m"
+C_RED = "\033[91m"
 C_DIM = "\033[2m"
 
 # State Simulator
 is_running = True
 is_publishing = True
-seq_count = 0
+msg_count = 0
 active_limits = {
     "phase_name": "penetasan",
     "temp_min": 27.0,
@@ -93,13 +92,12 @@ def on_message(client, userdata, msg):
     print(f"\n{C_MAGENTA}{C_BOLD}📥 [TERIMA <- {msg.topic}] Pukul: {now}{C_RESET}", flush=True)
     try:
         data = json.loads(raw_payload)
-        
-        # Ekstrak data batas
+
         phase = data.get("phase_name", active_limits.get("phase_name", "penetasan"))
-        t_min = float(data.get("temp_min", data.get("TempBottom", active_limits["temp_min"])))
-        t_max = float(data.get("temp_max", data.get("TempTop", active_limits["temp_max"])))
-        h_min = float(data.get("humid_min", data.get("HumidBottom", active_limits["humid_min"])))
-        h_max = float(data.get("humid_max", data.get("HumidTop", active_limits["humid_max"])))
+        t_min = float(data.get("temp_min", active_limits["temp_min"]))
+        t_max = float(data.get("temp_max", active_limits["temp_max"]))
+        h_min = float(data.get("humid_min", active_limits["humid_min"]))
+        h_max = float(data.get("humid_max", active_limits["humid_max"]))
 
         old_phase = active_limits.get("phase_name", "-")
         active_limits.update({
@@ -121,64 +119,47 @@ def on_message(client, userdata, msg):
 
 
 def generate_sensor_reading():
-    """Menghasilkan pembacaan suhu dan kelembapan yang realistis sesuai batas aktif"""
+    """Menghasilkan pembacaan suhu dan kelembapan realistis"""
     t_min = active_limits["temp_min"]
     t_max = active_limits["temp_max"]
     h_min = active_limits["humid_min"]
     h_max = active_limits["humid_max"]
 
-    # Menghasilkan nilai dengan variasi realistis di sekitar rentang ideal
-    temp = round(random.uniform(t_min - 0.8, t_max + 0.8), 2)
-    humid = round(random.uniform(h_min - 1.5, h_max + 1.5), 2)
+    temp = round(random.uniform(t_min - 0.5, t_max + 0.5), 2)
+    humid = round(random.uniform(h_min - 1.0, h_max + 1.0), 2)
 
-    # Pastikan dalam batas fisik 0 - 100
     temp = max(0.0, min(100.0, temp))
     humid = max(0.0, min(100.0, humid))
 
-    # Cek status
-    status = "NORMAL"
-    if temp < t_min or temp > t_max or humid < h_min or humid > h_max:
-        status = "ALERT"
-
-    return temp, humid, status
+    return temp, humid
 
 
 def publish_environment_data(client):
-    """Mengirim data sensor telemetri ke topik environmentData"""
-    global seq_count
-    seq_count += 1
+    """Mengirim hanya data temperature dan humidity bersih ke topik environmentData"""
+    global msg_count
+    msg_count += 1
 
-    temp, humid, status = generate_sensor_reading()
-    phase = active_limits.get("phase_name", "penetasan")
+    temp, humid = generate_sensor_reading()
 
+    # Payload bersih tanpa timestamp, seq, status, atau alias
     payload = {
-        "seq": seq_count,
-        "device_id": "ESP32-Maggot-01",
-        "phase_name": phase,
         "temperature": temp,
-        "humidity": humid,
-        "temp": temp,
-        "humid": humid,
-        "status": status,
-        "timestamp": datetime.now().isoformat()
+        "humidity": humid
     }
 
     payload_json = json.dumps(payload)
     client.publish(TOPIC_PUB, payload_json, qos=1)
 
     now_time = datetime.now().strftime("%H:%M:%S")
-    status_badge = f"{C_GREEN}[NORMAL]{C_RESET}" if status == "NORMAL" else f"{C_RED}[ALERT]{C_RESET}"
-    
-    print(f"{C_CYAN}[{now_time}]{C_RESET} 📤 {C_BOLD}[KIRIM -> {TOPIC_PUB}]{C_RESET} #{seq_count:04d} | Fase: {C_BOLD}{phase:<10}{C_RESET} | Suhu: {C_BOLD}{temp:>5.2f}°C{C_RESET} | Kelembapan: {C_BOLD}{humid:>5.2f}%{C_RESET} | {status_badge}", flush=True)
+    print(f"{C_CYAN}[{now_time}]{C_RESET} 📤 {C_BOLD}[KIRIM -> {TOPIC_PUB}]{C_RESET} #{msg_count:04d} | Suhu: {C_BOLD}{temp:>5.2f}°C{C_RESET} | Kelembapan: {C_BOLD}{humid:>5.2f}%{C_RESET} | {C_DIM}JSON: {payload_json}{C_RESET}", flush=True)
 
 
 def publisher_thread(client):
-    """Loop background pengiriman data telemetri berkala"""
+    """Loop pengiriman data telemetri otomatis"""
     time.sleep(0.5)
     while is_running:
         if is_publishing:
             publish_environment_data(client)
-            # Sleep terbagi per 0.2 detik agar responsif saat dijeda atau keluar
             steps = int(DEFAULT_INTERVAL / 0.2)
             for _ in range(steps):
                 if not is_running or not is_publishing:
@@ -204,9 +185,9 @@ def user_input_thread(client):
                 status_txt = f"{C_GREEN}AKTIF (Kirim tiap {DEFAULT_INTERVAL}s){C_RESET}" if is_publishing else f"{C_YELLOW}DIJEDA / PAUSED{C_RESET}"
                 print(f"\n>> Status Simulator: {status_txt}", flush=True)
                 if is_publishing:
-                    print(">> Melanjutkan pengiriman data telemetri...", flush=True)
+                    print(">> Melanjutkan pengiriman data...", flush=True)
                 else:
-                    print(">> Pengiriman otomatis dijeda. Tekan [Enter] untuk melanjutkan, atau [N] untuk kirim manual.", flush=True)
+                    print(">> Pengiriman otomatis dijeda. Tekan [Enter] untuk lanjut, atau [N] untuk kirim manual.", flush=True)
         except (EOFError, KeyboardInterrupt):
             is_running = False
             break
@@ -219,8 +200,8 @@ def main():
     print(f"{C_BOLD}   SIMULATOR MIKROKONTROLER IOT MAGGOT (ESP32){C_RESET}", flush=True)
     print(f"{C_BOLD}{'=' * 70}{C_RESET}", flush=True)
     print(f" • Target Broker   : {C_CYAN}{BROKER_HOST}:{BROKER_PORT}{C_RESET}", flush=True)
-    print(f" • Topik Publish   : {C_GREEN}{TOPIC_PUB}{C_RESET} (Kirim suhu & kelembapan tiap {DEFAULT_INTERVAL}s)", flush=True)
-    print(f" • Topik Subscribe : {C_MAGENTA}{TOPIC_SUB}{C_RESET} (Menerima batas lingkungan dari Web)", flush=True)
+    print(f" • Topik Publish   : {C_GREEN}{TOPIC_PUB}{C_RESET} ({{\"temperature\": ..., \"humidity\": ...}})", flush=True)
+    print(f" • Topik Subscribe : {C_MAGENTA}{TOPIC_SUB}{C_RESET} (Batas lingkungan tanpa field redundan)", flush=True)
     print(f" • Kontrol         : Tekan {C_BOLD}[Enter]{C_RESET} Jeda/Lanjut | {C_BOLD}[N]{C_RESET} Kirim Instan | {C_BOLD}[Q]{C_RESET} Keluar", flush=True)
     print(f"{C_BOLD}{'=' * 70}{C_RESET}\n", flush=True)
 
@@ -238,14 +219,11 @@ def main():
         client.loop_start()
     except Exception as e:
         print(f"{C_RED}✖ Tidak dapat terhubung ke broker MQTT di {BROKER_HOST}:{BROKER_PORT}: {e}{C_RESET}", flush=True)
-        print(f"{C_YELLOW}Pastikan container broker Mosquitto sedang aktif (misal: docker compose up -d di folder testing).{C_RESET}\n", flush=True)
         return
 
-    # Mulai thread publisher
     pub_t = threading.Thread(target=publisher_thread, args=(client,), daemon=True)
     pub_t.start()
 
-    # Mulai thread input keyboard
     input_t = threading.Thread(target=user_input_thread, args=(client,), daemon=True)
     input_t.start()
 

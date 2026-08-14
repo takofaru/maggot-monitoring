@@ -45,7 +45,7 @@ class MqttService
     }
 
     /**
-     * Sync and publish active phase limits to 'environmentLimit' topic.
+     * Sync and publish active phase limits to 'environmentLimit' topic without redundant keys.
      *
      * @param string|null $phaseName
      * @return bool
@@ -67,15 +67,11 @@ class MqttService
         }
 
         $payload = [
-            'phase_name'  => $phaseName,
-            'temp_min'    => (float) $setting->temp_bottom,
-            'temp_max'    => (float) $setting->temp_top,
-            'humid_min'   => (float) $setting->humid_bottom,
-            'humid_max'   => (float) $setting->humid_top,
-            'TempBottom'  => (float) $setting->temp_bottom,
-            'TempTop'     => (float) $setting->temp_top,
-            'HumidBottom' => (float) $setting->humid_bottom,
-            'HumidTop'    => (float) $setting->humid_top,
+            'phase_name' => $phaseName,
+            'temp_min'   => (float) $setting->temp_bottom,
+            'temp_max'   => (float) $setting->temp_top,
+            'humid_min'  => (float) $setting->humid_bottom,
+            'humid_max'  => (float) $setting->humid_top,
         ];
 
         return self::publish('environmentLimit', $payload);
