@@ -172,7 +172,7 @@ new class extends Component
 ?>
 
 <div wire:poll.5s class="space-y-(--size-26) w-full">
-    <!-- Header Dashboard & Status Indikator di Samping Judul -->
+    <!-- Header Dashboard & Status Indikator di Samping Judul & Tombol Lonceng Aktivitas -->
     <div class="flex items-center justify-between">
         <div class="flex items-center gap-3.5">
             <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
@@ -182,6 +182,87 @@ new class extends Component
             <!-- Dot Status Perangkat IoT di Samping Judul -->
             <div class="w-7 h-7 rounded-full bg-[#E3EFE9] flex items-center justify-center shrink-0" title="{{ $isDeviceOnline ? 'Perangkat Online' : 'Perangkat Offline' }}">
                 <span class="w-2.5 h-2.5 rounded-full {{ $isDeviceOnline ? 'bg-[#163428]' : 'bg-red-500' }}"></span>
+            </div>
+        </div>
+
+        <!-- Tombol Lonceng Notifikasi & Aktivitas (Dropdown Popover) -->
+        <div class="relative" x-data="{ open: false }">
+            <button
+                type="button"
+                @click="open = !open"
+                class="relative p-2.5 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) hover:bg-gray-50 focus:outline-none shadow-xs transition-colors cursor-pointer flex items-center justify-center text-(--prime-colour)"
+                title="Lihat Aktivitas & Notifikasi"
+            >
+                <x-lucide-bell class="w-5 h-5"/>
+                
+                @if(count($activities) > 0)
+                    <span class="absolute -top-1 -right-1 flex h-4 w-4">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[9px] font-bold text-white items-center justify-center leading-none">
+                            {{ count($activities) }}
+                        </span>
+                    </span>
+                @endif
+            </button>
+
+            <!-- Dropdown Popover List Aktivitas -->
+            <div
+                x-show="open"
+                @click.outside="open = false"
+                x-transition:enter="transition ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-95 transform translate-y-2"
+                x-transition:enter-end="opacity-100 scale-100 transform translate-y-0"
+                x-transition:leave="transition ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100 transform translate-y-0"
+                x-transition:leave-end="opacity-0 scale-95 transform translate-y-2"
+                x-cloak
+                class="absolute right-0 mt-2 w-80 sm:w-96 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xl z-50 overflow-hidden"
+            >
+                <!-- Header Dropdown -->
+                <div class="p-3.5 border-b border-gray-100 bg-gray-50/75 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <x-lucide-bell class="w-4 h-4 text-(--prime-colour)"/>
+                        <span class="font-bold text-sm text-(--prime-colour)">Aktivitas & Peringatan</span>
+                    </div>
+                    <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
+                        {{ count($activities) }} Catatan
+                    </span>
+                </div>
+
+                <!-- Isi Daftar Aktivitas -->
+                <div class="max-h-80 overflow-y-auto p-3 flex flex-col gap-2.5 divide-y divide-gray-50">
+                    @forelse($activities as $act)
+                        <div class="pt-2 first:pt-0 flex items-start gap-2.5">
+                            <div class="p-2 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
+                                @if($act['type'] === 'temp_low')
+                                    <x-lucide-thermometer-snowflake class="w-4 h-4"/>
+                                @elseif($act['type'] === 'temp_high')
+                                    <x-lucide-thermometer-sun class="w-4 h-4"/>
+                                @elseif(str_contains($act['type'], 'humid'))
+                                    <x-lucide-droplets class="w-4 h-4"/>
+                                @else
+                                    <x-lucide-clipboard-check class="w-4 h-4"/>
+                                @endif
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h4 class="font-bold text-xs text-gray-900 leading-tight">
+                                    {{ $act['title'] }}
+                                </h4>
+                                <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
+                                    {{ $act['desc'] }}
+                                </p>
+                                <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
+                                    {{ $act['time'] }}
+                                </span>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="text-center py-6 text-gray-400 text-xs">
+                            <x-lucide-bell-off class="w-6 h-6 mx-auto mb-1.5 opacity-40"/>
+                            Belum ada aktivitas atau peringatan tercatat.
+                        </div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>
@@ -207,134 +288,85 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Baris Atas: 3 Kartu KPI (Kiri, Span 8) & Aktivitas (Kanan Atas, Span 4) -->
-    <div class="grid grid-cols-12 gap-(--size-26) w-full items-stretch">
-        <!-- 3 KPI Cards (Span 8) -->
-        <div class="col-span-8 grid grid-cols-3 gap-(--size-26)">
-            <!-- 1. Total Pakan Kumulatif -->
-            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Total Pakan Kumulatif
-                    </span>
+    <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) -->
+    <div class="grid grid-cols-3 gap-(--size-26) w-full">
+        <!-- 1. Total Pakan Kumulatif -->
+        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
                 </div>
-                <div>
-                    <div class="flex items-baseline gap-2 flex-nowrap">
-                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($totalFeed, 1) }}
-                        </span>
-                        <span class="text-base font-bold text-gray-500">kg</span>
-                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
-                            {{ $feedDelta >= 0 ? '+' : '' }}{{ number_format($feedDelta, 1) }}kg dari sebelumnya
-                        </span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1.5">
-                        Diperbaharui pada {{ $lastUpdateDate }}
-                    </p>
-                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Total Pakan Kumulatif
+                </span>
             </div>
-
-            <!-- 2. Berat Maggot -->
-            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Berat Maggot
+            <div>
+                <div class="flex items-baseline gap-2 flex-nowrap">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($totalFeed, 1) }}
+                    </span>
+                    <span class="text-base font-bold text-gray-500">kg</span>
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                        {{ $feedDelta >= 0 ? '+' : '' }}{{ number_format($feedDelta, 1) }}kg dari sebelumnya
                     </span>
                 </div>
-                <div>
-                    <div class="flex items-baseline gap-2 flex-nowrap">
-                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($latestMaggotWeight, 1) }}
-                        </span>
-                        <span class="text-base font-bold text-gray-500">kg</span>
-                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
-                            {{ $maggotDelta >= 0 ? '+' : '' }}{{ number_format($maggotDelta, 1) }}kg dari sebelumnya
-                        </span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1.5">
-                        Diperbaharui pada {{ $lastUpdateDate }}
-                    </p>
-                </div>
-            </div>
-
-            <!-- 3. Konversi Rasio Pakan Sementara (FCR) -->
-            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Konversi Rasio Pakan Sementara
-                    </span>
-                </div>
-                <div>
-                    <div class="flex items-baseline gap-1.5 flex-nowrap">
-                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($fcr, 1) }}
-                        </span>
-                        <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
-                    </div>
-                    <div class="mt-2">
-                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
-                            {{ $fcrDelta >= 0 ? '+' : '' }}{{ number_format($fcrDelta, 1) }} dari sebelumnya
-                        </span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-1.5">
-                        Diperbaharui pada {{ $lastUpdateDate }}
-                    </p>
-                </div>
+                <p class="text-xs text-gray-400 mt-1.5">
+                    Diperbaharui pada {{ $lastUpdateDate }}
+                </p>
             </div>
         </div>
 
-        <!-- 4. Aktivitas (Kanan Atas, Span 4) -->
-        <div class="col-span-4 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16) border-b pb-3">
+        <!-- 2. Berat Maggot -->
+        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-activity class="w-(--size-26) h-(--size-26)"/>
+                    <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
                 </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
-                    Aktivitas
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Berat Maggot
                 </span>
             </div>
+            <div>
+                <div class="flex items-baseline gap-2 flex-nowrap">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($latestMaggotWeight, 1) }}
+                    </span>
+                    <span class="text-base font-bold text-gray-500">kg</span>
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                        {{ $maggotDelta >= 0 ? '+' : '' }}{{ number_format($maggotDelta, 1) }}kg dari sebelumnya
+                    </span>
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5">
+                    Diperbaharui pada {{ $lastUpdateDate }}
+                </p>
+            </div>
+        </div>
 
-            <!-- List Item Aktivitas & Peringatan -->
-            <div class="flex flex-col gap-2 max-h-[140px] overflow-y-auto pr-1">
-                @forelse($activities as $act)
-                    <div class="p-2.5 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-2 shadow-2xs">
-                        <div class="p-1.5 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
-                            @if($act['type'] === 'temp_low')
-                                <x-lucide-thermometer-snowflake class="w-4 h-4"/>
-                            @elseif($act['type'] === 'temp_high')
-                                <x-lucide-thermometer-sun class="w-4 h-4"/>
-                            @elseif(str_contains($act['type'], 'humid'))
-                                <x-lucide-droplets class="w-4 h-4"/>
-                            @else
-                                <x-lucide-clipboard-check class="w-4 h-4"/>
-                            @endif
-                        </div>
-                        <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-xs text-gray-900 leading-tight">
-                                {{ $act['title'] }}
-                            </h4>
-                            <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
-                                {{ $act['desc'] }}
-                            </p>
-                            <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
-                                {{ $act['time'] }}
-                            </span>
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-5 text-gray-400 text-xs">
-                        Belum ada aktivitas atau peringatan tercatat.
-                    </div>
-                @endforelse
+        <!-- 3. Konversi Rasio Pakan Sementara (FCR) -->
+        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
+                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Konversi Rasio Pakan Sementara
+                </span>
+            </div>
+            <div>
+                <div class="flex items-baseline gap-1.5 flex-nowrap">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($fcr, 1) }}
+                    </span>
+                    <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
+                </div>
+                <div class="mt-2">
+                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                        {{ $fcrDelta >= 0 ? '+' : '' }}{{ number_format($fcrDelta, 1) }} dari sebelumnya
+                    </span>
+                </div>
+                <p class="text-xs text-gray-400 mt-1.5">
+                    Diperbaharui pada {{ $lastUpdateDate }}
+                </p>
             </div>
         </div>
     </div>
