@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('phase_settings', function (Blueprint $table) {
             $table->id()->autoIncrement()->primary();
             $table->integer('order');
-            $table->string('phase_name');
+            $table->enum('phase_name', ['penetasan', 'pembesaran', 'prepupa']);
             $table->decimal('temp_bottom', 8, 2);
             $table->decimal('temp_top', 8, 2);
             $table->decimal('humid_bottom', 8, 2);

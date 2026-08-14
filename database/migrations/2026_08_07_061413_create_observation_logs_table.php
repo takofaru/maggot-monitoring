@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('observation_logs', function (Blueprint $table) {
             $table->id()->autoIncrement()->primary();
             $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();
-            $table->string('phase_name');
+            $table->enum('phase_name', ['penetasan', 'pembesaran', 'prepupa']);
             $table->foreignId('environment_log_id')->constrained()->cascadeOnDelete();
             $table->date('timestamp');
             $table->decimal('feed_weight', 8, 2)->default(0);

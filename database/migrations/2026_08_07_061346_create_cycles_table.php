@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id()->autoIncrement()->primary();
             $table->date('start_date');
             $table->date('end_date')->nullable();
-            $table->string('current_phase');
+            $table->enum('current_phase', ['penetasan', 'pembesaran', 'prepupa', 'panen']);
             $table->boolean('is_active');
             $table->timestamps();
         });

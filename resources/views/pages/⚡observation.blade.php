@@ -24,7 +24,7 @@ new class extends Component
     // Form Field Properties
     public $temp = '';
     public $humid = '';
-    public bool $useNewEnvironmentLog = false;
+    public bool $useManualEnvLog = false;
     public $feed = '';
     public $maggot = '';
 
@@ -56,32 +56,43 @@ new class extends Component
         if (!$this->selectedCycleId) return;
 
         $cycle = Cycle::find($this->selectedCycleId);
-        if (!$cycle) return;
+        if (!$cycle || !$cycle->is_active) return;
 
-        $phases = PhaseSetting::orderBy('order')->pluck('phase_name')->toArray();
-        if (empty($phases)) {
-            $phases = ['Penetasan', 'Grow Out', 'Prepupa', 'Panen'];
-        } elseif (!in_array('Panen', $phases)) {
-            $phases[] = 'Panen';
+        $currentPhase = strtolower($cycle->current_phase);
+
+        // Jika sudah di tahap prepupa, menyelesaikan siklus & menetapkannya sebagai panen
+        if ($currentPhase === 'prepupa') {
+            $cycle->update([
+                'current_phase' => 'panen',
+                'is_active'     => false,
+                'end_date'      => now()->toDateString(),
+            ]);
+            $this->isSelectedCurrent = false;
+            $this->flashMessage = "Siklus {$cycle->id} telah selesai dan berhasil ditetapkan sebagai Panen.";
+            return;
         }
 
-        $currentIndex = array_search($cycle->current_phase, $phases);
-        if ($currentIndex === false) {
-            $nextPhase = $phases[0];
+        // Transisi fase: penetasan -> pembesaran -> prepupa
+        $phases = ['penetasan', 'pembesaran', 'prepupa'];
+        $currentIndex = array_search($currentPhase, $phases);
+
+        if ($currentIndex === false || $currentIndex === null) {
+            $nextPhase = 'penetasan';
         } else {
-            $nextIndex = ($currentIndex + 1) % count($phases);
+            $nextIndex = min(count($phases) - 1, $currentIndex + 1);
             $nextPhase = $phases[$nextIndex];
         }
 
         $cycle->update(['current_phase' => $nextPhase]);
-        $this->flashMessage = "Fase berhasil diubah menjadi {$nextPhase}.";
+        $this->flashMessage = "Fase berhasil diubah menjadi " . ucfirst($nextPhase) . ".";
     }
 
     public function openCreateModal()
     {
         $this->resetForm();
+        $this->useManualEnvLog = false;
         
-        // Ambil data lingkungan terkini sebagai saran awal
+        // Ambil data telemetri otomatis terkini dari siklus
         $latestEnv = EnvironmentLog::where('cycle_id', $this->selectedCycleId)->latest('id')->first();
         if ($latestEnv) {
             $this->temp = $latestEnv->temperature;
@@ -101,8 +112,20 @@ new class extends Component
         $this->maggot = $log->maggot_weight;
         $this->temp = $log->environmentLog?->temperature ?? '';
         $this->humid = $log->environmentLog?->humidity ?? '';
-        $this->useNewEnvironmentLog = false;
+        $this->useManualEnvLog = false;
         $this->openForm = true;
+    }
+
+    public function updatedUseManualEnvLog($value)
+    {
+        if (!$value) {
+            // Ketika switch dimatikan, kembalikan ke data telemetri otomatis sensor terkini
+            $latestEnv = EnvironmentLog::where('cycle_id', $this->selectedCycleId)->latest('id')->first();
+            if ($latestEnv) {
+                $this->temp = $latestEnv->temperature;
+                $this->humid = $latestEnv->humidity;
+            }
+        }
     }
 
     public function closeForm()
@@ -113,7 +136,7 @@ new class extends Component
 
     public function resetForm()
     {
-        $this->reset(['temp', 'humid', 'feed', 'maggot', 'useNewEnvironmentLog', 'editingId']);
+        $this->reset(['temp', 'humid', 'feed', 'maggot', 'useManualEnvLog', 'editingId']);
         $this->resetErrorBag();
     }
 
@@ -141,8 +164,8 @@ new class extends Component
 
         // Penanganan EnvironmentLog
         $envLogId = null;
-        if ($this->useNewEnvironmentLog || $this->editingId === null) {
-            // Buat entri environment log baru jika diaktifkan atau data baru
+        if ($this->useManualEnvLog) {
+            // Pengguna memilih input manual: buat record environment log baru
             $envLog = EnvironmentLog::create([
                 'cycle_id'    => $cycle->id,
                 'timestamp'   => now(),
@@ -151,7 +174,7 @@ new class extends Component
             ]);
             $envLogId = $envLog->id;
         } else {
-            // Gunakan EnvironmentLog terakhir yang ada
+            // Otomatis: gunakan data environment log terakhir dari siklus
             $latestEnv = EnvironmentLog::where('cycle_id', $cycle->id)->latest('id')->first();
             if ($latestEnv) {
                 $envLogId = $latestEnv->id;
@@ -166,6 +189,11 @@ new class extends Component
             }
         }
 
+        // Tentukan fase (enum: penetasan, pembesaran, prepupa)
+        $phaseName = in_array(strtolower($cycle->current_phase), ['penetasan', 'pembesaran', 'prepupa'])
+            ? strtolower($cycle->current_phase)
+            : 'prepupa';
+
         if ($this->editingId) {
             // Mode Update Catatan
             $log = ObservationLog::findOrFail($this->editingId);
@@ -179,7 +207,7 @@ new class extends Component
             // Mode Tambah Catatan Baru
             ObservationLog::create([
                 'cycle_id'           => $cycle->id,
-                'phase_name'         => $cycle->current_phase ?? 'Penetasan',
+                'phase_name'         => $phaseName,
                 'environment_log_id' => $envLogId,
                 'timestamp'          => now()->toDateString(),
                 'feed_weight'        => $this->feed,
@@ -225,7 +253,7 @@ new class extends Component
             <div
                 x-data="{ show: true }"
                 x-show="show"
-                x-init="setTimeout(() => show = false, 4000)"
+                x-init="setTimeout(() => show = false, 4500)"
                 class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
             >
                 <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
@@ -279,17 +307,28 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Fase Terkini & Tombol Ganti Fase -->
+            <!-- Fase Terkini & Tombol Ganti Fase dengan Konfirmasi -->
+            @php
+                $activeCycleObj = $cycleData->firstWhere('id', $selectedCycleId);
+                $currPhase = strtolower($activeCycleObj->current_phase ?? '');
+                $confirmMsg = match($currPhase) {
+                    'penetasan' => 'Yakin ingin melanjutkan ke fase Pembesaran?',
+                    'pembesaran' => 'Yakin ingin melanjutkan ke fase Prepupa?',
+                    'prepupa'   => 'Siklus berada pada tahap Prepupa. Melanjutkan akan menyelesaikan siklus ini dan menetapkannya sebagai Panen. Lanjutkan?',
+                    default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
+                };
+            @endphp
             <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px]">
                 <div class="gap-(--size-6)">
                     Fase terkini:
-                    <span class="font-bold text-(--prime-colour)">{{ $cycleData->firstWhere('id', $selectedCycleId)->current_phase ?? '-' }}</span>
+                    <span class="font-bold text-(--prime-colour) capitalize">{{ $activeCycleObj->current_phase ?? '-' }}</span>
                 </div>
-                @if($isSelectedCurrent)
+                @if($isSelectedCurrent && $currPhase !== 'panen')
                     <button
                         wire:click="nextPhase"
+                        wire:confirm="{{ $confirmMsg }}"
                         type="button"
-                        title="Ubah ke fase berikutnya"
+                        title="{{ $currPhase === 'prepupa' ? 'Selesaikan siklus dan tetapkan sebagai Panen' : 'Lanjut ke fase berikutnya' }}"
                         class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) px-(--size-16) py-(--size-6) input-button text-(--fg-colour) cursor-pointer hover:opacity-90"
                     >
                         <x-lucide-chevrons-right class="w-(--size-26)"/>
@@ -330,7 +369,7 @@ new class extends Component
                     <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
                         <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y') : '-' }}</td>
                         <td>
-                            <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs">
+                            <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs capitalize">
                                 {{ $item->phase_name }}
                             </span>
                         </td>
@@ -399,18 +438,19 @@ new class extends Component
                         </button>
                     </div>
 
-                    <!-- Input Suhu & Kelembapan -->
+                    <!-- Input Suhu & Kelembapan (Enabled/Disabled berdasarkan Switch) -->
                     <div class="flex flex-row gap-(--size-16)">
                         <div class="input-container w-full">
                             <label for="temp">Suhu yang Diamati</label>
-                            <div class="flex flex-row items-center justify-between input-text @error('temp') border-red-500 @enderror">
+                            <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('temp') border-red-500 @enderror">
                                 <input
                                     wire:model="temp"
                                     id="temp"
                                     type="number"
                                     step="0.01"
                                     placeholder="Contoh: 28.5"
-                                    class="w-full bg-transparent focus:outline-none"
+                                    @disabled(!$useManualEnvLog)
+                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed"
                                 />
                                 <span class="text-gray-500 font-medium">&deg;C</span>
                             </div>
@@ -421,14 +461,15 @@ new class extends Component
 
                         <div class="input-container w-full">
                             <label for="humid">Kelembapan yang Diamati</label>
-                            <div class="flex flex-row items-center justify-between input-text @error('humid') border-red-500 @enderror">
+                            <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('humid') border-red-500 @enderror">
                                 <input
                                     wire:model="humid"
                                     id="humid"
                                     type="number"
                                     step="0.01"
                                     placeholder="Contoh: 70"
-                                    class="w-full bg-transparent focus:outline-none"
+                                    @disabled(!$useManualEnvLog)
+                                    class="w-full bg-transparent focus:outline-none disabled:opacity-75 disabled:cursor-not-allowed"
                                 />
                                 <span class="text-gray-500 font-medium">%</span>
                             </div>
@@ -438,17 +479,17 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Switch Penggunaan Data Lingkungan Baru -->
+                    <!-- Switch Penggunaan Data Manual -->
                     <div class="flex flex-row gap-(--size-10) items-center">
                         <label class="relative inline-flex items-center cursor-pointer">
                             <input
-                                wire:model="useNewEnvironmentLog"
+                                wire:model.live="useManualEnvLog"
                                 type="checkbox"
                                 class="sr-only peer"
                             />
                             <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-(--prime-colour)"></div>
                         </label>
-                        <span class="text-sm font-medium text-gray-700">Gunakan Data Suhu & Kelembapan Baru</span>
+                        <span class="text-sm font-medium text-gray-700">Menggunakan data suhu dan kelembapan secara manual</span>
                     </div>
 
                     <!-- Input Berat Pakan & Maggot -->

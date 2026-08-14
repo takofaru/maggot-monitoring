@@ -13,7 +13,7 @@ class DatabaseSeeder extends Seeder
         $phaseSettings = [
             [
                 'order'        => 1,
-                'phase_name'   => 'Penetasan',
+                'phase_name'   => 'penetasan',
                 'temp_bottom'  => 27.00,
                 'temp_top'     => 30.00,
                 'humid_bottom' => 60.00,
@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'order'        => 2,
-                'phase_name'   => 'Grow Out',
+                'phase_name'   => 'pembesaran',
                 'temp_bottom'  => 26.00,
                 'temp_top'     => 32.00,
                 'humid_bottom' => 60.00,
@@ -29,7 +29,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'order'        => 3,
-                'phase_name'   => 'Prepupa',
+                'phase_name'   => 'prepupa',
                 'temp_bottom'  => 25.00,
                 'temp_top'     => 29.00,
                 'humid_bottom' => 50.00,

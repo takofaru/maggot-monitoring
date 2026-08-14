@@ -45,15 +45,13 @@ class ObservationLogSeeder extends Seeder
                     break;
                 }
 
-                // Tentukan nama fase berdasarkan umur hari siklus
+                // Tentukan nama fase berdasarkan umur hari siklus (enum: penetasan, pembesaran, prepupa)
                 if ($day <= 5) {
-                    $phaseName = 'Penetasan';
+                    $phaseName = 'penetasan';
                 } elseif ($day <= 18) {
-                    $phaseName = 'Grow Out';
-                } elseif ($day <= 23) {
-                    $phaseName = 'Prepupa';
+                    $phaseName = 'pembesaran';
                 } else {
-                    $phaseName = 'Panen';
+                    $phaseName = 'prepupa';
                 }
 
                 // Cari log lingkungan yang paling dekat dengan tanggal dan siklus ini
