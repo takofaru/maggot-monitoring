@@ -1,7 +1,7 @@
 <div class="p-6 md:p-8 space-y-6 bg-[#F8F9FA] min-h-screen font-sans w-full">
 
     <!-- Title & Toolbar -->
-    <div class="flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-nowrap items-center justify-between gap-4">
         <h1 class="text-3xl font-extrabold text-gray-900">Laporan dan Analisis</h1>
 
         <!-- Filter Siklus (Jika Dibutuhkan) -->

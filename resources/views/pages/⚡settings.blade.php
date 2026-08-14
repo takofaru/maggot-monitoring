@@ -238,7 +238,7 @@ new class extends Component
     </div>
 
     <!-- Status Alat & Waktu Terakhir Terhubung (Persis settings.png) -->
-    <div wire:poll.10s class="flex flex-row items-center justify-between text-sm py-1 flex-wrap gap-2">
+    <div wire:poll.10s class="flex flex-row items-center justify-between text-sm py-1 flex-nowrap gap-2">
         <!-- Status Alat -->
         <div class="flex items-center gap-3 whitespace-nowrap shrink-0">
             <span class="font-bold text-(--text-colour) text-base">Status Alat:</span>

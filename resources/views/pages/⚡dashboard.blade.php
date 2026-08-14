@@ -185,7 +185,7 @@ new class extends Component
     </div>
 
     <!-- 3 Pill Badges Status Siklus (Persis dashboard.png) -->
-    <div class="flex flex-wrap items-center gap-(--size-10)">
+    <div class="flex flex-nowrap items-center gap-(--size-10)">
         <!-- Pill 1: Siklus ke -->
         <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
             <x-lucide-refresh-cw class="w-(--size-16) text-(--prime-colour)"/>
@@ -218,7 +218,7 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2 flex-wrap">
+                <div class="flex items-baseline gap-2 flex-nowrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($totalFeed, 1) }}
                     </span>
@@ -244,7 +244,7 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2 flex-wrap">
+                <div class="flex items-baseline gap-2 flex-nowrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($latestMaggotWeight, 1) }}
                     </span>
@@ -270,7 +270,7 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2 flex-wrap">
+                <div class="flex items-baseline gap-2 flex-nowrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($fcr, 1) }}
                     </span>

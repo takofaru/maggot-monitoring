@@ -1,7 +1,7 @@
 <div wire:poll.10s class="p-6 md:p-8 space-y-6 bg-[#F8F9FA] min-h-screen font-sans w-full">
 
     <!-- Top Status Badges -->
-    <div class="flex flex-wrap items-center gap-3">
+    <div class="flex flex-nowrap items-center gap-3">
         <span class="px-4 py-2 bg-white rounded-xl border border-gray-200 text-xs font-bold text-gray-700 shadow-sm flex items-center gap-2">
             <svg class="w-4 h-4 text-[#1A382B]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             Siklus ke: {{ sprintf('%02d', $cycleNumber) }}

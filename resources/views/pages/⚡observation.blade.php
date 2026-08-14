@@ -304,8 +304,8 @@ new class extends Component
     </div>
 
     <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah -->
-    <div class="inline-flex gap-(--size-10) justify-between w-full flex-wrap items-center">
-        <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+    <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
+        <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
             <!-- Dropdown Pilihan Siklus -->
             <div x-data="{ openDropdown: false }" class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                 <span>Siklus ke:</span>
