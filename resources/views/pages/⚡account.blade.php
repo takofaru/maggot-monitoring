@@ -386,7 +386,7 @@ new class extends Component
             </button>
         </div>
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full">
+        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) min-w-max w-full shadow-xs">
             <table class="w-full text-left border-collapse">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
@@ -559,17 +559,50 @@ new class extends Component
                             </div>
                         </div>
 
-                        <!-- 3. Baris 3: Peran (Role) -->
-                        <div class="input-container w-full min-w-0">
-                            <label for="userRole">Peran</label>
-                            <select
-                                wire:model="userRole"
-                                id="userRole"
-                                class="input-text cursor-pointer w-full bg-(--bg-colour)"
-                            >
-                                <option value="user">Pengguna (Siswa / Operator)</option>
-                                <option value="admin">Administrator</option>
-                            </select>
+                        <!-- 3. Baris 3: Peran (Role) dengan Custom Dropdown Alpine -->
+                        <div class="input-container w-full min-w-0" x-data="{ openRoleDropdown: false }">
+                            <label>Peran</label>
+                            <div class="relative w-full">
+                                <button
+                                    @click="openRoleDropdown = !openRoleDropdown"
+                                    type="button"
+                                    class="w-full rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer"
+                                >
+                                    <span>{{ $userRole === 'admin' ? 'Administrator' : 'Pengguna (Siswa / Operator)' }}</span>
+                                    <x-lucide-chevron-down class="w-(--size-16) shrink-0"/>
+                                </button>
+
+                                <div
+                                    x-show="openRoleDropdown"
+                                    @click.outside="openRoleDropdown = false"
+                                    x-transition.opacity.duration.200ms
+                                    class="absolute left-0 top-full mt-(--size-10) w-full bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
+                                    x-cloak
+                                >
+                                    <button
+                                        type="button"
+                                        wire:click="$set('userRole', 'user')"
+                                        @click="openRoleDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $userRole === 'user' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span class="font-semibold">Pengguna (Siswa / Operator)</span>
+                                        @if($userRole === 'user')
+                                            <x-lucide-check class="w-4 h-4 text-emerald-700 shrink-0" />
+                                        @endif
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click="$set('userRole', 'admin')"
+                                        @click="openRoleDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $userRole === 'admin' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span class="font-semibold">Administrator</span>
+                                        @if($userRole === 'admin')
+                                            <x-lucide-check class="w-4 h-4 text-emerald-700 shrink-0" />
+                                        @endif
+                                    </button>
+                                </div>
+                            </div>
                             @error('userRole')
                                 <span class="text-xs text-red-500 font-medium leading-none">{{ $message }}</span>
                             @enderror
