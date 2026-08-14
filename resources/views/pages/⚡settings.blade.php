@@ -216,7 +216,7 @@ new class extends Component
 };
 ?>
 
-<div wire:poll.5s class="space-y-(--size-26)">
+<div class="space-y-(--size-26)">
     <!-- Header & Notifikasi Flash -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
@@ -236,7 +236,7 @@ new class extends Component
     </div>
 
     <!-- Status Perangkat IoT & Datetime Terakhir Terhubung (Dibawah Judul) -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-(--size-16) px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+    <div wire:poll.5s class="flex flex-col sm:flex-row sm:items-center justify-between gap-(--size-16) px-(--size-26) py-(--size-16) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
         <div class="flex items-center gap-(--size-16)">
             <div class="p-3 bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0">
                 <x-lucide-cpu class="w-(--size-26) h-(--size-26)" />
@@ -280,7 +280,7 @@ new class extends Component
         </div>
     </div>
 
-    <form wire:submit="changePhaseSettings" id="changePhaseSettingsForm" class="space-y-(--size-26)">
+    <form wire:submit.prevent="changePhaseSettings" onsubmit="event.preventDefault();" id="changePhaseSettingsForm" class="space-y-(--size-26)">
         <!-- Grid 3 Fase: Penetasan, Pembesaran, Prepupa -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-(--size-26) w-full">
             
@@ -550,6 +550,7 @@ new class extends Component
         <!-- Tombol Simpan Pengaturan -->
         <button
             type="submit"
+            wire:click.prevent="changePhaseSettings"
             wire:loading.attr="disabled"
             class="input-button w-full cursor-pointer hover:opacity-90 flex items-center justify-center gap-2"
         >
