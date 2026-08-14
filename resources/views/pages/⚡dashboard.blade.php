@@ -195,86 +195,8 @@ new class extends Component
             </div>
         </div>
 
-        <!-- Tombol Lonceng Notifikasi & Aktivitas (Dropdown Popover) -->
-        <div class="relative" x-data="{ open: false }">
-            <button
-                type="button"
-                @click="open = !open"
-                class="relative p-2.5 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) hover:bg-gray-50 focus:outline-none shadow-xs transition-colors cursor-pointer flex items-center justify-center text-(--prime-colour)"
-                title="Lihat Aktivitas & Notifikasi"
-            >
-                <x-lucide-bell class="w-5 h-5"/>
-                
-                @if(count($activities) > 0)
-                    <span class="absolute -top-1 -right-1 flex h-4 w-4">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[9px] font-bold text-white items-center justify-center leading-none">
-                            {{ count($activities) }}
-                        </span>
-                    </span>
-                @endif
-            </button>
-
-            <!-- Dropdown Popover List Aktivitas -->
-            <div
-                x-show="open"
-                @click.outside="open = false"
-                x-transition:enter="transition ease-out duration-150"
-                x-transition:enter-start="opacity-0 scale-95 transform translate-y-2"
-                x-transition:enter-end="opacity-100 scale-100 transform translate-y-0"
-                x-transition:leave="transition ease-in duration-100"
-                x-transition:leave-start="opacity-100 scale-100 transform translate-y-0"
-                x-transition:leave-end="opacity-0 scale-95 transform translate-y-2"
-                x-cloak
-                class="absolute right-0 mt-2 w-80 sm:w-96 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xl z-50 overflow-hidden"
-            >
-                <!-- Header Dropdown -->
-                <div class="p-3.5 border-b border-gray-100 bg-gray-50/75 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-lucide-bell class="w-4 h-4 text-(--prime-colour)"/>
-                        <span class="font-bold text-sm text-(--prime-colour)">Aktivitas & Peringatan</span>
-                    </div>
-                    <span class="text-xs bg-gray-200 text-gray-700 px-2 py-0.5 rounded-full font-semibold">
-                        {{ count($activities) }} Catatan
-                    </span>
-                </div>
-
-                <!-- Isi Daftar Aktivitas -->
-                <div class="max-h-80 overflow-y-auto p-3 flex flex-col gap-2.5 divide-y divide-gray-50">
-                    @forelse($activities as $act)
-                        <div class="pt-2 first:pt-0 flex items-start gap-2.5">
-                            <div class="p-2 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
-                                @if($act['type'] === 'temp_low')
-                                    <x-lucide-thermometer-snowflake class="w-4 h-4"/>
-                                @elseif($act['type'] === 'temp_high')
-                                    <x-lucide-thermometer-sun class="w-4 h-4"/>
-                                @elseif(str_contains($act['type'], 'humid'))
-                                    <x-lucide-droplets class="w-4 h-4"/>
-                                @else
-                                    <x-lucide-clipboard-check class="w-4 h-4"/>
-                                @endif
-                            </div>
-                            <div class="min-w-0 flex-1">
-                                <h4 class="font-bold text-xs text-gray-900 leading-tight">
-                                    {{ $act['title'] }}
-                                </h4>
-                                <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
-                                    {{ $act['desc'] }}
-                                </p>
-                                <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
-                                    {{ $act['time'] }}
-                                </span>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-6 text-gray-400 text-xs">
-                            <x-lucide-bell-off class="w-6 h-6 mx-auto mb-1.5 opacity-40"/>
-                            Belum ada aktivitas atau peringatan tercatat.
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
+        <!-- Tombol Lonceng Notifikasi Global & Pop-up Toast -->
+        <livewire:notification-bell />
     </div>
 
     <!-- 3 Pill Badges Status Siklus -->

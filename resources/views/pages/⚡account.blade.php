@@ -226,9 +226,13 @@ new class extends Component
 ?>
 
 <div class="space-y-(--size-26) w-full">
-    <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
-        Manajemen Akun
-    </h1>
+    <!-- Header Halaman & Tombol Lonceng Notifikasi -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            Manajemen Akun
+        </h1>
+        <livewire:notification-bell />
+    </div>
 
     <div class="grid grid-cols-2 gap-(--size-26) w-full">
         <!-- Box Profil Saya -->

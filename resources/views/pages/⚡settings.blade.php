@@ -219,22 +219,25 @@ new class extends Component
 ?>
 
 <div class="space-y-(--size-26) w-full">
-    <!-- Header & Notifikasi Flash -->
+    <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
             Pengaturan Perangkat
         </h1>
-        @if ($flashMessage)
-            <div
-                x-data="{ show: true }"
-                x-show="show"
-                x-init="setTimeout(() => show = false, 5000)"
-                class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
-            >
-                <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{{ $flashMessage }}</span>
-            </div>
-        @endif
+        <div class="flex items-center gap-3">
+            @if ($flashMessage)
+                <div
+                    x-data="{ show: true }"
+                    x-show="show"
+                    x-init="setTimeout(() => show = false, 5000)"
+                    class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
+                >
+                    <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{{ $flashMessage }}</span>
+                </div>
+            @endif
+            <livewire:notification-bell />
+        </div>
     </div>
 
     <!-- Status Alat & Waktu Terakhir Terhubung (Persis settings.png) -->

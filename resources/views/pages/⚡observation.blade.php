@@ -239,10 +239,11 @@ new class extends Component
                 'maggot_weight'      => $this->maggot,
                 'environment_log_id' => $envLogId,
             ]);
+            \App\Services\NotificationService::logObservation($log, auth()->user(), isUpdate: true);
             $this->flashMessage = 'Catatan observasi berhasil diperbarui.';
         } else {
             // Mode Tambah Catatan Baru
-            ObservationLog::create([
+            $log = ObservationLog::create([
                 'cycle_id'           => $cycle->id,
                 'phase_name'         => $phaseName,
                 'environment_log_id' => $envLogId,
@@ -250,6 +251,7 @@ new class extends Component
                 'feed_weight'        => $this->feed,
                 'maggot_weight'      => $this->maggot,
             ]);
+            \App\Services\NotificationService::logObservation($log, auth()->user(), isUpdate: false);
             $this->flashMessage = 'Catatan observasi baru berhasil ditambahkan.';
         }
 
@@ -273,7 +275,7 @@ new class extends Component
     public function with(): array
     {
         return [
-            'cycleData' => Cycle::orderBy('id', 'asc')->get(),
+            'cycleData'       => Cycle::orderBy('id', 'asc')->get(),
             'observationData' => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
@@ -285,22 +287,25 @@ new class extends Component
 ?>
 
 <div class="space-y-(--size-26) w-full">
-    <!-- Judul & Flash Notification -->
-    <div class="flex items-center justify-between">
+    <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
+    <div class="flex flex-row justify-between w-full items-center">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
             Catatan Observasi
         </h1>
-        @if ($flashMessage)
-            <div
-                x-data="{ show: true }"
-                x-show="show"
-                x-init="setTimeout(() => show = false, 4500)"
-                class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
-            >
-                <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>{{ $flashMessage }}</span>
-            </div>
-        @endif
+        <div class="flex items-center gap-3">
+            @if ($flashMessage)
+                <div
+                    x-data="{ show: true }"
+                    x-show="show"
+                    x-init="setTimeout(() => show = false, 4500)"
+                    class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
+                >
+                    <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{{ $flashMessage }}</span>
+                </div>
+            @endif
+            <livewire:notification-bell />
+        </div>
     </div>
 
     <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah -->

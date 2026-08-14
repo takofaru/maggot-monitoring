@@ -176,11 +176,12 @@ new class extends Component
 ?>
 
 <div class="space-y-(--size-26) w-full">
-    <!-- Header Halaman -->
+    <!-- Header Halaman & Tombol Lonceng Notifikasi -->
     <div class="flex items-center justify-between">
         <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
             Laporan Budidaya
         </h1>
+        <livewire:notification-bell />
     </div>
 
     <!-- Toolbar: Selector Siklus, Status Siklus, & Tombol Aksi (Harmonized with observation.blade.php) -->

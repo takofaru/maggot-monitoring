@@ -83,6 +83,10 @@ class MqttListenCommand extends Command
                     // Simpan timestamp terakhir di cache untuk deteksi status instan
                     Cache::put('device_last_seen', $now->toIso8601String(), 120);
 
+                    // Evaluasi anomali suhu & kelembapan serta status perangkat
+                    \App\Services\NotificationService::evaluateEnvironmentTelemetry((float) $temp, (float) $humid, $activeCycle);
+                    \App\Services\NotificationService::evaluateDeviceStatus(true);
+
                     $this->line(sprintf(
                         "<info>[%s]</info> 📥 <comment>[%s]</comment> Suhu: <bold>%.2f°C</bold> | Humid: <bold>%.2f%%</bold> -> Tersimpan ke DB (ID: %d, Siklus: %s)",
                         $now->format('H:i:s'),
