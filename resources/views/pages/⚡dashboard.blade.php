@@ -172,19 +172,21 @@ new class extends Component
 ?>
 
 <div wire:poll.5s class="space-y-(--size-26) w-full">
-    <!-- Header Dashboard & Status Indikator (Persis dashboard.png) -->
+    <!-- Header Dashboard & Status Indikator di Samping Judul -->
     <div class="flex items-center justify-between">
-        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
-            Dashboard
-        </h1>
+        <div class="flex items-center gap-3.5">
+            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                Dashboard
+            </h1>
 
-        <!-- Dot Status Perangkat IoT Persis dashboard.png -->
-        <div class="w-8 h-8 rounded-full bg-[#E3EFE9] flex items-center justify-center shrink-0">
-            <span class="w-3 h-3 rounded-full {{ $isDeviceOnline ? 'bg-[#163428]' : 'bg-red-500' }}"></span>
+            <!-- Dot Status Perangkat IoT di Samping Judul -->
+            <div class="w-7 h-7 rounded-full bg-[#E3EFE9] flex items-center justify-center shrink-0" title="{{ $isDeviceOnline ? 'Perangkat Online' : 'Perangkat Offline' }}">
+                <span class="w-2.5 h-2.5 rounded-full {{ $isDeviceOnline ? 'bg-[#163428]' : 'bg-red-500' }}"></span>
+            </div>
         </div>
     </div>
 
-    <!-- 3 Pill Badges Status Siklus (Persis dashboard.png) -->
+    <!-- 3 Pill Badges Status Siklus -->
     <div class="flex flex-nowrap items-center gap-(--size-10)">
         <!-- Pill 1: Siklus ke -->
         <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
@@ -205,94 +207,143 @@ new class extends Component
         </div>
     </div>
 
-    <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) Persis dashboard.png -->
-    <div class="grid grid-cols-3 gap-(--size-26) w-full">
-        <!-- 1. Total Pakan Kumulatif -->
-        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
-                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
+    <!-- Baris Atas: 3 Kartu KPI (Kiri, Span 8) & Aktivitas (Kanan Atas, Span 4) -->
+    <div class="grid grid-cols-12 gap-(--size-26) w-full items-stretch">
+        <!-- 3 KPI Cards (Span 8) -->
+        <div class="col-span-8 grid grid-cols-3 gap-(--size-26)">
+            <!-- 1. Total Pakan Kumulatif -->
+            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        Total Pakan Kumulatif
+                    </span>
                 </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    Total Pakan Kumulatif
-                </span>
+                <div>
+                    <div class="flex items-baseline gap-2 flex-nowrap">
+                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                            {{ number_format($totalFeed, 1) }}
+                        </span>
+                        <span class="text-base font-bold text-gray-500">kg</span>
+                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                            {{ $feedDelta >= 0 ? '+' : '' }}{{ number_format($feedDelta, 1) }}kg dari sebelumnya
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1.5">
+                        Diperbaharui pada {{ $lastUpdateDate }}
+                    </p>
+                </div>
             </div>
-            <div>
-                <div class="flex items-baseline gap-2 flex-nowrap">
-                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                        {{ number_format($totalFeed, 1) }}
-                    </span>
-                    <span class="text-base font-bold text-gray-500">kg</span>
-                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
-                        {{ $feedDelta >= 0 ? '+' : '' }}{{ number_format($feedDelta, 1) }}kg dari sebelumnya
+
+            <!-- 2. Berat Maggot -->
+            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        Berat Maggot
                     </span>
                 </div>
-                <p class="text-xs text-gray-400 mt-1.5">
-                    Diperbaharui pada {{ $lastUpdateDate }}
-                </p>
+                <div>
+                    <div class="flex items-baseline gap-2 flex-nowrap">
+                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                            {{ number_format($latestMaggotWeight, 1) }}
+                        </span>
+                        <span class="text-base font-bold text-gray-500">kg</span>
+                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                            {{ $maggotDelta >= 0 ? '+' : '' }}{{ number_format($maggotDelta, 1) }}kg dari sebelumnya
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1.5">
+                        Diperbaharui pada {{ $lastUpdateDate }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. Konversi Rasio Pakan Sementara (FCR) -->
+            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        Konversi Rasio Pakan Sementara
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-1.5 flex-nowrap">
+                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                            {{ number_format($fcr, 1) }}
+                        </span>
+                        <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
+                    </div>
+                    <div class="mt-2">
+                        <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
+                            {{ $fcrDelta >= 0 ? '+' : '' }}{{ number_format($fcrDelta, 1) }} dari sebelumnya
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1.5">
+                        Diperbaharui pada {{ $lastUpdateDate }}
+                    </p>
+                </div>
             </div>
         </div>
 
-        <!-- 2. Berat Maggot -->
-        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
+        <!-- 4. Aktivitas (Kanan Atas, Span 4) -->
+        <div class="col-span-4 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16) border-b pb-3">
                 <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
+                    <x-lucide-activity class="w-(--size-26) h-(--size-26)"/>
                 </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    Berat Maggot
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
+                    Aktivitas
                 </span>
             </div>
-            <div>
-                <div class="flex items-baseline gap-2 flex-nowrap">
-                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                        {{ number_format($latestMaggotWeight, 1) }}
-                    </span>
-                    <span class="text-base font-bold text-gray-500">kg</span>
-                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
-                        {{ $maggotDelta >= 0 ? '+' : '' }}{{ number_format($maggotDelta, 1) }}kg dari sebelumnya
-                    </span>
-                </div>
-                <p class="text-xs text-gray-400 mt-1.5">
-                    Diperbaharui pada {{ $lastUpdateDate }}
-                </p>
-            </div>
-        </div>
 
-        <!-- 3. Konversi Rasio Pakan Sementara (FCR) -->
-        <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
-                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
-                </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    Konversi Rasio Pakan Sementara
-                </span>
-            </div>
-            <div>
-                <div class="flex items-baseline gap-1.5 flex-nowrap">
-                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                        {{ number_format($fcr, 1) }}
-                    </span>
-                    <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
-                </div>
-                <div class="mt-2">
-                    <span class="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full whitespace-nowrap">
-                        {{ $fcrDelta >= 0 ? '+' : '' }}{{ number_format($fcrDelta, 1) }} dari sebelumnya
-                    </span>
-                </div>
-                <p class="text-xs text-gray-400 mt-1.5">
-                    Diperbaharui pada {{ $lastUpdateDate }}
-                </p>
+            <!-- List Item Aktivitas & Peringatan -->
+            <div class="flex flex-col gap-2 max-h-[140px] overflow-y-auto pr-1">
+                @forelse($activities as $act)
+                    <div class="p-2.5 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-2 shadow-2xs">
+                        <div class="p-1.5 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
+                            @if($act['type'] === 'temp_low')
+                                <x-lucide-thermometer-snowflake class="w-4 h-4"/>
+                            @elseif($act['type'] === 'temp_high')
+                                <x-lucide-thermometer-sun class="w-4 h-4"/>
+                            @elseif(str_contains($act['type'], 'humid'))
+                                <x-lucide-droplets class="w-4 h-4"/>
+                            @else
+                                <x-lucide-clipboard-check class="w-4 h-4"/>
+                            @endif
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <h4 class="font-bold text-xs text-gray-900 leading-tight">
+                                {{ $act['title'] }}
+                            </h4>
+                            <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
+                                {{ $act['desc'] }}
+                            </p>
+                            <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
+                                {{ $act['time'] }}
+                            </span>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-5 text-gray-400 text-xs">
+                        Belum ada aktivitas atau peringatan tercatat.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
 
-    <!-- Baris 1: Suhu (Kiri) & Aktivitas (Kanan) Persis dashboard.png -->
-    <div class="grid grid-cols-3 gap-(--size-26) w-full items-stretch">
+    <!-- Baris Bawah: Suhu & Kelembapan Bersampingan (Grid 2 Kolom) -->
+    <div class="grid grid-cols-2 gap-(--size-26) w-full items-stretch">
         
-        <!-- 1. Box Grafik Suhu (Span 2) -->
-        <div class="col-span-2 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+        <!-- 1. Box Grafik Suhu (Col 1) -->
+        <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div>
                 <div class="flex flex-row items-center justify-between">
                     <div class="flex flex-row items-center gap-(--size-16)">
@@ -445,199 +496,153 @@ new class extends Component
             </div>
         </div>
 
-        <!-- 2. Box Aktivitas (Span 1) Persis dashboard.png -->
+        <!-- 2. Box Grafik Kelembapan (Col 2) -->
         <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16) border-b pb-3">
-                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-activity class="w-(--size-26) h-(--size-26)"/>
-                </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
-                    Aktivitas
-                </span>
-            </div>
-
-            <!-- List Item Aktivitas & Peringatan (Max 4 items or compact scroll) -->
-            <div class="flex flex-col gap-2.5 max-h-[300px] overflow-y-auto pr-1">
-                @forelse($activities as $act)
-                    <div class="p-3 bg-(--bg-colour) border border-(--outline-colour) rounded-(--size-16) flex items-start gap-2.5 shadow-2xs">
-                        <div class="p-2 rounded-(--size-10) shrink-0 {{ str_contains($act['type'], 'temp') || str_contains($act['type'], 'humid') ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
-                            @if($act['type'] === 'temp_low')
-                                <x-lucide-thermometer-snowflake class="w-4 h-4"/>
-                            @elseif($act['type'] === 'temp_high')
-                                <x-lucide-thermometer-sun class="w-4 h-4"/>
-                            @elseif(str_contains($act['type'], 'humid'))
-                                <x-lucide-droplets class="w-4 h-4"/>
-                            @else
-                                <x-lucide-clipboard-check class="w-4 h-4"/>
-                            @endif
+            <div>
+                <div class="flex flex-row items-center justify-between">
+                    <div class="flex flex-row items-center gap-(--size-16)">
+                        <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                            <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
                         </div>
-                        <div class="min-w-0 flex-1">
-                            <h4 class="font-bold text-xs text-gray-900 leading-tight">
-                                {{ $act['title'] }}
-                            </h4>
-                            <p class="text-[11px] text-gray-600 mt-0.5 leading-snug">
-                                {{ $act['desc'] }}
-                            </p>
-                            <span class="text-[10px] text-gray-400 font-medium mt-0.5 block">
-                                {{ $act['time'] }}
-                            </span>
-                        </div>
+                        <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
+                            Kelembapan
+                        </span>
                     </div>
-                @empty
-                    <div class="text-center py-8 text-gray-400 text-xs">
-                        Belum ada aktivitas atau peringatan tercatat.
-                    </div>
-                @endforelse
-            </div>
-        </div>
 
-    </div>
-
-    <!-- Baris 2: Kelembapan Persis dashboard.png -->
-    <div class="flex flex-col gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs w-full">
-        <div>
-            <div class="flex flex-row items-center justify-between">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
+                    <!-- Keterangan Garis Batas Kelembapan -->
+                    <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
+                        <span class="flex items-center gap-1 text-gray-600 font-medium">
+                            <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
+                        </span>
+                        <span class="flex items-center gap-1 text-red-600 font-medium">
+                            <span class="w-3 h-0.5 bg-red-500 border-b border-dashed border-red-500"></span> Maks ({{ $humidMax }}%)
+                        </span>
+                        <span class="flex items-center gap-1 text-blue-600 font-medium">
+                            <span class="w-3 h-0.5 bg-blue-500 border-b border-dashed border-blue-500"></span> Min ({{ $humidMin }}%)
+                        </span>
                     </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold">
-                        Kelembapan
-                    </span>
                 </div>
 
-                <!-- Keterangan Garis Batas Kelembapan -->
-                <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
-                    <span class="flex items-center gap-1 text-gray-600 font-medium">
-                        <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
-                    </span>
-                    <span class="flex items-center gap-1 text-red-600 font-medium">
-                        <span class="w-3 h-0.5 bg-red-500 border-b border-dashed border-red-500"></span> Maks ({{ $humidMax }}%)
-                    </span>
-                    <span class="flex items-center gap-1 text-blue-600 font-medium">
-                        <span class="w-3 h-0.5 bg-blue-500 border-b border-dashed border-blue-500"></span> Min ({{ $humidMin }}%)
-                    </span>
+                <div class="mt-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
+                            {{ number_format($humidVal, 1) }}%
+                        </span>
+                        @if($isHumidNormal)
+                            <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Normal</span>
+                        @else
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Peringatan</span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-gray-400 mt-1 mb-1">
+                        Diperbaharui pada {{ $envUpdateDate }}
+                    </p>
                 </div>
             </div>
 
-            <div class="mt-2">
-                <div class="flex items-center gap-3">
-                    <span class="text-(length:--size-42) font-extrabold text-gray-900 leading-none">
-                        {{ number_format($humidVal, 1) }}%
-                    </span>
-                    @if($isHumidNormal)
-                        <span class="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">Normal</span>
-                    @else
-                        <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">Peringatan</span>
-                    @endif
-                </div>
-                <p class="text-xs text-gray-400 mt-1 mb-1">
-                    Diperbaharui pada {{ $envUpdateDate }}
-                </p>
-            </div>
-        </div>
+            <!-- Canvas Chart Kelembapan dengan Range 0 - 100% -->
+            <div class="relative w-full h-44 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
+                <canvas x-data="{
+                    chart: null,
+                    init() {
+                        this.$nextTick(() => this.renderChart());
+                    },
+                    renderChart() {
+                        let labels = @js($chartLabels);
+                        let data = @js($chartHumid);
+                        let hMin = {{ (float) $humidMin }};
+                        let hMax = {{ (float) $humidMax }};
 
-        <!-- Canvas Chart Kelembapan dengan Range 0 - 100% -->
-        <div class="relative w-full h-44 border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
-            <canvas x-data="{
-                chart: null,
-                init() {
-                    this.$nextTick(() => this.renderChart());
-                },
-                renderChart() {
-                    let labels = @js($chartLabels);
-                    let data = @js($chartHumid);
-                    let hMin = {{ (float) $humidMin }};
-                    let hMax = {{ (float) $humidMax }};
+                        let minLine = Array(labels.length).fill(hMin);
+                        let maxLine = Array(labels.length).fill(hMax);
 
-                    let minLine = Array(labels.length).fill(hMin);
-                    let maxLine = Array(labels.length).fill(hMax);
+                        if (this.chart) {
+                            this.chart.data.labels = labels;
+                            this.chart.data.datasets[0].data = data;
+                            this.chart.data.datasets[1].data = maxLine;
+                            this.chart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
+                            this.chart.data.datasets[2].data = minLine;
+                            this.chart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
+                            this.chart.update('none');
+                            return;
+                        }
 
-                    if (this.chart) {
-                        this.chart.data.labels = labels;
-                        this.chart.data.datasets[0].data = data;
-                        this.chart.data.datasets[1].data = maxLine;
-                        this.chart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
-                        this.chart.data.datasets[2].data = minLine;
-                        this.chart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
-                        this.chart.update('none');
-                        return;
-                    }
+                        if (typeof Chart === 'undefined') {
+                            setTimeout(() => this.renderChart(), 100);
+                            return;
+                        }
 
-                    if (typeof Chart === 'undefined') {
-                        setTimeout(() => this.renderChart(), 100);
-                        return;
-                    }
-
-                    this.chart = new Chart(this.$el, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: 'Kelembapan Aktual (%)',
-                                    data: data,
-                                    borderColor: '#163428',
-                                    backgroundColor: 'rgba(22, 52, 40, 0.08)',
-                                    borderWidth: 2.5,
-                                    pointRadius: 4,
-                                    pointHoverRadius: 6,
-                                    pointBackgroundColor: '#163428',
-                                    tension: 0.3,
-                                    fill: true
+                        this.chart = new Chart(this.$el, {
+                            type: 'line',
+                            data: {
+                                labels: labels,
+                                datasets: [
+                                    {
+                                        label: 'Kelembapan Aktual (%)',
+                                        data: data,
+                                        borderColor: '#163428',
+                                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
+                                        borderWidth: 2.5,
+                                        pointRadius: 4,
+                                        pointHoverRadius: 6,
+                                        pointBackgroundColor: '#163428',
+                                        tension: 0.3,
+                                        fill: true
+                                    },
+                                    {
+                                        label: 'Batas Maksimum (' + hMax + '%)',
+                                        data: maxLine,
+                                        borderColor: '#EF4444',
+                                        borderWidth: 1.5,
+                                        borderDash: [6, 4],
+                                        pointRadius: 0,
+                                        fill: false
+                                    },
+                                    {
+                                        label: 'Batas Minimum (' + hMin + '%)',
+                                        data: minLine,
+                                        borderColor: '#3B82F6',
+                                        borderWidth: 1.5,
+                                        borderDash: [6, 4],
+                                        pointRadius: 0,
+                                        fill: false
+                                    }
+                                ]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: '#163428',
+                                        callbacks: {
+                                            label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
+                                        }
+                                    }
                                 },
-                                {
-                                    label: 'Batas Maksimum (' + hMax + '%)',
-                                    data: maxLine,
-                                    borderColor: '#EF4444',
-                                    borderWidth: 1.5,
-                                    borderDash: [6, 4],
-                                    pointRadius: 0,
-                                    fill: false
-                                },
-                                {
-                                    label: 'Batas Minimum (' + hMin + '%)',
-                                    data: minLine,
-                                    borderColor: '#3B82F6',
-                                    borderWidth: 1.5,
-                                    borderDash: [6, 4],
-                                    pointRadius: 0,
-                                    fill: false
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    backgroundColor: '#163428',
-                                    callbacks: {
-                                        label: (ctx) => ' ' + ctx.dataset.label + ': ' + ctx.parsed.y.toFixed(1) + '%'
+                                scales: {
+                                    y: {
+                                        min: 0,
+                                        max: 100,
+                                        ticks: {
+                                            stepSize: 10,
+                                            callback: (v) => v + '%'
+                                        },
+                                        grid: { color: '#E5E7EB' }
+                                    },
+                                    x: {
+                                        grid: { color: '#F3F4F6' }
                                     }
                                 }
-                            },
-                            scales: {
-                                y: {
-                                    min: 0,
-                                    max: 100,
-                                    ticks: {
-                                        stepSize: 10,
-                                        callback: (v) => v + '%'
-                                    },
-                                    grid: { color: '#E5E7EB' }
-                                },
-                                x: {
-                                    grid: { color: '#F3F4F6' }
-                                }
                             }
-                        }
-                    });
-                }
-            }"
-            x-on:livewire:updated.window="renderChart()"
-            style="width: 100%; height: 100%;"></canvas>
+                        });
+                    }
+                }"
+                x-on:livewire:updated.window="renderChart()"
+                style="width: 100%; height: 100%;"></canvas>
+            </div>
         </div>
+
     </div>
 </div>
