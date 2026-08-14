@@ -232,7 +232,7 @@ new class extends Component
             </div>
 
             <!-- Status Siklus Pill (Tinggi Sama Persis dengan Siklus) -->
-            <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm whitespace-nowrap shrink-0">
+            <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
                 <div class="gap-(--size-6) flex items-center">
                     <span>Status:</span>
                     <span class="font-bold text-(--prime-colour) ml-1">
