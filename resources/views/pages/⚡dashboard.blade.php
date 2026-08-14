@@ -418,44 +418,41 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Canvas Chart Suhu dengan Range 0 sampai Suhu Tertinggi (Tinggi Tetap 320px, Lebar Fleksibel) -->
-            <div class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
-                <canvas x-data="{
+            <!-- Canvas Chart Suhu dengan Range 0 sampai Suhu Tertinggi (Tinggi Tetap 320px, Lebar Fleksibel & Live Updating) -->
+            <div 
+                x-data="{
                     chart: null,
-                    init() {
-                        this.$nextTick(() => this.renderChart());
-                    },
-                    renderChart() {
-                        let labels = @js($chartLabels);
-                        let data = @js($chartTemp);
-                        let tMin = {{ (float) $tempMin }};
-                        let tMax = {{ (float) $tempMax }};
-
-                        let minLine = Array(labels.length).fill(tMin);
-                        let maxLine = Array(labels.length).fill(tMax);
-
-                        // Hitung suhu tertinggi untuk rentang sumbu Y dinamis (0 s/d tertinggi)
-                        let maxObserved = Math.max(...data, tMax, 0);
+                    updateData(labels, data, minVal, maxVal) {
+                        if (!this.chart) {
+                            this.initChart(labels, data, minVal, maxVal);
+                            return;
+                        }
+                        let minLine = Array(labels.length).fill(minVal);
+                        let maxLine = Array(labels.length).fill(maxVal);
+                        let maxObserved = Math.max(...data, maxVal, 0);
                         let yMax = Math.max(35, Math.ceil(maxObserved / 5) * 5);
 
-                        if (this.chart) {
-                            this.chart.data.labels = labels;
-                            this.chart.data.datasets[0].data = data;
-                            this.chart.data.datasets[1].data = maxLine;
-                            this.chart.data.datasets[1].label = 'Batas Maksimum (' + tMax + '°C)';
-                            this.chart.data.datasets[2].data = minLine;
-                            this.chart.data.datasets[2].label = 'Batas Minimum (' + tMin + '°C)';
-                            this.chart.options.scales.y.max = yMax;
-                            this.chart.update('none');
-                            return;
-                        }
-
+                        this.chart.data.labels = labels;
+                        this.chart.data.datasets[0].data = data;
+                        this.chart.data.datasets[1].data = maxLine;
+                        this.chart.data.datasets[1].label = 'Batas Maksimum (' + maxVal + '°C)';
+                        this.chart.data.datasets[2].data = minLine;
+                        this.chart.data.datasets[2].label = 'Batas Minimum (' + minVal + '°C)';
+                        this.chart.options.scales.y.max = yMax;
+                        this.chart.options.scales.y.ticks.stepSize = yMax <= 40 ? 5 : 10;
+                        this.chart.update('none');
+                    },
+                    initChart(labels, data, minVal, maxVal) {
                         if (typeof Chart === 'undefined') {
-                            setTimeout(() => this.renderChart(), 100);
+                            setTimeout(() => this.initChart(labels, data, minVal, maxVal), 100);
                             return;
                         }
+                        let minLine = Array(labels.length).fill(minVal);
+                        let maxLine = Array(labels.length).fill(maxVal);
+                        let maxObserved = Math.max(...data, maxVal, 0);
+                        let yMax = Math.max(35, Math.ceil(maxObserved / 5) * 5);
 
-                        this.chart = new Chart(this.$el, {
+                        this.chart = new Chart(this.$refs.canvas, {
                             type: 'line',
                             data: {
                                 labels: labels,
@@ -473,7 +470,7 @@ new class extends Component
                                         fill: true
                                     },
                                     {
-                                        label: 'Batas Maksimum (' + tMax + '°C)',
+                                        label: 'Batas Maksimum (' + maxVal + '°C)',
                                         data: maxLine,
                                         borderColor: '#EF4444',
                                         borderWidth: 1.5,
@@ -482,7 +479,7 @@ new class extends Component
                                         fill: false
                                     },
                                     {
-                                        label: 'Batas Minimum (' + tMin + '°C)',
+                                        label: 'Batas Minimum (' + minVal + '°C)',
                                         data: minLine,
                                         borderColor: '#3B82F6',
                                         borderWidth: 1.5,
@@ -523,8 +520,13 @@ new class extends Component
                         });
                     }
                 }"
-                x-on:livewire:updated.window="renderChart()"
-                style="width: 100%; height: 100%;"></canvas>
+                x-init="initChart(@js($chartLabels), @js($chartTemp), {{ (float)$tempMin }}, {{ (float)$tempMax }})"
+                x-effect="updateData(@js($chartLabels), @js($chartTemp), {{ (float)$tempMin }}, {{ (float)$tempMax }})"
+                class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50"
+            >
+                <div wire:ignore class="w-full h-full">
+                    <canvas x-ref="canvas" style="width: 100%; height: 100%;"></canvas>
+                </div>
             </div>
         </div>
 
@@ -572,39 +574,35 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Canvas Chart Kelembapan dengan Range 0 - 100% (Tinggi Tetap 320px, Lebar Fleksibel) -->
-            <div class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50" wire:ignore>
-                <canvas x-data="{
+            <!-- Canvas Chart Kelembapan dengan Range 0 - 100% (Tinggi Tetap 320px, Lebar Fleksibel & Live Updating) -->
+            <div 
+                x-data="{
                     chart: null,
-                    init() {
-                        this.$nextTick(() => this.renderChart());
+                    updateData(labels, data, minVal, maxVal) {
+                        if (!this.chart) {
+                            this.initChart(labels, data, minVal, maxVal);
+                            return;
+                        }
+                        let minLine = Array(labels.length).fill(minVal);
+                        let maxLine = Array(labels.length).fill(maxVal);
+
+                        this.chart.data.labels = labels;
+                        this.chart.data.datasets[0].data = data;
+                        this.chart.data.datasets[1].data = maxLine;
+                        this.chart.data.datasets[1].label = 'Batas Maksimum (' + maxVal + '%)';
+                        this.chart.data.datasets[2].data = minLine;
+                        this.chart.data.datasets[2].label = 'Batas Minimum (' + minVal + '%)';
+                        this.chart.update('none');
                     },
-                    renderChart() {
-                        let labels = @js($chartLabels);
-                        let data = @js($chartHumid);
-                        let hMin = {{ (float) $humidMin }};
-                        let hMax = {{ (float) $humidMax }};
-
-                        let minLine = Array(labels.length).fill(hMin);
-                        let maxLine = Array(labels.length).fill(hMax);
-
-                        if (this.chart) {
-                            this.chart.data.labels = labels;
-                            this.chart.data.datasets[0].data = data;
-                            this.chart.data.datasets[1].data = maxLine;
-                            this.chart.data.datasets[1].label = 'Batas Maksimum (' + hMax + '%)';
-                            this.chart.data.datasets[2].data = minLine;
-                            this.chart.data.datasets[2].label = 'Batas Minimum (' + hMin + '%)';
-                            this.chart.update('none');
-                            return;
-                        }
-
+                    initChart(labels, data, minVal, maxVal) {
                         if (typeof Chart === 'undefined') {
-                            setTimeout(() => this.renderChart(), 100);
+                            setTimeout(() => this.initChart(labels, data, minVal, maxVal), 100);
                             return;
                         }
+                        let minLine = Array(labels.length).fill(minVal);
+                        let maxLine = Array(labels.length).fill(maxVal);
 
-                        this.chart = new Chart(this.$el, {
+                        this.chart = new Chart(this.$refs.canvas, {
                             type: 'line',
                             data: {
                                 labels: labels,
@@ -622,7 +620,7 @@ new class extends Component
                                         fill: true
                                     },
                                     {
-                                        label: 'Batas Maksimum (' + hMax + '%)',
+                                        label: 'Batas Maksimum (' + maxVal + '%)',
                                         data: maxLine,
                                         borderColor: '#EF4444',
                                         borderWidth: 1.5,
@@ -631,7 +629,7 @@ new class extends Component
                                         fill: false
                                     },
                                     {
-                                        label: 'Batas Minimum (' + hMin + '%)',
+                                        label: 'Batas Minimum (' + minVal + '%)',
                                         data: minLine,
                                         borderColor: '#3B82F6',
                                         borderWidth: 1.5,
@@ -644,6 +642,7 @@ new class extends Component
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                animation: false,
                                 plugins: {
                                     legend: { display: false },
                                     tooltip: {
@@ -671,8 +670,13 @@ new class extends Component
                         });
                     }
                 }"
-                x-on:livewire:updated.window="renderChart()"
-                style="width: 100%; height: 100%;"></canvas>
+                x-init="initChart(@js($chartLabels), @js($chartHumid), {{ (float)$humidMin }}, {{ (float)$humidMax }})"
+                x-effect="updateData(@js($chartLabels), @js($chartHumid), {{ (float)$humidMin }}, {{ (float)$humidMax }})"
+                class="relative w-full h-[320px] border border-gray-100 rounded-xl p-2 bg-gray-50/50"
+            >
+                <div wire:ignore class="w-full h-full">
+                    <canvas x-ref="canvas" style="width: 100%; height: 100%;"></canvas>
+                </div>
             </div>
         </div>
 
