@@ -265,7 +265,7 @@ new class extends Component
     </div>
 
     <!-- 3 Kartu Ringkasan KPI Utama (Harmonized with dashboard.blade.php) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-(--size-26) w-full">
+    <div class="grid grid-cols-3 gap-(--size-26) w-full">
         <!-- 1. Total Pakan Kumulatif -->
         <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16)">

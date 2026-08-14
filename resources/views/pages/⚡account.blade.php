@@ -230,7 +230,7 @@ new class extends Component
         Manajemen Akun
     </h1>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-(--size-26) w-full">
+    <div class="grid grid-cols-2 gap-(--size-26) w-full">
         <!-- Box Profil Saya -->
         <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
             <div class="flex flex-row gap-(--size-16) items-center">
@@ -251,7 +251,7 @@ new class extends Component
             @endif
 
             <form wire:submit="changeProfile" id="changeProfileForm" class="flex flex-col gap-(--size-16) w-full min-w-0">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                <div class="grid grid-cols-2 gap-(--size-16) w-full">
                     <div class="input-container w-full min-w-0">
                         <label for="fullName">Nama Lengkap</label>
                         <input
@@ -307,7 +307,7 @@ new class extends Component
             @endif
 
             <form wire:submit="changePassword" id="changePasswordForm" class="flex flex-col gap-(--size-16) w-full min-w-0">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                <div class="grid grid-cols-2 gap-(--size-16) w-full">
                     <!-- Password Baru dengan Toggle Show/Hide -->
                     <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
                         <label for="newPassword">Password Baru</label>
@@ -484,7 +484,7 @@ new class extends Component
                         </div>
                         <div class="flex flex-col gap-(--size-16)">
                             <!-- 1. Baris 1: Nama Lengkap dan Username -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                            <div class="grid grid-cols-2 gap-(--size-16) w-full">
                                 <div class="input-container w-full min-w-0">
                                     <label for="userFullName">Nama Lengkap</label>
                                     <input
@@ -515,7 +515,7 @@ new class extends Component
                             </div>
 
                             <!-- 2. Baris 2: Password dan Konfirmasi Password (dengan Toggle Lihat Password) -->
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                            <div class="grid grid-cols-2 gap-(--size-16) w-full">
                                 <div class="input-container w-full min-w-0" x-data="{ showPass: false }">
                                     <label for="userPassword">
                                         {{ $editingUserId ? 'Password Baru (Opsional)' : 'Password' }}

@@ -18,7 +18,7 @@
 
         <!-- Karena main punya overflow-y-auto, HANYA area ini yang akan bisa di-scroll -->
         <main class="flex-1 overflow-auto">
-            <div class="p-(--size-42) w-full min-w-[1140px] box-border">
+            <div class="p-(--size-42) w-full min-w-[1140px] box-border shrink-0">
                 {{ $slot }}
             </div>
         </main>

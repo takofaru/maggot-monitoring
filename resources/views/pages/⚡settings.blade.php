@@ -270,7 +270,7 @@ new class extends Component
 
     <!-- Form Batas Lingkungan Fase (Grid 2 Kolom Persis settings.png) -->
     <form wire:submit.prevent="changePhaseSettings" onsubmit="event.preventDefault();" id="changePhaseSettingsForm" class="space-y-(--size-26)">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-(--size-26) w-full">
+        <div class="grid grid-cols-2 gap-(--size-26) w-full">
             
             <!-- 1. Fase Penetasan -->
             <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">

@@ -501,7 +501,7 @@ new class extends Component
                     </div>
                     <div class="flex flex-col gap-(--size-16)">
                         <!-- Input Suhu & Kelembapan (Enabled/Disabled berdasarkan Switch) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                        <div class="grid grid-cols-2 gap-(--size-16) w-full">
                             <div class="input-container w-full min-w-0">
                                 <label for="temp">Suhu yang Diamati</label>
                                 <div class="flex flex-row items-center justify-between input-text {{ !$useManualEnvLog ? 'bg-gray-100 text-gray-500' : '' }} @error('temp') border-red-500 @enderror">
@@ -555,7 +555,7 @@ new class extends Component
                         </div>
 
                         <!-- Input Berat Pakan & Maggot -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-(--size-16) w-full">
+                        <div class="grid grid-cols-2 gap-(--size-16) w-full">
                             <div class="input-container w-full min-w-0">
                                 <label for="feed">Berat Pakan yang Diberikan</label>
                                 <div class="flex flex-row items-center justify-between input-text @error('feed') border-red-500 @enderror">
