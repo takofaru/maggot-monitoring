@@ -26,4 +26,15 @@ class ActivityLog extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    protected static function booted(): void
+    {
+        static::created(function (ActivityLog $activityLog) {
+            try {
+                event(new \App\Events\NotificationCreated($activityLog));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Failed to broadcast NotificationCreated: ' . $e->getMessage());
+            }
+        });
+    }
 }

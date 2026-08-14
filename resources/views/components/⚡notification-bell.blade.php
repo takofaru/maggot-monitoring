@@ -83,10 +83,21 @@ new class extends Component
 ?>
 
 <div 
-    wire:poll.4s
+    wire:poll.20s
     x-data="{
         open: false,
         toasts: [],
+        init() {
+            if (window.Echo) {
+                window.Echo.channel('maggot-notifications')
+                    .listen('.notification.created', (event) => {
+                        if (event && event.notification) {
+                            this.addToast(event.notification);
+                            $wire.$refresh();
+                        }
+                    });
+            }
+        },
         addToast(toast) {
             const id = toast.id || Date.now() + Math.random();
             const newToast = { ...toast, internalId: id };
