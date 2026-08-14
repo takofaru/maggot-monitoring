@@ -25,14 +25,6 @@ class AppServiceProvider extends ServiceProvider
             return in_array($user->role, [User::ROLE_ADMIN, User::ROLE_USER]);
         });
 
-        Gate::define('is-admin', function (User $user) {
-            return $user->isAdmin();
-        });
-
-        Gate::define('admin-only', function (User $user) {
-            return $user->isAdmin();
-        });
-
         Gate::define('manage-accounts', function (User $user) {
             return $user->isAdmin();
         });
