@@ -313,9 +313,9 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah -->
-    <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
-        <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah (Responsif di Mobile, Sejajar di Desktop) -->
+    <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
             <!-- Dropdown Pilihan Siklus -->
             <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                 <span>Siklus ke:</span>
@@ -333,7 +333,7 @@ new class extends Component
                         x-show="openDropdown"
                         @click.outside="openDropdown = false"
                         x-transition.opacity.duration.200ms
-                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) max-w-[calc(100vw-3rem)] bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
                         x-cloak
                     >
                         @foreach($cycleData as $item)
@@ -360,7 +360,7 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Fase Terkini & Tombol Ganti Fase dengan Konfirmasi (Tinggi Sama Persis dengan Siklus) -->
+            <!-- Fase Terkini & Tombol Ganti Fase -->
             @php
                 $activeCycleObj = $cycleData->firstWhere('id', $selectedCycleId);
                 $currPhase = strtolower($activeCycleObj->current_phase ?? '');
@@ -402,7 +402,7 @@ new class extends Component
             <button
                 wire:click="openCreateModal"
                 type="button"
-                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shrink-0 shadow-xs"
             >
                 <x-lucide-plus class="w-(--size-26)"/>
                 <span>Tambah Catatan Baru</span>
@@ -410,8 +410,91 @@ new class extends Component
         @endif
     </div>
 
-    <!-- Tabel Catatan Observasi -->
-    <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
+    <!-- 1. Tampilan Card Khusus Layar Mobile (Mencegah Tabel Overflow ke Samping) -->
+    <div class="space-y-3 md:hidden">
+        @forelse($observationData as $item)
+            <div class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
+                <!-- Baris Atas: Tanggal & Fase Badge -->
+                <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <x-lucide-calendar class="w-4 h-4 text-(--prime-colour)"/>
+                        <span class="font-bold text-sm text-(--prime-colour)">
+                            {{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y - H:i') : '-' }}
+                        </span>
+                    </div>
+                    <span class="px-2.5 py-0.5 bg-gray-100 text-gray-800 rounded-md font-bold text-xs capitalize">
+                        {{ $item->phase_name }}
+                    </span>
+                </div>
+
+                <!-- Grid 2x2 Parameter Observasi -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Suhu Lingkungan</span>
+                        <span class="font-bold text-gray-900 text-sm mt-0.5">
+                            {{ $item->environmentLog->temperature ?? '-' }}&deg;C
+                        </span>
+                    </div>
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Kelembapan</span>
+                        <span class="font-bold text-gray-900 text-sm mt-0.5">
+                            {{ $item->environmentLog->humidity ?? '-' }}%
+                        </span>
+                    </div>
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Berat Pakan</span>
+                        <span class="font-bold text-gray-900 text-sm mt-0.5">
+                            {{ $item->feed_weight }} kg
+                        </span>
+                    </div>
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Berat Maggot</span>
+                        <span class="font-bold text-emerald-800 text-sm mt-0.5">
+                            {{ $item->maggot_weight }} kg
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Baris Bawah: Tombol Aksi Edit & Hapus (Jika Siklus Aktif) -->
+                @if($isSelectedCurrent)
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-(--outline-colour)/40">
+                        <button
+                            wire:click="openEditModal({{ $item->id }})"
+                            type="button"
+                            class="px-3.5 py-1.5 bg-(--prime-light-colour) text-(--prime-colour) rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:opacity-80 transition cursor-pointer"
+                        >
+                            <x-lucide-square-pen class="w-3.5 h-3.5"/>
+                            <span>Ubah</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="$confirm({
+                                title: 'Hapus Catatan Observasi',
+                                message: 'Apakah Anda yakin ingin menghapus catatan observasi tanggal {{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y') : '' }}? Data yang dihapus tidak dapat dipulihkan.',
+                                confirmText: 'Ya, Hapus',
+                                cancelText: 'Batal',
+                                variant: 'danger',
+                                icon: 'trash',
+                                onConfirm: () => $wire.deleteObservationLog({{ $item->id }})
+                            })"
+                            class="px-3.5 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-red-100 transition cursor-pointer"
+                        >
+                            <x-lucide-trash-2 class="w-3.5 h-3.5 text-red-600"/>
+                            <span>Hapus</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+        @empty
+            <div class="py-8 text-center text-gray-400 bg-(--fg-colour) rounded-(--size-16) border border-(--outline-colour) text-sm">
+                Belum ada catatan observasi untuk siklus ini.
+            </div>
+        @endforelse
+    </div>
+
+    <!-- 2. Tampilan Tabel Khusus Layar Desktop (hidden md:block) -->
+    <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
         <table class="w-full text-left border-collapse">
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>

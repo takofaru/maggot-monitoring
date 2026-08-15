@@ -526,11 +526,11 @@ new class extends Component
             </div>
         </div>
 
-        <!-- Filter Toolbar & Tombol Aksi (Sejajar Horisontal 1 Baris, Bebas Wrap) -->
-        <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
+        <!-- Filter Toolbar & Tombol Aksi (Responsif di Mobile, Sejajar di Desktop) -->
+        <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
             @if($reportMode === 'periodic')
                 <!-- Toolbar Mode Periodik: Preset & Tanggal -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
                     <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
                     <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                         <span>Preset:</span>
@@ -602,7 +602,7 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai) -->
                     <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
                         <div class="flex items-center gap-(--size-10)">
                             <span>Dari:</span>
@@ -616,7 +616,7 @@ new class extends Component
                 </div>
             @else
                 <!-- Toolbar Mode Siklus: Siklus ke & Status -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
                     <!-- Dropdown Pilihan Siklus -->
                     <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                         <span>Siklus ke:</span>
@@ -634,7 +634,7 @@ new class extends Component
                                 x-show="openDropdown"
                                 @click.outside="openDropdown = false"
                                 x-transition.opacity.duration.200ms
-                                class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                                class="absolute left-0 top-full mt-(--size-10) w-(--size-492) max-w-[calc(100vw-3rem)] bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
                                 x-cloak
                             >
                                 @foreach($cycleData as $item)
@@ -674,23 +674,23 @@ new class extends Component
                 </div>
             @endif
 
-            <!-- Tombol Ekspor CSV & Cetak Laporan (Sejajar di Sisi Kanan) -->
-            <div class="flex flex-row items-center gap-(--size-10) flex-nowrap shrink-0">
+            <!-- Tombol Ekspor CSV & Cetak Laporan -->
+            <div class="flex flex-row items-center gap-2.5 shrink-0">
                 <button
                     wire:click="exportCsv"
                     type="button"
-                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                    class="h-[58px] flex-1 sm:flex-initial gap-(--size-10) px-4 sm:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm sm:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
-                    <x-lucide-download class="w-(--size-26)"/>
+                    <x-lucide-download class="w-5 sm:w-(--size-26)"/>
                     <span>Ekspor CSV</span>
                 </button>
 
                 <button
                     onclick="window.printReport ? window.printReport() : window.print()"
                     type="button"
-                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                    class="h-[58px] flex-1 sm:flex-initial gap-(--size-10) px-4 sm:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm sm:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
-                    <x-lucide-printer class="w-(--size-26)"/>
+                    <x-lucide-printer class="w-5 sm:w-(--size-26)"/>
                     <span>Cetak Laporan</span>
                 </button>
             </div>
@@ -927,7 +927,47 @@ new class extends Component
                 </div>
             </div>
 
-            <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <!-- 1. Tampilan Card Khusus Mobile (Analisis Fase) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:hidden mt-1">
+                @foreach($phaseBreakdown as $key => $p)
+                    <div class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <div class="flex items-center gap-2 font-bold text-sm text-(--prime-colour)">
+                                @if($key === 'penetasan')
+                                    <x-lucide-egg class="w-4 h-4 text-(--prime-colour)" />
+                                @elseif($key === 'pembesaran')
+                                    <x-lucide-worm class="w-4 h-4 text-(--prime-colour)" />
+                                @else
+                                    <x-lucide-bug class="w-4 h-4 text-(--prime-colour)" />
+                                @endif
+                                <span>{{ $p['name'] }}</span>
+                            </div>
+                            <span class="text-xs text-gray-500 font-semibold">{{ $p['log_count'] }} kali log</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Total Pakan</span>
+                                <span class="font-bold text-gray-800">{{ number_format($p['total_feed'], 1) }} kg</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Bobot Akhir</span>
+                                <span class="font-bold text-emerald-800">{{ number_format($p['end_maggot'], 1) }} kg</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Suhu Rata-rata</span>
+                                <span class="font-semibold text-gray-800">{{ $p['avg_temp'] !== '-' ? $p['avg_temp'] . '°C' : '-' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Kelembapan</span>
+                                <span class="font-semibold text-gray-800">{{ $p['avg_humid'] !== '-' ? $p['avg_humid'] . '%' : '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- 2. Tampilan Tabel Khusus Desktop (Analisis Fase) -->
+            <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                         <tr>
@@ -991,7 +1031,46 @@ new class extends Component
                 </div>
             </div>
 
-            <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <!-- 1. Tampilan Card Khusus Mobile (Log Observasi) -->
+            <div class="space-y-3 md:hidden mt-1">
+                @forelse($observationLogs as $item)
+                    <div class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <div class="flex items-center gap-2 text-xs font-bold text-(--prime-colour)">
+                                <x-lucide-calendar class="w-3.5 h-3.5"/>
+                                <span>{{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y - H:i') : '-' }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                @if($reportMode === 'periodic')
+                                    <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded text-[11px] border border-emerald-200">
+                                        Siklus {{ $item->cycle_id ?? '-' }}
+                                    </span>
+                                @endif
+                                <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold rounded text-[11px] capitalize">
+                                    {{ $item->phase_name }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Suhu & Kelembapan</span>
+                                <span class="font-bold text-gray-800">{{ $item->environmentLog->temperature ?? '-' }}&deg;C &bull; {{ $item->environmentLog->humidity ?? '-' }}%</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Pakan / Bobot</span>
+                                <span class="font-bold text-gray-800">{{ $item->feed_weight }} kg / {{ $item->maggot_weight }} kg</span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-6 text-center text-xs text-gray-400 bg-(--bg-colour) rounded-xl border border-(--outline-colour)">
+                        Tidak ada catatan observasi untuk {{ $reportMode === 'periodic' ? 'rentang periode tanggal ini' : 'siklus ini' }}.
+                    </div>
+                @endforelse
+            </div>
+
+            <!-- 2. Tampilan Tabel Khusus Desktop (Log Observasi) -->
+            <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                         <tr>
