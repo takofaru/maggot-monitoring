@@ -504,198 +504,195 @@ new class extends Component
             <livewire:notification-bell />
         </div>
 
-        <!-- Mode Selector Tabs & Toolbar Filter -->
-        <div class="flex flex-col gap-3 w-full">
-            <!-- Baris 1: Mode Switch Tab & Aksi Ekspor -->
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs shrink-0">
-                    <button
-                        type="button"
-                        wire:click="setReportMode('periodic')"
-                        class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
-                    >
-                        <x-lucide-calendar-range class="w-4 h-4"/>
-                        <span>Laporan Periodik</span>
-                    </button>
-                    <button
-                        type="button"
-                        wire:click="setReportMode('cycle')"
-                        class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
-                    >
-                        <x-lucide-refresh-cw class="w-4 h-4"/>
-                        <span>Laporan Siklus</span>
-                    </button>
-                </div>
-
-                <!-- Tombol Ekspor CSV & Cetak Laporan -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
-                    <button
-                        wire:click="exportCsv"
-                        type="button"
-                        class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
-                    >
-                        <x-lucide-download class="w-(--size-26)"/>
-                        <span>Ekspor CSV</span>
-                    </button>
-
-                    <button
-                        onclick="window.printReport ? window.printReport() : window.print()"
-                        type="button"
-                        class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
-                    >
-                        <x-lucide-printer class="w-(--size-26)"/>
-                        <span>Cetak Laporan</span>
-                    </button>
-                </div>
+        <!-- Mode Switch Tabs -->
+        <div class="flex items-center">
+            <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs shrink-0">
+                <button
+                    type="button"
+                    wire:click="setReportMode('periodic')"
+                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                >
+                    <x-lucide-calendar-range class="w-4 h-4"/>
+                    <span>Laporan Periodik</span>
+                </button>
+                <button
+                    type="button"
+                    wire:click="setReportMode('cycle')"
+                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                >
+                    <x-lucide-refresh-cw class="w-4 h-4"/>
+                    <span>Laporan Siklus</span>
+                </button>
             </div>
+        </div>
 
-            <!-- Baris 2: Filter Toolbar Sesuai Mode Terpilih -->
-            <div class="flex items-center justify-between w-full flex-wrap gap-3">
-                @if($reportMode === 'periodic')
-                    <!-- Toolbar Mode Periodik (Harmonized 100% dengan Mode Siklus) -->
-                    <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
-                        <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
-                        <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                            <span>Preset:</span>
-                            <div class="relative inline-block">
-                                <button
-                                    @click="openDropdown = !openDropdown"
-                                    type="button"
-                                    class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
-                                >
-                                    <span>
-                                        @if($periodicPreset === 'today') Hari Ini
-                                        @elseif($periodicPreset === '7days') 7 Hari Terakhir
-                                        @elseif($periodicPreset === '30days') 30 Hari Terakhir
-                                        @elseif($periodicPreset === 'this_month') Bulan Ini
-                                        @else Kustom
-                                        @endif
-                                    </span>
-                                    <x-lucide-chevron-down class="w-(--size-16)"/>
-                                </button>
-
-                                <div
-                                    x-show="openDropdown"
-                                    @click.outside="openDropdown = false"
-                                    x-transition.opacity.duration.200ms
-                                    class="absolute left-0 top-full mt-(--size-10) w-52 bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
-                                    x-cloak
-                                >
-                                    <button
-                                        type="button"
-                                        wire:click="setPeriodicPreset('today')"
-                                        @click="openDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'today' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span>Hari Ini</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        wire:click="setPeriodicPreset('7days')"
-                                        @click="openDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '7days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span>7 Hari Terakhir</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        wire:click="setPeriodicPreset('30days')"
-                                        @click="openDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '30days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span>30 Hari Terakhir</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        wire:click="setPeriodicPreset('this_month')"
-                                        @click="openDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'this_month' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span>Bulan Ini</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        wire:click="setPeriodicPreset('custom')"
-                                        @click="openDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $periodicPreset === 'custom' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                    >
-                                        <span>Kustom Tanggal</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
-                        <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                            <div class="flex items-center gap-(--size-10)">
-                                <span>Dari:</span>
-                                <x-custom-date-picker wire:model.live="startDate" />
-                                <span class="text-gray-300 font-bold">&mdash;</span>
-                                <span>Sampai:</span>
-                                <x-custom-date-picker wire:model.live="endDate" />
-                                <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <!-- Toolbar Mode Siklus -->
-                    <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
-                        <!-- Dropdown Pilihan Siklus -->
-                        <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                            <span>Siklus ke:</span>
-                            <div class="relative inline-block">
-                                <button
-                                    @click="openDropdown = !openDropdown"
-                                    type="button"
-                                    class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
-                                >
-                                    <span>{{ $selectedCycleName }}</span>
-                                    <x-lucide-chevron-down class="w-(--size-16)"/>
-                                </button>
-
-                                <div
-                                    x-show="openDropdown"
-                                    @click.outside="openDropdown = false"
-                                    x-transition.opacity.duration.200ms
-                                    class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
-                                    x-cloak
-                                >
-                                    @foreach($cycleData as $item)
-                                        <button
-                                            type="button"
-                                            wire:click="selectCycle({{ $item->id }})"
-                                            @click="openDropdown = false"
-                                            class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 last:border-0 cursor-pointer {{ $item->id == $selectedCycleId ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                        >
-                                            <span class="font-semibold flex items-center gap-2">
-                                                Siklus {{ $item->id }}
-                                                @if($item->is_active)
-                                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px]">Aktif</span>
-                                                @else
-                                                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px]">Selesai</span>
-                                                @endif
-                                            </span>
-                                            <span class="text-xs text-gray-500">
-                                                {{ $item->start_date ? $item->start_date->translatedFormat('d M Y') : 'Belum Dimulai' }} &mdash; {{ $item->end_date ? $item->end_date->translatedFormat('d M Y') : 'Sekarang' }}
-                                            </span>
-                                        </button>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Status Siklus Pill -->
-                        <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                            <div class="gap-(--size-6) flex items-center">
-                                <span>Status:</span>
-                                <span class="font-bold text-(--prime-colour) ml-1">
-                                    {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
+        <!-- Filter Toolbar & Tombol Aksi (Sejajar Horisontal dalam 1 Baris) -->
+        <div class="flex items-center justify-between w-full flex-wrap gap-3">
+            @if($reportMode === 'periodic')
+                <!-- Toolbar Mode Periodik: Preset & Tanggal -->
+                <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+                    <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                        <span>Preset:</span>
+                        <div class="relative inline-block">
+                            <button
+                                @click="openDropdown = !openDropdown"
+                                type="button"
+                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
+                            >
+                                <span>
+                                    @if($periodicPreset === 'today') Hari Ini
+                                    @elseif($periodicPreset === '7days') 7 Hari Terakhir
+                                    @elseif($periodicPreset === '30days') 30 Hari Terakhir
+                                    @elseif($periodicPreset === 'this_month') Bulan Ini
+                                    @else Kustom
+                                    @endif
                                 </span>
-                                <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
+                                <x-lucide-chevron-down class="w-(--size-16)"/>
+                            </button>
+
+                            <div
+                                x-show="openDropdown"
+                                @click.outside="openDropdown = false"
+                                x-transition.opacity.duration.200ms
+                                class="absolute left-0 top-full mt-(--size-10) w-52 bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
+                                x-cloak
+                            >
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('today')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'today' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>Hari Ini</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('7days')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '7days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>7 Hari Terakhir</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('30days')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '30days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>30 Hari Terakhir</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('this_month')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'this_month' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>Bulan Ini</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('custom')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $periodicPreset === 'custom' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>Kustom Tanggal</span>
+                                </button>
                             </div>
                         </div>
                     </div>
-                @endif
+
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
+                        <div class="flex items-center gap-(--size-10)">
+                            <span>Dari:</span>
+                            <x-custom-date-picker wire:model.live="startDate" />
+                            <span class="text-gray-300 font-bold">&mdash;</span>
+                            <span>Sampai:</span>
+                            <x-custom-date-picker wire:model.live="endDate" />
+                            <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <!-- Toolbar Mode Siklus: Siklus ke & Status -->
+                <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+                    <!-- Dropdown Pilihan Siklus -->
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                        <span>Siklus ke:</span>
+                        <div class="relative inline-block">
+                            <button
+                                @click="openDropdown = !openDropdown"
+                                type="button"
+                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
+                            >
+                                <span>{{ $selectedCycleName }}</span>
+                                <x-lucide-chevron-down class="w-(--size-16)"/>
+                            </button>
+
+                            <div
+                                x-show="openDropdown"
+                                @click.outside="openDropdown = false"
+                                x-transition.opacity.duration.200ms
+                                class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                                x-cloak
+                            >
+                                @foreach($cycleData as $item)
+                                    <button
+                                        type="button"
+                                        wire:click="selectCycle({{ $item->id }})"
+                                        @click="openDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 last:border-0 cursor-pointer {{ $item->id == $selectedCycleId ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span class="font-semibold flex items-center gap-2">
+                                            Siklus {{ $item->id }}
+                                            @if($item->is_active)
+                                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px]">Aktif</span>
+                                            @else
+                                                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px]">Selesai</span>
+                                            @endif
+                                        </span>
+                                        <span class="text-xs text-gray-500">
+                                            {{ $item->start_date ? $item->start_date->translatedFormat('d M Y') : 'Belum Dimulai' }} &mdash; {{ $item->end_date ? $item->end_date->translatedFormat('d M Y') : 'Sekarang' }}
+                                        </span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Siklus Pill -->
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
+                        <div class="gap-(--size-6) flex items-center">
+                            <span>Status:</span>
+                            <span class="font-bold text-(--prime-colour) ml-1">
+                                {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
+                            </span>
+                            <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Tombol Ekspor CSV & Cetak Laporan (Sejajar di Sisi Kanan) -->
+            <div class="flex flex-row items-center gap-(--size-10) flex-nowrap shrink-0">
+                <button
+                    wire:click="exportCsv"
+                    type="button"
+                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                >
+                    <x-lucide-download class="w-(--size-26)"/>
+                    <span>Ekspor CSV</span>
+                </button>
+
+                <button
+                    onclick="window.printReport ? window.printReport() : window.print()"
+                    type="button"
+                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                >
+                    <x-lucide-printer class="w-(--size-26)"/>
+                    <span>Cetak Laporan</span>
+                </button>
             </div>
         </div>
 
@@ -775,10 +772,10 @@ new class extends Component
             </div>
         </div>
 
-        <!-- 2 Grafik Analitik (1. Pertumbuhan Maggot vs Pakan, 2. Tren Lingkungan Suhu & Kelembapan Harmonis) -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-(--size-26) w-full items-stretch">
+        <!-- 2 Grafik Analitik (Tetap 2 Kolom Bersebelahan, Tidak Mengalami Wrap Saat Lebar Mengecil) -->
+        <div class="grid grid-cols-2 gap-(--size-26) w-full items-stretch">
             <!-- Grafik 1: Pertumbuhan Bobot Maggot vs Konsumsi Pakan -->
-            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div>
                     <div class="flex flex-row items-center justify-between flex-wrap gap-2">
                         <div class="flex flex-row items-center gap-(--size-16)">
@@ -814,7 +811,7 @@ new class extends Component
             </div>
 
             <!-- Grafik 2: Tren Kondisi Lingkungan (Suhu & Kelembapan yang Diharmonisasikan) -->
-            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div>
                     <div class="flex flex-row items-center justify-between flex-wrap gap-2">
                         <div class="flex flex-row items-center gap-(--size-16)">
