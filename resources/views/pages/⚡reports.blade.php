@@ -539,7 +539,7 @@ new class extends Component
                     </button>
 
                     <button
-                        onclick="preparePrintCharts(); window.print();"
+                        onclick="window.printReport ? window.printReport() : window.print()"
                         type="button"
                         class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
                     >
@@ -1456,7 +1456,7 @@ new class extends Component
         });
     }
 
-    function preparePrintCharts() {
+    window.preparePrintCharts = function() {
         const growthCanvas = document.getElementById('growthReportChartCanvas');
         const envCanvas = document.getElementById('envReportChartCanvas');
         const printGrowthImg = document.getElementById('printGrowthChartImg');
@@ -1476,9 +1476,16 @@ new class extends Component
                 console.error('Error generating env chart image for print:', e);
             }
         }
-    }
+    };
 
-    window.addEventListener('beforeprint', preparePrintCharts);
+    window.printReport = function() {
+        if (typeof window.preparePrintCharts === 'function') {
+            window.preparePrintCharts();
+        }
+        window.print();
+    };
+
+    window.addEventListener('beforeprint', window.preparePrintCharts);
 
     function syncAllReportCharts() {
         const holder = document.getElementById('reportChartDataHolder');
@@ -1495,7 +1502,7 @@ new class extends Component
             initOrUpdateEnvChart(labels, temp, humid);
 
             // Pre-render print images
-            setTimeout(preparePrintCharts, 50);
+            setTimeout(window.preparePrintCharts, 50);
         } catch (e) {
             console.error('Failed to parse chart data from DOM holder:', e);
         }
@@ -1506,7 +1513,7 @@ new class extends Component
         if (payload) {
             initOrUpdateGrowthChart(payload.labels, payload.maggot, payload.feed);
             initOrUpdateEnvChart(payload.labels, payload.temp, payload.humid);
-            setTimeout(preparePrintCharts, 50);
+            setTimeout(window.preparePrintCharts, 50);
         }
     });
 
