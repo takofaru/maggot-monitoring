@@ -532,49 +532,96 @@ new class extends Component
         <!-- Baris 2: Filter Toolbar Sesuai Mode Terpilih -->
         <div class="flex items-center justify-between w-full flex-wrap gap-3">
             @if($reportMode === 'periodic')
-                <!-- Toolbar Mode Periodik -->
+                <!-- Toolbar Mode Periodik (Harmonized 100% dengan Mode Siklus) -->
                 <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
-                    <!-- Preset Cepat Periodik -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                        <span class="text-sm font-semibold text-gray-500">Preset:</span>
-                        <div class="flex items-center gap-1.5">
+                    <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                        <span>Preset:</span>
+                        <div class="relative inline-block">
                             <button
-                                wire:click="setPeriodicPreset('7days')"
+                                @click="openDropdown = !openDropdown"
                                 type="button"
-                                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer {{ $periodicPreset === '7days' ? 'bg-(--prime-colour) text-(--fg-colour)' : 'bg-(--bg-colour) hover:bg-gray-200 text-gray-700' }}"
+                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
                             >
-                                7 Hari
+                                <span>
+                                    @if($periodicPreset === 'today') Hari Ini
+                                    @elseif($periodicPreset === '7days') 7 Hari Terakhir
+                                    @elseif($periodicPreset === '30days') 30 Hari Terakhir
+                                    @elseif($periodicPreset === 'this_month') Bulan Ini
+                                    @else Kustom
+                                    @endif
+                                </span>
+                                <x-lucide-chevron-down class="w-(--size-16)"/>
                             </button>
-                            <button
-                                wire:click="setPeriodicPreset('30days')"
-                                type="button"
-                                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer {{ $periodicPreset === '30days' ? 'bg-(--prime-colour) text-(--fg-colour)' : 'bg-(--bg-colour) hover:bg-gray-200 text-gray-700' }}"
+
+                            <div
+                                x-show="openDropdown"
+                                @click.outside="openDropdown = false"
+                                x-transition.opacity.duration.200ms
+                                class="absolute left-0 top-full mt-(--size-10) w-52 bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
+                                x-cloak
                             >
-                                30 Hari
-                            </button>
-                            <button
-                                wire:click="setPeriodicPreset('this_month')"
-                                type="button"
-                                class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer {{ $periodicPreset === 'this_month' ? 'bg-(--prime-colour) text-(--fg-colour)' : 'bg-(--bg-colour) hover:bg-gray-200 text-gray-700' }}"
-                            >
-                                Bulan Ini
-                            </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('today')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'today' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>Hari Ini</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('7days')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '7days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>7 Hari Terakhir</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('30days')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '30days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>30 Hari Terakhir</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('this_month')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'this_month' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>Bulan Ini</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    wire:click="setPeriodicPreset('custom')"
+                                    @click="openDropdown = false"
+                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $periodicPreset === 'custom' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                >
+                                    <span>Kustom Tanggal</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari - Sampai dengan format dd Mon yyyy) -->
-                    <div class="inline-flex h-[58px] gap-3 items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                        <x-custom-date-picker wire:model.live="startDate" label="Dari" />
-                        <span class="text-gray-300 font-bold">&mdash;</span>
-                        <x-custom-date-picker wire:model.live="endDate" label="Sampai" />
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy) -->
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
+                        <div class="flex items-center gap-(--size-10)">
+                            <span>Dari:</span>
+                            <x-custom-date-picker wire:model.live="startDate" />
+                            <span class="text-gray-300 font-bold">&mdash;</span>
+                            <span>Sampai:</span>
+                            <x-custom-date-picker wire:model.live="endDate" />
+                        </div>
                     </div>
 
-                    <!-- Pill Ringkasan Periode Terpilih -->
+                    <!-- Status Periode Pill (Tinggi, Font & Format Sama Persis dengan Status Siklus) -->
                     <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
                         <div class="gap-(--size-6) flex items-center">
-                            <x-lucide-calendar class="w-4 h-4 text-(--prime-colour)"/>
+                            <span>Status:</span>
                             <span class="font-bold text-(--prime-colour) ml-1">
-                                {{ Carbon::parse($startDate)->translatedFormat('d M Y') }} &mdash; {{ Carbon::parse($endDate)->translatedFormat('d M Y') }}
+                                Periode Aktif
                             </span>
                             <span class="text-xs text-gray-400 ml-1">({{ $durationDays }} Hari)</span>
                         </div>

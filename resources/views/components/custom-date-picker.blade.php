@@ -139,20 +139,19 @@
     @click.outside="open = false"
     @keydown.escape.window="open = false"
 >
-    <!-- Trigger Input Button (Format: dd Mon yyyy) -->
-    <div class="flex items-center gap-2">
+    <!-- Trigger Button Input (Format dd Mon yyyy, Harmonized dengan style input-text) -->
+    <div class="flex items-center gap-(--size-10)">
         @if($label)
-            <span class="text-xs font-semibold text-gray-500 whitespace-nowrap">{{ $label }}:</span>
+            <span class="text-(length:--size-16) font-normal text-(--text-colour) whitespace-nowrap">{{ $label }}:</span>
         @endif
         <button
             type="button"
             @click="open = !open"
-            class="inline-flex items-center justify-between gap-2.5 px-3 py-1.5 bg-(--bg-colour) hover:bg-(--bg2-colour) border border-(--outline-colour) rounded-xl font-medium text-sm text-(--text-colour) shadow-2xs transition-all cursor-pointer whitespace-nowrap focus:outline-none focus:ring-1 focus:ring-(--prime-colour)"
+            class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0 transition-all focus:outline-none focus:ring-1 focus:ring-(--prime-colour)"
             x-bind:class="open ? 'border-(--prime-colour) ring-1 ring-(--prime-colour)' : ''"
         >
-            <x-lucide-calendar class="w-4 h-4 text-(--prime-colour) shrink-0"/>
             <span class="font-bold text-[#163428]" x-text="formattedDisplay"></span>
-            <x-lucide-chevron-down class="w-3.5 h-3.5 text-gray-400 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''"/>
+            <x-lucide-chevron-down class="w-(--size-16) text-gray-500 transition-transform duration-200" x-bind:class="open ? 'rotate-180' : ''"/>
         </button>
     </div>
 
@@ -165,7 +164,7 @@
         x-transition:leave="transition ease-in duration-100"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-        class="absolute {{ $align === 'right' ? 'right-0' : 'left-0' }} top-full mt-2 w-72 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-2xl shadow-xl z-50 p-4 select-none"
+        class="absolute {{ $align === 'right' ? 'right-0' : 'left-0' }} top-full mt-(--size-10) w-72 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xl z-50 p-4 select-none"
         x-cloak
     >
         <!-- Header Navigasi Bulan & Tahun -->
@@ -216,7 +215,7 @@
             </template>
         </div>
 
-        <!-- Footer: Tombol Pintas Hari Ini & Batal -->
+        <!-- Footer: Tombol Pintas Hari Ini & Tutup -->
         <div class="flex items-center justify-between pt-3 mt-2 border-t border-gray-100 text-xs">
             <button
                 type="button"
