@@ -228,9 +228,14 @@ new class extends Component
 <div class="space-y-(--size-26) w-full">
     <!-- Header Halaman & Tombol Lonceng Notifikasi -->
     <div class="flex items-center justify-between">
-        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
-            Manajemen Akun
-        </h1>
+        <div>
+            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                Manajemen Akun
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Kelola profil pengguna, kredensial keamanan, dan hak akses akun administrator.
+            </p>
+        </div>
         <livewire:notification-bell />
     </div>
 

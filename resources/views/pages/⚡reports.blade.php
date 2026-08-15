@@ -605,7 +605,7 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy) -->
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
                     <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
                         <div class="flex items-center gap-(--size-10)">
                             <span>Dari:</span>
@@ -613,17 +613,7 @@ new class extends Component
                             <span class="text-gray-300 font-bold">&mdash;</span>
                             <span>Sampai:</span>
                             <x-custom-date-picker wire:model.live="endDate" />
-                        </div>
-                    </div>
-
-                    <!-- Status Periode Pill (Tinggi, Font & Format Sama Persis dengan Status Siklus) -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                        <div class="gap-(--size-6) flex items-center">
-                            <span>Status:</span>
-                            <span class="font-bold text-(--prime-colour) ml-1">
-                                Periode Aktif
-                            </span>
-                            <span class="text-xs text-gray-400 ml-1">({{ $durationDays }} Hari)</span>
+                            <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
                         </div>
                     </div>
                 </div>

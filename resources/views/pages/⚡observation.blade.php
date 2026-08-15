@@ -289,9 +289,14 @@ new class extends Component
 <div class="space-y-(--size-26) w-full">
     <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
     <div class="flex flex-row justify-between w-full items-center">
-        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold">
-            Catatan Observasi
-        </h1>
+        <div>
+            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                Catatan Observasi
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Pencatatan data harian pakan, bobot biomassa maggot, dan sinkronisasi kondisi lingkungan.
+            </p>
+        </div>
         <div class="flex items-center gap-3">
             @if ($flashMessage)
                 <div

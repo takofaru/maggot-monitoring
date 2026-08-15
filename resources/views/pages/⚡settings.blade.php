@@ -221,9 +221,14 @@ new class extends Component
 <div class="space-y-(--size-26) w-full">
     <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
     <div class="flex items-center justify-between">
-        <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
-            Pengaturan Perangkat
-        </h1>
+        <div>
+            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                Pengaturan Perangkat
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Konfigurasi batas ideal suhu, kelembapan setiap fase budidaya, dan status konektivitas IoT.
+            </p>
+        </div>
         <div class="flex items-center gap-3">
             @if ($flashMessage)
                 <div
