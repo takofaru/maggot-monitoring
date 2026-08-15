@@ -232,9 +232,16 @@ new class extends Component
             <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
                 Manajemen Akun
             </h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Kelola profil pengguna, kredensial keamanan, dan hak akses akun administrator.
-            </p>
+            @cannot('manage-accounts')
+                <p class="text-sm text-gray-500 mt-1">
+                    Kelola profil pengguna dan kredensial keamanan.
+                </p>
+            @endcannot
+            @can('manage-accounts')
+                <p class="text-sm text-gray-500 mt-1">
+                    Kelola profil pengguna, kredensial keamanan, dan hak akses akun administrator.
+                </p>
+            @endcan
         </div>
         <livewire:notification-bell />
     </div>
