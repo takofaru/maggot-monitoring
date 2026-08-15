@@ -96,6 +96,54 @@ new class extends Component
         $this->resetPage();
     }
 
+    public function getChartData(): array
+    {
+        if ($this->reportMode === 'periodic') {
+            $start = Carbon::parse($this->startDate ?: now()->subDays(30))->startOfDay();
+            $end = Carbon::parse($this->endDate ?: now())->endOfDay();
+
+            $allLogs = ObservationLog::with('environmentLog')
+                ->whereBetween('timestamp', [$start, $end])
+                ->orderBy('timestamp', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+        } else {
+            $allLogs = ObservationLog::with('environmentLog')
+                ->where('cycle_id', $this->selectedCycleId)
+                ->orderBy('timestamp', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+        }
+
+        $chartLabels = [];
+        $chartMaggot = [];
+        $chartFeed   = [];
+        $chartTemp   = [];
+        $chartHumid  = [];
+
+        foreach ($allLogs as $log) {
+            $chartLabels[] = $log->timestamp ? $log->timestamp->format('d M') : "#{$log->id}";
+            $chartMaggot[] = (float) $log->maggot_weight;
+            $chartFeed[]   = (float) $log->feed_weight;
+            $chartTemp[]   = $log->environmentLog ? (float) $log->environmentLog->temperature : null;
+            $chartHumid[]  = $log->environmentLog ? (float) $log->environmentLog->humidity : null;
+        }
+
+        return [
+            'labels' => $chartLabels,
+            'maggot' => $chartMaggot,
+            'feed'   => $chartFeed,
+            'temp'   => $chartTemp,
+            'humid'  => $chartHumid,
+        ];
+    }
+
+    public function rendering()
+    {
+        $chartData = $this->getChartData();
+        $this->dispatch('report-charts-updated', ...$chartData);
+    }
+
     public function exportCsv(): StreamedResponse
     {
         if ($this->reportMode === 'periodic') {
@@ -197,6 +245,7 @@ new class extends Component
     public function with(): array
     {
         $phaseSettings = PhaseSetting::all()->keyBy('phase_name');
+        $chartData = $this->getChartData();
 
         if ($this->reportMode === 'periodic') {
             $start = Carbon::parse($this->startDate ?: now()->subDays(30))->startOfDay();
@@ -220,21 +269,6 @@ new class extends Component
 
             $avgTemp = $envLogs->count() > 0 ? round((float) $envLogs->avg('temperature'), 1) : 0.0;
             $avgHumid = $envLogs->count() > 0 ? round((float) $envLogs->avg('humidity'), 1) : 0.0;
-
-            // Hitung data series grafik analitik
-            $chartLabels = [];
-            $chartMaggot = [];
-            $chartFeed   = [];
-            $chartTemp   = [];
-            $chartHumid  = [];
-
-            foreach ($allLogs as $log) {
-                $chartLabels[] = $log->timestamp ? $log->timestamp->format('d M') : "#{$log->id}";
-                $chartMaggot[] = (float) $log->maggot_weight;
-                $chartFeed[]   = (float) $log->feed_weight;
-                $chartTemp[]   = $log->environmentLog ? (float) $log->environmentLog->temperature : null;
-                $chartHumid[]  = $log->environmentLog ? (float) $log->environmentLog->humidity : null;
-            }
 
             // Hitung siklus yang terjadi pada rentang waktu ini (Logika Presisi: Selesai Penuh vs Separuh)
             $allCycles = Cycle::all();
@@ -347,11 +381,11 @@ new class extends Component
                 'partialCycles'    => $partialCycles,
                 'totalInvolvedCycles' => count($completedCycles) + count($partialCycles),
                 'phaseBreakdown'   => $phaseBreakdown,
-                'chartLabels'      => $chartLabels,
-                'chartMaggot'      => $chartMaggot,
-                'chartFeed'        => $chartFeed,
-                'chartTemp'        => $chartTemp,
-                'chartHumid'       => $chartHumid,
+                'chartLabels'      => $chartData['labels'],
+                'chartMaggot'      => $chartData['maggot'],
+                'chartFeed'        => $chartData['feed'],
+                'chartTemp'        => $chartData['temp'],
+                'chartHumid'       => $chartData['humid'],
                 'printLogs'        => $allLogs,
                 'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                     ->whereBetween('timestamp', [$start, $end])
@@ -387,21 +421,6 @@ new class extends Component
 
         $avgTemp = $envLogs->count() > 0 ? round((float) $envLogs->avg('temperature'), 1) : 0.0;
         $avgHumid = $envLogs->count() > 0 ? round((float) $envLogs->avg('humidity'), 1) : 0.0;
-
-        // Hitung data series grafik analitik untuk siklus
-        $chartLabels = [];
-        $chartMaggot = [];
-        $chartFeed   = [];
-        $chartTemp   = [];
-        $chartHumid  = [];
-
-        foreach ($allLogs as $log) {
-            $chartLabels[] = $log->timestamp ? $log->timestamp->format('d M') : "#{$log->id}";
-            $chartMaggot[] = (float) $log->maggot_weight;
-            $chartFeed[]   = (float) $log->feed_weight;
-            $chartTemp[]   = $log->environmentLog ? (float) $log->environmentLog->temperature : null;
-            $chartHumid[]  = $log->environmentLog ? (float) $log->environmentLog->humidity : null;
-        }
 
         $phaseBreakdown = [];
         $phases = ['penetasan', 'pembesaran', 'prepupa'];
@@ -446,11 +465,11 @@ new class extends Component
             'partialCycles'    => [],
             'totalInvolvedCycles' => 1,
             'phaseBreakdown'   => $phaseBreakdown,
-            'chartLabels'      => $chartLabels,
-            'chartMaggot'      => $chartMaggot,
-            'chartFeed'        => $chartFeed,
-            'chartTemp'        => $chartTemp,
-            'chartHumid'       => $chartHumid,
+            'chartLabels'      => $chartData['labels'],
+            'chartMaggot'      => $chartData['maggot'],
+            'chartFeed'        => $chartData['feed'],
+            'chartTemp'        => $chartData['temp'],
+            'chartHumid'       => $chartData['humid'],
             'printLogs'        => $allLogs,
             'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
@@ -463,6 +482,17 @@ new class extends Component
 ?>
 
 <div>
+    <!-- Element DOM tersembunyi untuk mentransfer data array grafik yang selalu reaktif saat Livewire commit -->
+    <div
+        id="reportChartDataHolder"
+        data-labels="{{ json_encode($chartLabels) }}"
+        data-maggot="{{ json_encode($chartMaggot) }}"
+        data-feed="{{ json_encode($chartFeed) }}"
+        data-temp="{{ json_encode($chartTemp) }}"
+        data-humid="{{ json_encode($chartHumid) }}"
+        style="display: none;"
+    ></div>
+
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
     <div class="no-print space-y-(--size-26) w-full">
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
@@ -1412,27 +1442,41 @@ new class extends Component
     }
 
     function syncAllReportCharts() {
-        const labels = @js($chartLabels);
-        const maggot = @js($chartMaggot);
-        const feed   = @js($chartFeed);
-        const temp   = @js($chartTemp);
-        const humid  = @js($chartHumid);
+        const holder = document.getElementById('reportChartDataHolder');
+        if (!holder) return;
 
-        initOrUpdateGrowthChart(labels, maggot, feed);
-        initOrUpdateEnvChart(labels, temp, humid);
+        try {
+            const labels = JSON.parse(holder.getAttribute('data-labels') || '[]');
+            const maggot = JSON.parse(holder.getAttribute('data-maggot') || '[]');
+            const feed   = JSON.parse(holder.getAttribute('data-feed') || '[]');
+            const temp   = JSON.parse(holder.getAttribute('data-temp') || '[]');
+            const humid  = JSON.parse(holder.getAttribute('data-humid') || '[]');
+
+            initOrUpdateGrowthChart(labels, maggot, feed);
+            initOrUpdateEnvChart(labels, temp, humid);
+        } catch (e) {
+            console.error('Failed to parse chart data from DOM holder:', e);
+        }
     }
+
+    $wire.on('report-charts-updated', (event) => {
+        const payload = Array.isArray(event) ? event[0] : event;
+        if (payload) {
+            initOrUpdateGrowthChart(payload.labels, payload.maggot, payload.feed);
+            initOrUpdateEnvChart(payload.labels, payload.temp, payload.humid);
+        }
+    });
 
     $wire.hook('commit', ({ succeed }) => {
         succeed(() => {
-            setTimeout(syncAllReportCharts, 50);
+            setTimeout(syncAllReportCharts, 20);
         });
     });
 
     document.addEventListener('livewire:navigated', () => {
-        setTimeout(syncAllReportCharts, 50);
+        setTimeout(syncAllReportCharts, 20);
     });
 
-    setTimeout(syncAllReportCharts, 50);
+    setTimeout(syncAllReportCharts, 20);
 </script>
 @endscript
-
