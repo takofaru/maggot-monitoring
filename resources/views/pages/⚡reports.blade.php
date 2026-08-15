@@ -221,6 +221,21 @@ new class extends Component
             $avgTemp = $envLogs->count() > 0 ? round((float) $envLogs->avg('temperature'), 1) : 0.0;
             $avgHumid = $envLogs->count() > 0 ? round((float) $envLogs->avg('humidity'), 1) : 0.0;
 
+            // Hitung data series grafik analitik
+            $chartLabels = [];
+            $chartMaggot = [];
+            $chartFeed   = [];
+            $chartTemp   = [];
+            $chartHumid  = [];
+
+            foreach ($allLogs as $log) {
+                $chartLabels[] = $log->timestamp ? $log->timestamp->format('d M') : "#{$log->id}";
+                $chartMaggot[] = (float) $log->maggot_weight;
+                $chartFeed[]   = (float) $log->feed_weight;
+                $chartTemp[]   = $log->environmentLog ? (float) $log->environmentLog->temperature : null;
+                $chartHumid[]  = $log->environmentLog ? (float) $log->environmentLog->humidity : null;
+            }
+
             // Hitung siklus yang terjadi pada rentang waktu ini (Logika Presisi: Selesai Penuh vs Separuh)
             $allCycles = Cycle::all();
             $logCycleIds = $allLogs->pluck('cycle_id')->filter()->unique();
@@ -332,6 +347,11 @@ new class extends Component
                 'partialCycles'    => $partialCycles,
                 'totalInvolvedCycles' => count($completedCycles) + count($partialCycles),
                 'phaseBreakdown'   => $phaseBreakdown,
+                'chartLabels'      => $chartLabels,
+                'chartMaggot'      => $chartMaggot,
+                'chartFeed'        => $chartFeed,
+                'chartTemp'        => $chartTemp,
+                'chartHumid'       => $chartHumid,
                 'printLogs'        => $allLogs,
                 'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                     ->whereBetween('timestamp', [$start, $end])
@@ -367,6 +387,21 @@ new class extends Component
 
         $avgTemp = $envLogs->count() > 0 ? round((float) $envLogs->avg('temperature'), 1) : 0.0;
         $avgHumid = $envLogs->count() > 0 ? round((float) $envLogs->avg('humidity'), 1) : 0.0;
+
+        // Hitung data series grafik analitik untuk siklus
+        $chartLabels = [];
+        $chartMaggot = [];
+        $chartFeed   = [];
+        $chartTemp   = [];
+        $chartHumid  = [];
+
+        foreach ($allLogs as $log) {
+            $chartLabels[] = $log->timestamp ? $log->timestamp->format('d M') : "#{$log->id}";
+            $chartMaggot[] = (float) $log->maggot_weight;
+            $chartFeed[]   = (float) $log->feed_weight;
+            $chartTemp[]   = $log->environmentLog ? (float) $log->environmentLog->temperature : null;
+            $chartHumid[]  = $log->environmentLog ? (float) $log->environmentLog->humidity : null;
+        }
 
         $phaseBreakdown = [];
         $phases = ['penetasan', 'pembesaran', 'prepupa'];
@@ -411,6 +446,11 @@ new class extends Component
             'partialCycles'    => [],
             'totalInvolvedCycles' => 1,
             'phaseBreakdown'   => $phaseBreakdown,
+            'chartLabels'      => $chartLabels,
+            'chartMaggot'      => $chartMaggot,
+            'chartFeed'        => $chartFeed,
+            'chartTemp'        => $chartTemp,
+            'chartHumid'       => $chartHumid,
             'printLogs'        => $allLogs,
             'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
@@ -424,7 +464,153 @@ new class extends Component
 
 <div>
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
-    <div class="no-print space-y-(--size-26) w-full">
+    <div
+        x-data="{
+            growthChart: null,
+            envChart: null,
+            initCharts() {
+                this.renderGrowth(@js($chartLabels), @js($chartMaggot), @js($chartFeed));
+                this.renderEnv(@js($chartLabels), @js($chartTemp), @js($chartHumid));
+            },
+            renderGrowth(labels, maggot, feed) {
+                const canvas = document.getElementById('growthReportChartCanvas');
+                if (!canvas || typeof Chart === 'undefined') return;
+
+                if (this.growthChart) this.growthChart.destroy();
+                this.growthChart = new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels.length ? labels : ['Belum ada data'],
+                        datasets: [
+                            {
+                                label: 'Bobot Maggot (kg)',
+                                data: maggot.length ? maggot : [0],
+                                borderColor: '#163428',
+                                backgroundColor: 'rgba(22, 52, 40, 0.12)',
+                                fill: true,
+                                tension: 0.3,
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#163428',
+                                pointRadius: labels.length > 20 ? 2 : 4,
+                            },
+                            {
+                                label: 'Pakan (kg)',
+                                data: feed.length ? feed : [0],
+                                borderColor: '#F59E0B',
+                                backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                                fill: false,
+                                borderDash: [4, 4],
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointBackgroundColor: '#F59E0B',
+                                pointRadius: labels.length > 20 ? 2 : 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#163428',
+                                padding: 10,
+                                titleFont: { size: 12, weight: 'bold' },
+                                bodyFont: { size: 12 }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#E5E7EB' },
+                                ticks: { font: { size: 11 } }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 11 }, maxRotation: 45 }
+                            }
+                        }
+                    }
+                });
+            },
+            renderEnv(labels, temp, humid) {
+                const canvas = document.getElementById('envReportChartCanvas');
+                if (!canvas || typeof Chart === 'undefined') return;
+
+                if (this.envChart) this.envChart.destroy();
+                this.envChart = new Chart(canvas, {
+                    type: 'line',
+                    data: {
+                        labels: labels.length ? labels : ['Belum ada data'],
+                        datasets: [
+                            {
+                                label: 'Suhu (°C)',
+                                data: temp.length ? temp : [0],
+                                borderColor: '#059669',
+                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                                yAxisID: 'yTemp',
+                                tension: 0.3,
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#059669',
+                                pointRadius: labels.length > 20 ? 2 : 4,
+                            },
+                            {
+                                label: 'Kelembapan (%)',
+                                data: humid.length ? humid : [0],
+                                borderColor: '#2563EB',
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                yAxisID: 'yHumid',
+                                tension: 0.3,
+                                borderWidth: 2.5,
+                                pointBackgroundColor: '#2563EB',
+                                pointRadius: labels.length > 20 ? 2 : 4,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: '#163428',
+                                padding: 10,
+                                titleFont: { size: 12, weight: 'bold' },
+                                bodyFont: { size: 12 }
+                            }
+                        },
+                        scales: {
+                            yTemp: {
+                                type: 'linear',
+                                position: 'left',
+                                title: { display: true, text: 'Suhu (°C)', font: { size: 11 } },
+                                grid: { color: '#E5E7EB' },
+                                ticks: { font: { size: 11 } }
+                            },
+                            yHumid: {
+                                type: 'linear',
+                                position: 'right',
+                                min: 0,
+                                max: 100,
+                                title: { display: true, text: 'Kelembapan (%)', font: { size: 11 } },
+                                grid: { display: false },
+                                ticks: { font: { size: 11 } }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 11 }, maxRotation: 45 }
+                            }
+                        }
+                    }
+                });
+            }
+        }"
+        x-init="$nextTick(() => initCharts())"
+        x-effect="renderGrowth(@js($chartLabels), @js($chartMaggot), @js($chartFeed)); renderEnv(@js($chartLabels), @js($chartTemp), @js($chartHumid));"
+        class="no-print space-y-(--size-26) w-full"
+    >
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
         <div class="flex items-center justify-between">
             <div>
@@ -705,6 +891,81 @@ new class extends Component
                     <p class="text-xs text-gray-400 mt-2">
                         Rata-rata lingkungan: {{ $avgTemp }}&deg;C &bull; {{ $avgHumid }}%
                     </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2 Grafik Analitik (1. Pertumbuhan Maggot vs Pakan, 2. Tren Lingkungan Suhu & Kelembapan) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-(--size-26) w-full items-stretch">
+            <!-- Grafik 1: Pertumbuhan Bobot Maggot vs Konsumsi Pakan -->
+            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div>
+                    <div class="flex flex-row items-center justify-between flex-wrap gap-2">
+                        <div class="flex flex-row items-center gap-(--size-16)">
+                            <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                                <x-lucide-trending-up class="w-(--size-26) h-(--size-26)"/>
+                            </div>
+                            <div>
+                                <h3 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                                    Pertumbuhan & Pakan
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    Trajektori biomassa maggot dan pemberian pakan
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Legend Indikator -->
+                        <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
+                            <span class="flex items-center gap-1.5 text-gray-700 font-semibold">
+                                <span class="w-3 h-3 rounded-sm bg-[#163428]"></span> Bobot Maggot (kg)
+                            </span>
+                            <span class="flex items-center gap-1.5 text-amber-700 font-semibold">
+                                <span class="w-3 h-3 rounded-sm bg-amber-500"></span> Pakan (kg)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Grafik Pertumbuhan -->
+                <div wire:ignore class="relative w-full h-[300px] border border-gray-100 rounded-xl p-3 bg-gray-50/50">
+                    <canvas id="growthReportChartCanvas" style="width: 100%; height: 100%;"></canvas>
+                </div>
+            </div>
+
+            <!-- Grafik 2: Tren Kondisi Lingkungan (Suhu & Kelembapan) -->
+            <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div>
+                    <div class="flex flex-row items-center justify-between flex-wrap gap-2">
+                        <div class="flex flex-row items-center gap-(--size-16)">
+                            <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                                <x-lucide-activity class="w-(--size-26) h-(--size-26)"/>
+                            </div>
+                            <div>
+                                <h3 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                                    Tren Lingkungan
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    Kondisi suhu (&deg;C) dan kelembapan (%) saat observasi
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Legend Indikator -->
+                        <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
+                            <span class="flex items-center gap-1.5 text-emerald-800 font-semibold">
+                                <span class="w-3 h-3 rounded-sm bg-emerald-600"></span> Suhu (&deg;C)
+                            </span>
+                            <span class="flex items-center gap-1.5 text-blue-700 font-semibold">
+                                <span class="w-3 h-3 rounded-sm bg-blue-500"></span> Kelembapan (%)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Grafik Lingkungan -->
+                <div wire:ignore class="relative w-full h-[300px] border border-gray-100 rounded-xl p-3 bg-gray-50/50">
+                    <canvas id="envReportChartCanvas" style="width: 100%; height: 100%;"></canvas>
                 </div>
             </div>
         </div>
