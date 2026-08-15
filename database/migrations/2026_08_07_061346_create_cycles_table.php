@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('cycles', function (Blueprint $table) {
             $table->id()->autoIncrement()->primary();
-            $table->date('start_date');
+            $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->enum('current_phase', ['penetasan', 'pembesaran', 'prepupa', 'panen']);
-            $table->boolean('is_active');
+            $table->enum('current_phase', ['penetasan', 'pembesaran', 'prepupa', 'panen'])->default('penetasan');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

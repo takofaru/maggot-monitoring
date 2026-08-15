@@ -73,6 +73,11 @@ class MqttListenCommand extends Command
                     $now = now();
                     $activeCycle = Cycle::where('is_active', true)->first() ?? Cycle::latest('id')->first();
 
+                    // Jika siklus aktif belum memiliki start_date (karena sebelumnya alat offline), mulai start_date hari ini
+                    if ($activeCycle && $activeCycle->start_date === null) {
+                        $activeCycle->update(['start_date' => $now->toDateString()]);
+                    }
+
                     $log = EnvironmentLog::create([
                         'cycle_id'    => $activeCycle?->id,
                         'temperature' => (float) $temp,

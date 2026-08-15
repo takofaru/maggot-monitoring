@@ -122,6 +122,12 @@ class NotificationService
         $lastRecordedState = Cache::get('device_status_state'); // null, 'online', 'offline'
 
         if ($isCurrentlyOnline) {
+            // Jika siklus aktif belum memiliki start_date karena sebelumnya alat offline, mulai start_date hari ini
+            $activeCycle = Cycle::where('is_active', true)->first();
+            if ($activeCycle && $activeCycle->start_date === null) {
+                $activeCycle->update(['start_date' => now()->toDateString()]);
+            }
+
             if ($lastRecordedState !== 'online') {
                 Cache::put('device_status_state', 'online', 3600);
                 if ($lastRecordedState !== null) {

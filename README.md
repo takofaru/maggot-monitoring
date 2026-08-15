@@ -100,9 +100,10 @@ Maggot Monitoring adalah sistem informasi dan pemantauan budidaya maggot Black S
    ```bash
    php artisan migrate --seed
    ```
-   *Seeder akan membuat pengaturan batas fase awal, siklus aktif, dan akun pengguna default:*
-   - **Admin**: Username: `admin` | Password: `password`
-   - **Petugas**: Username: `petugas` | Password: `password`
+   *Seeder akan menginisialisasi data inti deployment:*
+   - **User Admin**: Username: `admin` | Password: `password`
+   - **Phase Settings**: Batas ideal untuk fase Penetasan, Pembesaran, dan Prepupa.
+   - **First Cycle (Siklus 1)**: Siklus pertama dalam fase penetasan (start_date otomatis diset jika alat online, atau dimulai saat alat pertama kali terhubung).
 
 7. **Kompilasi Aset Frontend**
    ```bash

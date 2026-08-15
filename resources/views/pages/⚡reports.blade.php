@@ -238,7 +238,7 @@ new class extends Component
                     <span class="font-bold text-(--prime-colour) ml-1">
                         {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
                     </span>
-                    <span class="text-xs text-gray-400 ml-1">({{ $durationDays }} Hari)</span>
+                    <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
                 </div>
             </div>
         </div>

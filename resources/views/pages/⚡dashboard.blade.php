@@ -17,10 +17,9 @@ new class extends Component
         $cycleId = $activeCycle?->id;
         $cycleNumber = $cycleId ?? 1;
 
-        $dayNumber = 1;
-        if ($activeCycle && $activeCycle->start_date) {
-            $dayNumber = (int) Carbon::parse($activeCycle->start_date)->diffInDays(now()) + 1;
-        }
+        $dayNumber = ($activeCycle && $activeCycle->start_date)
+            ? (int) Carbon::parse($activeCycle->start_date)->diffInDays(now()) + 1
+            : null;
 
         $currentPhase = $activeCycle ? ucfirst($activeCycle->current_phase) : 'Penetasan';
 
@@ -210,7 +209,7 @@ new class extends Component
         <!-- Pill 2: Hari ke -->
         <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
             <x-lucide-calendar class="w-(--size-16) text-(--prime-colour)"/>
-            <span>Hari ke: {{ sprintf('%02d', $dayNumber) }}</span>
+            <span>Hari ke: {{ $dayNumber !== null ? sprintf('%02d', $dayNumber) : '-' }}</span>
         </div>
 
         <!-- Pill 3: Fase Sekarang -->

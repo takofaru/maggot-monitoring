@@ -3,69 +3,45 @@
 namespace Database\Seeders;
 
 use App\Models\Cycle;
+use App\Models\EnvironmentLog;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Cache;
 
 class CycleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     * Hanya seed first cycle (Siklus 1).
+     * Jika alat offline, maka start_date bernilai null (belum dimulai).
      */
     public function run(): void
     {
-        // Kumpulan siklus berurutan dihitung mundur dari waktu saat ini
-        $cycles = [
-            [
-                'start_date'    => now()->subDays(180)->toDateString(),
-                'end_date'      => now()->subDays(155)->toDateString(),
-                'current_phase' => 'panen',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(154)->toDateString(),
-                'end_date'      => now()->subDays(130)->toDateString(),
-                'current_phase' => 'panen',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(129)->toDateString(),
-                'end_date'      => now()->subDays(104)->toDateString(),
-                'current_phase' => 'panen',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(103)->toDateString(),
-                'end_date'      => now()->subDays(78)->toDateString(),
-                'current_phase' => 'panen',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(77)->toDateString(),
-                'end_date'      => now()->subDays(52)->toDateString(),
-                'current_phase' => 'panen',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(51)->toDateString(),
-                'end_date'      => now()->subDays(26)->toDateString(),
-                'current_phase' => 'panen',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(25)->toDateString(),
-                'end_date'      => now()->subDays(9)->toDateString(),
-                'current_phase' => 'prepupa',
-                'is_active'     => false,
-            ],
-            [
-                'start_date'    => now()->subDays(8)->toDateString(),
-                'end_date'      => null, // Siklus aktif terakhir mempunyai end_date null
-                'current_phase' => 'pembesaran',
-                'is_active'     => true, // Hanya satu cycle yang aktif (cycle terakhir)
-            ],
-        ];
+        // 1. Evaluasi status konektivitas perangkat IoT terkini (Liveness Check)
+        $cachedLastSeenStr = Cache::get('device_last_seen');
+        $cachedLastSeen = $cachedLastSeenStr ? Carbon::parse($cachedLastSeenStr) : null;
+        $latestEnv = EnvironmentLog::latest('timestamp')->latest('id')->first();
+        $dbLastSeen = $latestEnv ? Carbon::parse($latestEnv->timestamp ?? $latestEnv->created_at) : null;
 
-        foreach ($cycles as $cycleData) {
-            Cycle::create($cycleData);
-        }
+        $lastSeen = ($cachedLastSeen && $dbLastSeen)
+            ? ($cachedLastSeen->greaterThan($dbLastSeen) ? $cachedLastSeen : $dbLastSeen)
+            : ($cachedLastSeen ?? $dbLastSeen);
+
+        $diffInSeconds = $lastSeen ? (int) abs(now()->diffInSeconds($lastSeen, false)) : null;
+        $isDeviceOnline = ($diffInSeconds !== null && $diffInSeconds <= 20);
+
+        // Jika alat online, start_date dimulai hari ini. Jika alat offline, start_date belum dimulai (null).
+        $startDate = $isDeviceOnline ? now()->toDateString() : null;
+
+        // 2. Buat Siklus Pertama (Siklus 1) jika belum ada
+        Cycle::firstOrCreate(
+            ['id' => 1],
+            [
+                'start_date'    => $startDate,
+                'end_date'      => null,
+                'current_phase' => 'penetasan',
+                'is_active'     => true,
+            ]
+        );
     }
 }
