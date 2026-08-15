@@ -315,9 +315,9 @@ new class extends Component
 
     <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah (Responsif di Mobile, Sejajar di Desktop) -->
     <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
-        <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
             <!-- Dropdown Pilihan Siklus -->
-            <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+            <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                 <span>Siklus ke:</span>
                 <div class="relative inline-block">
                     <button
@@ -371,9 +371,9 @@ new class extends Component
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
-            <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+            <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                 <div class="gap-(--size-6) flex items-center">
-                    Fase terkini:
+                    <span>Fase terkini:</span>
                     <span class="font-bold text-(--prime-colour) capitalize ml-1">{{ $activeCycleObj->current_phase ?? '-' }}</span>
                 </div>
                 @if($isSelectedCurrent && $currPhase !== 'panen')
@@ -402,9 +402,9 @@ new class extends Component
             <button
                 wire:click="openCreateModal"
                 type="button"
-                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shrink-0 shadow-xs"
+                class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
             >
-                <x-lucide-plus class="w-(--size-26)"/>
+                <x-lucide-plus class="w-5 md:w-(--size-26)"/>
                 <span>Tambah Catatan Baru</span>
             </button>
         @endif

@@ -621,10 +621,10 @@ new class extends Component
                     </div>
                 </div>
             @else
-                <!-- Toolbar Mode Siklus: Siklus ke & Status -->
-                <div class="flex flex-col sm:flex-row md:inline-flex items-stretch sm:items-center gap-3 w-full md:w-auto">
+                <!-- Toolbar Mode Siklus: Siklus ke & Status (Vertikal di Mobile, Horisontal di Desktop) -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Siklus -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Siklus ke:</span>
                         <div class="relative inline-block">
                             <button
@@ -668,14 +668,16 @@ new class extends Component
                     </div>
 
                     <!-- Status Siklus Pill -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between sm:justify-start px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) whitespace-nowrap w-full md:w-auto shrink-0">
-                        <div class="gap-(--size-6) flex items-center">
-                            <span>Status:</span>
-                            <span class="font-bold text-(--prime-colour) ml-1">
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full md:w-auto shrink-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-gray-500 font-medium">Status:</span>
+                            <span class="font-bold text-(--prime-colour)">
                                 {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
                             </span>
-                            <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
                         </div>
+                        <span class="text-xs text-gray-400 font-semibold shrink-0 ml-2">
+                            ({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})
+                        </span>
                     </div>
                 </div>
             @endif
