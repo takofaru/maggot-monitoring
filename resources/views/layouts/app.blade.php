@@ -14,7 +14,9 @@
     <body class="bg-(--bg-colour) flex h-screen overflow-hidden">
 
         <!-- Sidebar Anda sekarang akan TERKUNCI alias diam di tempat! -->
-        <livewire:sidebar />
+        <div class="no-print">
+            <livewire:sidebar />
+        </div>
 
         <!-- Karena main punya overflow-y-auto, HANYA area ini yang akan bisa di-scroll -->
         <main class="flex-1 overflow-auto">
@@ -24,7 +26,9 @@
         </main>
 
         <!-- Custom Global Confirmation Dialog UI -->
-        <livewire:confirm-dialog />
+        <div class="no-print">
+            <livewire:confirm-dialog />
+        </div>
 
         @livewireScripts
     </body>

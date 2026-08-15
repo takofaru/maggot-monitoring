@@ -108,55 +108,12 @@ new class extends Component
                 ->orderBy('id', 'asc')
                 ->get();
 
-            // Hitung siklus yang terjadi pada rentang periode ini (Logika Lengkap vs Separuh)
-            $allCycles = Cycle::all();
-            $logCycleIds = $logs->pluck('cycle_id')->filter()->unique();
-            $involvedCycleIds = collect();
-
-            foreach ($allCycles as $c) {
-                if (!$c->start_date) continue;
-                $cStart = Carbon::parse($c->start_date)->startOfDay();
-                $cEnd = $c->end_date ? Carbon::parse($c->end_date)->endOfDay() : null;
-                $effectiveEnd = $cEnd ?? now()->endOfDay();
-
-                if ($cStart <= $end && $effectiveEnd >= $start) {
-                    $involvedCycleIds->push($c->id);
-                }
-            }
-            foreach ($logCycleIds as $cid) {
-                $involvedCycleIds->push($cid);
-            }
-            $involvedCycles = Cycle::whereIn('id', $involvedCycleIds->unique())->get();
-
-            $completedCount = 0;
-            $partialCount = 0;
-            foreach ($involvedCycles as $c) {
-                $cStart = $c->start_date ? Carbon::parse($c->start_date)->startOfDay() : null;
-                $cEnd = $c->end_date ? Carbon::parse($c->end_date)->endOfDay() : null;
-
-                // Siklus Selesai Penuh: Harus dimulai pada/setelah start DAN selesai pada/sebelum end
-                $isFullCompleted = ($cStart !== null && $cStart >= $start && $cEnd !== null && $cEnd <= $end && (!$c->is_active || $c->current_phase === 'panen'));
-
-                if ($isFullCompleted) {
-                    $completedCount++;
-                } else {
-                    $partialCount++;
-                }
-            }
-
             $filename = "laporan_periodik_" . $start->format('Ymd') . "_sd_" . $end->format('Ymd') . ".csv";
 
-            return response()->streamDownload(function () use ($logs, $start, $end, $completedCount, $partialCount) {
+            // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
+            return response()->streamDownload(function () use ($logs) {
                 $handle = fopen('php://output', 'w');
                 fputs($handle, "\xEF\xBB\xBF");
-
-                fputcsv($handle, ["LAPORAN PERIODIK REKAPITULASI BUDIDAYA MAGGOT"], ',', '"', "\\");
-                fputcsv($handle, ["Rentang Periode", $start->format('d/m/Y') . " s/d " . $end->format('d/m/Y')], ',', '"', "\\");
-                fputcsv($handle, ["Siklus Selesai Penuh", "{$completedCount} siklus (Dimulai & Panen di periode ini)"], ',', '"', "\\");
-                fputcsv($handle, ["Siklus Separuh", "{$partialCount} siklus (Sebagian periode / sedang berjalan)"], ',', '"', "\\");
-                fputcsv($handle, ["Jumlah Log Observasi", $logs->count() . " data"], ',', '"', "\\");
-                fputcsv($handle, ["Tanggal Unduh", now()->translatedFormat('d F Y H:i:s')], ',', '"', "\\");
-                fputcsv($handle, [], ',', '"', "\\");
 
                 fputcsv($handle, [
                     'No',
@@ -193,7 +150,6 @@ new class extends Component
 
         // Export Mode Siklus
         $cycleId = $this->selectedCycleId;
-        $cycle = Cycle::find($cycleId);
         $logs = ObservationLog::with('environmentLog')
             ->where('cycle_id', $cycleId)
             ->orderBy('timestamp', 'asc')
@@ -202,19 +158,14 @@ new class extends Component
 
         $filename = "laporan_siklus_{$cycleId}_" . now()->format('Ymd_His') . ".csv";
 
-        return response()->streamDownload(function () use ($logs, $cycle) {
+        // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
+        return response()->streamDownload(function () use ($logs) {
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
 
-            fputcsv($handle, ["LAPORAN REKAPITULASI BUDIDAYA MAGGOT - SIKLUS {$cycle?->id}"], ',', '"', "\\");
-            fputcsv($handle, ["Tanggal Mulai", $cycle?->start_date?->format('d/m/Y') ?? 'Belum Dimulai'], ',', '"', "\\");
-            fputcsv($handle, ["Tanggal Selesai", $cycle?->end_date?->format('d/m/Y') ?? ($cycle?->is_active ? 'Sedang Berjalan' : '-')], ',', '"', "\\");
-            fputcsv($handle, ["Status", $cycle?->is_active ? 'Aktif' : 'Panen / Selesai'], ',', '"', "\\");
-            fputcsv($handle, [], ',', '"', "\\");
-
             fputcsv($handle, [
                 'No',
-                'Tanggal',
+                'Tanggal & Waktu',
                 'Fase',
                 'Suhu (°C)',
                 'Kelembapan (%)',
@@ -226,7 +177,7 @@ new class extends Component
             foreach ($logs as $index => $log) {
                 fputcsv($handle, [
                     $index + 1,
-                    $log->timestamp ? $log->timestamp->format('d/m/Y') : '-',
+                    $log->timestamp ? $log->timestamp->format('d/m/Y H:i') : '-',
                     ucfirst($log->phase_name),
                     $log->environmentLog?->temperature ?? '-',
                     $log->environmentLog?->humidity ?? '-',
@@ -315,7 +266,6 @@ new class extends Component
                         'phase'       => 'Panen',
                     ];
                 } else {
-                    // Tentukan alasan separuh untuk transparansi pengguna
                     $reason = 'Sebagian Periode';
                     if ($cStart !== null && $cStart < $start && $cEnd !== null && $cEnd <= $end) {
                         $reason = 'Dimulai sebelum periode & selesai di periode ini';
@@ -382,6 +332,7 @@ new class extends Component
                 'partialCycles'    => $partialCycles,
                 'totalInvolvedCycles' => count($completedCycles) + count($partialCycles),
                 'phaseBreakdown'   => $phaseBreakdown,
+                'printLogs'        => $allLogs,
                 'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                     ->whereBetween('timestamp', [$start, $end])
                     ->orderBy('timestamp', 'desc')
@@ -460,6 +411,7 @@ new class extends Component
             'partialCycles'    => [],
             'totalInvolvedCycles' => 1,
             'phaseBreakdown'   => $phaseBreakdown,
+            'printLogs'        => $allLogs,
             'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
@@ -470,473 +422,675 @@ new class extends Component
 };
 ?>
 
-<div class="space-y-(--size-26) w-full">
-    <!-- Header Halaman & Tombol Lonceng Notifikasi -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
-                Laporan Budidaya
-            </h1>
-            <p class="text-sm text-gray-500 mt-1">
-                Rekapitulasi performa, konsumsi pakan, pertumbuhan bobot, dan evaluasi lingkungan.
-            </p>
-        </div>
-        <livewire:notification-bell />
-    </div>
-
-    <!-- Mode Selector Tabs & Toolbar Filter -->
-    <div class="flex flex-col gap-3 w-full">
-        <!-- Baris 1: Mode Switch Tab & Aksi Ekspor -->
-        <div class="flex items-center justify-between flex-wrap gap-3">
-            <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs shrink-0">
-                <button
-                    type="button"
-                    wire:click="setReportMode('periodic')"
-                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
-                >
-                    <x-lucide-calendar-range class="w-4 h-4"/>
-                    <span>Laporan Periodik</span>
-                </button>
-                <button
-                    type="button"
-                    wire:click="setReportMode('cycle')"
-                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
-                >
-                    <x-lucide-refresh-cw class="w-4 h-4"/>
-                    <span>Laporan Siklus</span>
-                </button>
+<div>
+    <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
+    <div class="no-print space-y-(--size-26) w-full">
+        <!-- Header Halaman & Tombol Lonceng Notifikasi -->
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                    Laporan Budidaya
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">
+                    Rekapitulasi performa, konsumsi pakan, pertumbuhan bobot, dan evaluasi lingkungan.
+                </p>
             </div>
-
-            <!-- Tombol Ekspor CSV & Cetak Laporan -->
-            <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
-                <button
-                    wire:click="exportCsv"
-                    type="button"
-                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
-                >
-                    <x-lucide-download class="w-(--size-26)"/>
-                    <span>Ekspor CSV</span>
-                </button>
-
-                <button
-                    onclick="window.print()"
-                    type="button"
-                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
-                >
-                    <x-lucide-printer class="w-(--size-26)"/>
-                    <span>Cetak Laporan</span>
-                </button>
-            </div>
+            <livewire:notification-bell />
         </div>
 
-        <!-- Baris 2: Filter Toolbar Sesuai Mode Terpilih -->
-        <div class="flex items-center justify-between w-full flex-wrap gap-3">
-            @if($reportMode === 'periodic')
-                <!-- Toolbar Mode Periodik (Harmonized 100% dengan Mode Siklus) -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
-                    <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                        <span>Preset:</span>
-                        <div class="relative inline-block">
-                            <button
-                                @click="openDropdown = !openDropdown"
-                                type="button"
-                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
-                            >
-                                <span>
-                                    @if($periodicPreset === 'today') Hari Ini
-                                    @elseif($periodicPreset === '7days') 7 Hari Terakhir
-                                    @elseif($periodicPreset === '30days') 30 Hari Terakhir
-                                    @elseif($periodicPreset === 'this_month') Bulan Ini
-                                    @else Kustom
-                                    @endif
-                                </span>
-                                <x-lucide-chevron-down class="w-(--size-16)"/>
-                            </button>
-
-                            <div
-                                x-show="openDropdown"
-                                @click.outside="openDropdown = false"
-                                x-transition.opacity.duration.200ms
-                                class="absolute left-0 top-full mt-(--size-10) w-52 bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
-                                x-cloak
-                            >
-                                <button
-                                    type="button"
-                                    wire:click="setPeriodicPreset('today')"
-                                    @click="openDropdown = false"
-                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'today' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                >
-                                    <span>Hari Ini</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    wire:click="setPeriodicPreset('7days')"
-                                    @click="openDropdown = false"
-                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '7days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                >
-                                    <span>7 Hari Terakhir</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    wire:click="setPeriodicPreset('30days')"
-                                    @click="openDropdown = false"
-                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '30days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                >
-                                    <span>30 Hari Terakhir</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    wire:click="setPeriodicPreset('this_month')"
-                                    @click="openDropdown = false"
-                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'this_month' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                >
-                                    <span>Bulan Ini</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    wire:click="setPeriodicPreset('custom')"
-                                    @click="openDropdown = false"
-                                    class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $periodicPreset === 'custom' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
-                                >
-                                    <span>Kustom Tanggal</span>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                        <div class="flex items-center gap-(--size-10)">
-                            <span>Dari:</span>
-                            <x-custom-date-picker wire:model.live="startDate" />
-                            <span class="text-gray-300 font-bold">&mdash;</span>
-                            <span>Sampai:</span>
-                            <x-custom-date-picker wire:model.live="endDate" />
-                            <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
-                        </div>
-                    </div>
+        <!-- Mode Selector Tabs & Toolbar Filter -->
+        <div class="flex flex-col gap-3 w-full">
+            <!-- Baris 1: Mode Switch Tab & Aksi Ekspor -->
+            <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs shrink-0">
+                    <button
+                        type="button"
+                        wire:click="setReportMode('periodic')"
+                        class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                    >
+                        <x-lucide-calendar-range class="w-4 h-4"/>
+                        <span>Laporan Periodik</span>
+                    </button>
+                    <button
+                        type="button"
+                        wire:click="setReportMode('cycle')"
+                        class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                    >
+                        <x-lucide-refresh-cw class="w-4 h-4"/>
+                        <span>Laporan Siklus</span>
+                    </button>
                 </div>
-            @else
-                <!-- Toolbar Mode Siklus -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
-                    <!-- Dropdown Pilihan Siklus -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                        <span>Siklus ke:</span>
-                        <div class="relative inline-block">
-                            <button
-                                @click="openDropdown = !openDropdown"
-                                type="button"
-                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
-                            >
-                                <span>{{ $selectedCycleName }}</span>
-                                <x-lucide-chevron-down class="w-(--size-16)"/>
-                            </button>
 
-                            <div
-                                x-show="openDropdown"
-                                @click.outside="openDropdown = false"
-                                x-transition.opacity.duration.200ms
-                                class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
-                                x-cloak
-                            >
-                                @foreach($cycleData as $item)
+                <!-- Tombol Ekspor CSV & Cetak Laporan -->
+                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+                    <button
+                        wire:click="exportCsv"
+                        type="button"
+                        class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                    >
+                        <x-lucide-download class="w-(--size-26)"/>
+                        <span>Ekspor CSV</span>
+                    </button>
+
+                    <button
+                        onclick="window.print()"
+                        type="button"
+                        class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                    >
+                        <x-lucide-printer class="w-(--size-26)"/>
+                        <span>Cetak Laporan</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Baris 2: Filter Toolbar Sesuai Mode Terpilih -->
+            <div class="flex items-center justify-between w-full flex-wrap gap-3">
+                @if($reportMode === 'periodic')
+                    <!-- Toolbar Mode Periodik (Harmonized 100% dengan Mode Siklus) -->
+                    <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+                        <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
+                        <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                            <span>Preset:</span>
+                            <div class="relative inline-block">
+                                <button
+                                    @click="openDropdown = !openDropdown"
+                                    type="button"
+                                    class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
+                                >
+                                    <span>
+                                        @if($periodicPreset === 'today') Hari Ini
+                                        @elseif($periodicPreset === '7days') 7 Hari Terakhir
+                                        @elseif($periodicPreset === '30days') 30 Hari Terakhir
+                                        @elseif($periodicPreset === 'this_month') Bulan Ini
+                                        @else Kustom
+                                        @endif
+                                    </span>
+                                    <x-lucide-chevron-down class="w-(--size-16)"/>
+                                </button>
+
+                                <div
+                                    x-show="openDropdown"
+                                    @click.outside="openDropdown = false"
+                                    x-transition.opacity.duration.200ms
+                                    class="absolute left-0 top-full mt-(--size-10) w-52 bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 overflow-hidden"
+                                    x-cloak
+                                >
                                     <button
                                         type="button"
-                                        wire:click="selectCycle({{ $item->id }})"
+                                        wire:click="setPeriodicPreset('today')"
                                         @click="openDropdown = false"
-                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 last:border-0 cursor-pointer {{ $item->id == $selectedCycleId ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'today' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
                                     >
-                                        <span class="font-semibold flex items-center gap-2">
-                                            Siklus {{ $item->id }}
-                                            @if($item->is_active)
-                                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px]">Aktif</span>
-                                            @else
-                                                <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px]">Selesai</span>
-                                            @endif
-                                        </span>
-                                        <span class="text-xs text-gray-500">
-                                            {{ $item->start_date ? $item->start_date->translatedFormat('d M Y') : 'Belum Dimulai' }} &mdash; {{ $item->end_date ? $item->end_date->translatedFormat('d M Y') : 'Sekarang' }}
-                                        </span>
+                                        <span>Hari Ini</span>
                                     </button>
-                                @endforeach
+                                    <button
+                                        type="button"
+                                        wire:click="setPeriodicPreset('7days')"
+                                        @click="openDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '7days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span>7 Hari Terakhir</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click="setPeriodicPreset('30days')"
+                                        @click="openDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === '30days' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span>30 Hari Terakhir</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click="setPeriodicPreset('this_month')"
+                                        @click="openDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 cursor-pointer {{ $periodicPreset === 'this_month' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span>Bulan Ini</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        wire:click="setPeriodicPreset('custom')"
+                                        @click="openDropdown = false"
+                                        class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 cursor-pointer {{ $periodicPreset === 'custom' ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                    >
+                                        <span>Kustom Tanggal</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
+                        <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
+                            <div class="flex items-center gap-(--size-10)">
+                                <span>Dari:</span>
+                                <x-custom-date-picker wire:model.live="startDate" />
+                                <span class="text-gray-300 font-bold">&mdash;</span>
+                                <span>Sampai:</span>
+                                <x-custom-date-picker wire:model.live="endDate" />
+                                <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
                             </div>
                         </div>
                     </div>
+                @else
+                    <!-- Toolbar Mode Siklus -->
+                    <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+                        <!-- Dropdown Pilihan Siklus -->
+                        <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                            <span>Siklus ke:</span>
+                            <div class="relative inline-block">
+                                <button
+                                    @click="openDropdown = !openDropdown"
+                                    type="button"
+                                    class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
+                                >
+                                    <span>{{ $selectedCycleName }}</span>
+                                    <x-lucide-chevron-down class="w-(--size-16)"/>
+                                </button>
 
-                    <!-- Status Siklus Pill -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                        <div class="gap-(--size-6) flex items-center">
-                            <span>Status:</span>
-                            <span class="font-bold text-(--prime-colour) ml-1">
-                                {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
-                            </span>
-                            <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
+                                <div
+                                    x-show="openDropdown"
+                                    @click.outside="openDropdown = false"
+                                    x-transition.opacity.duration.200ms
+                                    class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                                    x-cloak
+                                >
+                                    @foreach($cycleData as $item)
+                                        <button
+                                            type="button"
+                                            wire:click="selectCycle({{ $item->id }})"
+                                            @click="openDropdown = false"
+                                            class="w-full flex justify-between items-center text-left px-(--size-16) py-(--size-10) hover:bg-gray-100 border-b border-gray-100 last:border-0 cursor-pointer {{ $item->id == $selectedCycleId ? 'bg-emerald-50/70 font-bold text-[#163428]' : '' }}"
+                                        >
+                                            <span class="font-semibold flex items-center gap-2">
+                                                Siklus {{ $item->id }}
+                                                @if($item->is_active)
+                                                    <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full text-[11px]">Aktif</span>
+                                                @else
+                                                    <span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full text-[11px]">Selesai</span>
+                                                @endif
+                                            </span>
+                                            <span class="text-xs text-gray-500">
+                                                {{ $item->start_date ? $item->start_date->translatedFormat('d M Y') : 'Belum Dimulai' }} &mdash; {{ $item->end_date ? $item->end_date->translatedFormat('d M Y') : 'Sekarang' }}
+                                            </span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status Siklus Pill -->
+                        <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
+                            <div class="gap-(--size-6) flex items-center">
+                                <span>Status:</span>
+                                <span class="font-bold text-(--prime-colour) ml-1">
+                                    {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
+                                </span>
+                                <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
+                            </div>
                         </div>
                     </div>
+                @endif
+            </div>
+        </div>
+
+        <!-- 3 Kartu Ringkasan KPI Utama (Seragam 100% Ukuran & Proporsinya antara Mode Periodik dan Mode Siklus) -->
+        <div class="grid grid-cols-3 gap-(--size-26) w-full">
+            <!-- 1. Total Pakan Kumulatif / Periode -->
+            <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        {{ $reportMode === 'periodic' ? 'Total Pakan Periode' : 'Total Pakan Kumulatif' }}
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                            {{ number_format($totalFeed, 1) }}
+                        </span>
+                        <span class="text-base font-bold text-gray-500">kg</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">
+                        {{ $reportMode === 'periodic' ? 'Akumulasi pakan pada rentang tanggal terpilih' : 'Akumulasi konsumsi pakan siklus' }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- 2. Hasil Akhir / Bobot Maggot -->
+            <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        {{ $reportMode === 'periodic' ? 'Bobot Maggot Akhir' : 'Hasil Akhir Maggot' }}
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                            {{ number_format($finalMaggotWeight, 1) }}
+                        </span>
+                        <span class="text-base font-bold text-gray-500">kg</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">
+                        @if($netMaggotGain > 0)
+                            Pertambahan bersih: <span class="font-semibold text-emerald-600">+{{ number_format($netMaggotGain, 1) }} kg</span>
+                        @else
+                            Biomassa maggot tercatat
+                        @endif
+                    </p>
+                </div>
+            </div>
+
+            <!-- 3. Konversi Rasio Pakan (FCR) -->
+            <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex flex-row items-center gap-(--size-16)">
+                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                        <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
+                    </div>
+                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        Konversi Rasio Pakan (FCR)
+                    </span>
+                </div>
+                <div>
+                    <div class="flex items-baseline gap-2">
+                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                            {{ $fcr > 0 ? number_format($fcr, 1) : '-' }}
+                        </span>
+                        <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
+                    </div>
+                    <p class="text-xs text-gray-400 mt-2">
+                        Rata-rata lingkungan: {{ $avgTemp }}&deg;C &bull; {{ $avgHumid }}%
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Kontainer Luas & Rinci) -->
+        @if($reportMode === 'periodic')
+            <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+                <div class="flex items-center justify-between flex-wrap gap-3">
+                    <div class="flex flex-row gap-(--size-16) items-center">
+                        <x-lucide-refresh-cw class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                        <div>
+                            <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                                Rekapitulasi Siklus dalam Periode (Total {{ $totalInvolvedCycles }} Siklus)
+                            </h2>
+                            <p class="text-xs text-gray-400">
+                                Klasifikasi siklus yang berjalan penuh vs siklus separuh/sebagian pada rentang tanggal ini
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="px-3.5 py-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                            <x-lucide-check-circle-2 class="w-4 h-4 text-emerald-700"/>
+                            {{ count($completedCycles) }} Siklus Selesai Penuh
+                        </span>
+                        <span class="px-3.5 py-1.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                            <x-lucide-clock class="w-4 h-4 text-amber-700"/>
+                            {{ count($partialCycles) }} Siklus Separuh
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Grid Kartu Siklus -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+                    @forelse(array_merge($completedCycles, $partialCycles) as $item)
+                        <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full {{ $item['type'] === 'completed' ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
+                                    <span class="font-bold text-base text-[#163428]">{{ $item['name'] }}</span>
+                                </div>
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $item['type'] === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                    {{ $item['label'] }}
+                                </span>
+                            </div>
+                            <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-200/70 pt-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-500">Status Fase:</span>
+                                    <span class="font-semibold text-gray-800">{{ $item['phase'] }}</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-500">Rentang Siklus:</span>
+                                    <span class="font-medium text-gray-700">{{ $item['start_date'] }} &mdash; {{ $item['end_date'] }}</span>
+                                </div>
+                                <div class="text-[11px] text-gray-500 italic pt-1">
+                                    &bull; {{ $item['detail'] }}
+                                </div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="col-span-full py-8 text-center text-sm text-gray-400 bg-(--bg-colour) rounded-xl border border-dashed border-gray-300">
+                            Tidak ada aktivitas siklus yang teridentifikasi dalam rentang waktu tanggal ini.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        @endif
+
+        <!-- Tabel 1: Analisis Performa Per Fase Budidaya -->
+        <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row gap-(--size-16) items-center">
+                <x-lucide-bar-chart-3 class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                <div>
+                    <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        {{ $reportMode === 'periodic' ? 'Analisis Performa Fase dalam Periode Terpilih' : 'Analisis Performa Per Fase Budidaya' }}
+                    </h2>
+                    <p class="text-xs text-gray-400">
+                        {{ $reportMode === 'periodic' ? 'Ringkasan observasi dan kondisi lingkungan per fase pada rentang waktu ini' : 'Ringkasan komparasi performa antar fase budidaya pada siklus ini' }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+                <table class="w-full text-left border-collapse">
+                    <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
+                        <tr>
+                            <th class="min-w-[160px]">Fase Budidaya</th>
+                            <th class="min-w-[130px]">Jumlah Log</th>
+                            <th class="min-w-[130px]">Total Pakan</th>
+                            <th class="min-w-[160px]">Bobot Maggot Fase</th>
+                            <th class="min-w-[160px]">Suhu Aktual (Ideal)</th>
+                            <th class="border-r-0 min-w-[160px]">Kelembapan Aktual (Ideal)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($phaseBreakdown as $key => $p)
+                            <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                                <td class="font-bold text-(--prime-colour)">
+                                    <div class="flex items-center justify-center gap-2">
+                                        @if($key === 'penetasan')
+                                            <x-lucide-egg class="w-4 h-4 text-(--prime-colour)" />
+                                        @elseif($key === 'pembesaran')
+                                            <x-lucide-worm class="w-4 h-4 text-(--prime-colour)" />
+                                        @else
+                                            <x-lucide-bug class="w-4 h-4 text-(--prime-colour)" />
+                                        @endif
+                                        <span>{{ $p['name'] }}</span>
+                                    </div>
+                                </td>
+                                <td>{{ $p['log_count'] }} kali observasi</td>
+                                <td class="font-semibold">{{ number_format($p['total_feed'], 1) }} kg</td>
+                                <td>
+                                    <div class="font-semibold text-gray-900">{{ number_format($p['end_maggot'], 1) }} kg</div>
+                                    @if($p['growth_gain'] > 0)
+                                        <div class="text-[11px] text-emerald-700 font-medium">(+{{ number_format($p['growth_gain'], 1) }} kg pada fase ini)</div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <span class="font-semibold">{{ $p['avg_temp'] !== '-' ? $p['avg_temp'] . '°C' : '-' }}</span>
+                                    <span class="text-xs text-gray-400 block">({{ $p['ideal_temp'] }})</span>
+                                </td>
+                                <td class="border-r-0">
+                                    <span class="font-semibold">{{ $p['avg_humid'] !== '-' ? $p['avg_humid'] . '%' : '-' }}</span>
+                                    <span class="text-xs text-gray-400 block">({{ $p['ideal_humid'] }})</span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabel 2: Rincian Log Catatan Observasi Interaktif (Berhalaman / Paginated) -->
+        <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row gap-(--size-16) items-center">
+                <x-lucide-table class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                <div>
+                    <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        {{ $reportMode === 'periodic' ? 'Rincian Log Observasi Periode' : 'Rincian Log Harian Siklus' }}
+                    </h2>
+                    <p class="text-xs text-gray-400">
+                        {{ $reportMode === 'periodic' ? 'Daftar catatan harian yang terekam pada rentang tanggal ' . Carbon::parse($startDate)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($endDate)->translatedFormat('d M Y') : 'Daftar catatan harian yang terekam pada siklus terpilih' }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+                <table class="w-full text-left border-collapse">
+                    <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
+                        <tr>
+                            <th class="min-w-[180px]">Tanggal & Waktu</th>
+                            @if($reportMode === 'periodic')
+                                <th class="min-w-[110px]">Siklus</th>
+                            @endif
+                            <th class="min-w-[130px]">Fase</th>
+                            <th class="min-w-[100px]">Suhu</th>
+                            <th class="min-w-[120px]">Kelembapan</th>
+                            <th class="min-w-[140px]">Pakan Diberikan</th>
+                            <th class="border-r-0 min-w-[140px]">Berat Maggot</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($observationLogs as $item)
+                            <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                                <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y - H:i') : '-' }}</td>
+                                @if($reportMode === 'periodic')
+                                    <td>
+                                        <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded-md text-xs border border-emerald-200">
+                                            Siklus {{ $item->cycle_id ?? '-' }}
+                                        </span>
+                                    </td>
+                                @endif
+                                <td>
+                                    <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs capitalize">
+                                        {{ $item->phase_name }}
+                                    </span>
+                                </td>
+                                <td>{{ $item->environmentLog->temperature ?? '-' }}&deg;C</td>
+                                <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
+                                <td>{{ $item->feed_weight }} kg</td>
+                                <td class="border-r-0">{{ $item->maggot_weight }} kg</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ $reportMode === 'periodic' ? 7 : 6 }}" class="border-r-0 py-8 text-center text-gray-400">
+                                    Tidak ada catatan observasi untuk {{ $reportMode === 'periodic' ? 'rentang periode tanggal ini' : 'siklus ini' }}.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($observationLogs->hasPages())
+                <div class="pt-2">
+                    {{ $observationLogs->links() }}
                 </div>
             @endif
         </div>
     </div>
 
-    <!-- 3 Kartu Ringkasan KPI Utama (Seragam 100% Ukuran & Proporsinya antara Mode Periodik dan Mode Siklus) -->
-    <div class="grid grid-cols-3 gap-(--size-26) w-full">
-        <!-- 1. Total Pakan Kumulatif / Periode -->
-        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
-                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
+    <!-- 2. DEDICATED PRINTABLE DOCUMENT LAYOUT (Hanya Tampil Saat Cetak / window.print) -->
+    <div class="print-only font-sans text-black bg-white w-full">
+        <!-- Header Kop Dokumen Resmi -->
+        <div class="border-b-2 border-black pb-3 mb-4">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-lg font-black uppercase tracking-wider text-black">
+                        SISTEM MONITORING BUDIDAYA MAGGOT BSF
+                    </h1>
+                    <h2 class="text-sm font-bold text-gray-800 mt-0.5">
+                        {{ $reportMode === 'periodic' ? 'LAPORAN PERIODIK REKAPITULASI HASIL BUDIDAYA & LINGKUNGAN' : 'LAPORAN REKAPITULASI BUDIDAYA - SIKLUS ' . ($currentCycle?->id ?? '-') }}
+                    </h2>
+                    <p class="text-[11px] text-gray-600 mt-0.5">
+                        Dokumen resmi rekapitulasi data biomassa maggot, efisiensi pakan, dan parameter lingkungan kandang.
+                    </p>
                 </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    {{ $reportMode === 'periodic' ? 'Total Pakan Periode' : 'Total Pakan Kumulatif' }}
-                </span>
-            </div>
-            <div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                        {{ number_format($totalFeed, 1) }}
-                    </span>
-                    <span class="text-base font-bold text-gray-500">kg</span>
+                <div class="text-right text-[11px] text-gray-600 space-y-0.5">
+                    <div><strong>Waktu Cetak:</strong> {{ now()->translatedFormat('d F Y, H:i') }} WIB</div>
+                    <div><strong>Operator:</strong> {{ auth()->user()->name ?? 'Administrator' }}</div>
                 </div>
-                <p class="text-xs text-gray-400 mt-2">
-                    {{ $reportMode === 'periodic' ? 'Akumulasi pakan pada rentang tanggal terpilih' : 'Akumulasi konsumsi pakan siklus' }}
-                </p>
             </div>
-        </div>
 
-        <!-- 2. Hasil Akhir / Bobot Maggot -->
-        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
-                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
-                </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    {{ $reportMode === 'periodic' ? 'Bobot Maggot Akhir' : 'Hasil Akhir Maggot' }}
-                </span>
-            </div>
-            <div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                        {{ number_format($finalMaggotWeight, 1) }}
-                    </span>
-                    <span class="text-base font-bold text-gray-500">kg</span>
-                </div>
-                <p class="text-xs text-gray-400 mt-2">
-                    @if($netMaggotGain > 0)
-                        Pertambahan bersih: <span class="font-semibold text-emerald-600">+{{ number_format($netMaggotGain, 1) }} kg</span>
+            <!-- Metadata Periode / Siklus -->
+            <div class="mt-3 pt-2 border-t border-gray-300 text-[11px] flex justify-between items-center text-gray-800">
+                <div>
+                    @if($reportMode === 'periodic')
+                        <strong>Rentang Waktu:</strong> {{ Carbon::parse($startDate)->translatedFormat('d M Y') }} &mdash; {{ Carbon::parse($endDate)->translatedFormat('d M Y') }} ({{ $durationDays }} Hari)
                     @else
-                        Biomassa maggot tercatat
+                        <strong>Rentang Siklus:</strong> {{ $currentCycle?->start_date?->translatedFormat('d M Y') ?? 'Belum Dimulai' }} &mdash; {{ $currentCycle?->end_date?->translatedFormat('d M Y') ?? ($currentCycle?->is_active ? 'Sedang Berjalan' : '-') }} ({{ $durationDays }} Hari)
                     @endif
-                </p>
+                </div>
+                <div>
+                    @if($reportMode === 'periodic')
+                        <strong>Siklus Terlibat:</strong> {{ $totalInvolvedCycles }} Siklus ({{ count($completedCycles) }} Selesai, {{ count($partialCycles) }} Separuh)
+                    @else
+                        <strong>Status Siklus:</strong> {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
+                    @endif
+                </div>
             </div>
         </div>
 
-        <!-- 3. Konversi Rasio Pakan (FCR) -->
-        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex flex-row items-center gap-(--size-16)">
-                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                    <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
-                </div>
-                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    Konversi Rasio Pakan (FCR)
-                </span>
-            </div>
-            <div>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                        {{ $fcr > 0 ? number_format($fcr, 1) : '-' }}
-                    </span>
-                    <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
-                </div>
-                <p class="text-xs text-gray-400 mt-2">
-                    Rata-rata lingkungan: {{ $avgTemp }}&deg;C &bull; {{ $avgHumid }}%
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Kontainer Luas & Rinci) -->
-    @if($reportMode === 'periodic')
-        <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-            <div class="flex items-center justify-between flex-wrap gap-3">
-                <div class="flex flex-row gap-(--size-16) items-center">
-                    <x-lucide-refresh-cw class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
-                    <div>
-                        <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                            Rekapitulasi Siklus dalam Periode (Total {{ $totalInvolvedCycles }} Siklus)
-                        </h2>
-                        <p class="text-xs text-gray-400">
-                            Klasifikasi siklus yang berjalan penuh vs siklus separuh/sebagian pada rentang tanggal ini
-                        </p>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="px-3.5 py-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
-                        <x-lucide-check-circle-2 class="w-4 h-4 text-emerald-700"/>
-                        {{ count($completedCycles) }} Siklus Selesai Penuh
-                    </span>
-                    <span class="px-3.5 py-1.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
-                        <x-lucide-clock class="w-4 h-4 text-amber-700"/>
-                        {{ count($partialCycles) }} Siklus Separuh
-                    </span>
-                </div>
-            </div>
-
-            <!-- Grid Kartu Siklus -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-                @forelse(array_merge($completedCycles, $partialCycles) as $item)
-                    <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="w-2.5 h-2.5 rounded-full {{ $item['type'] === 'completed' ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
-                                <span class="font-bold text-base text-[#163428]">{{ $item['name'] }}</span>
-                            </div>
-                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $item['type'] === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                {{ $item['label'] }}
-                            </span>
-                        </div>
-                        <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-200/70 pt-2">
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-500">Status Fase:</span>
-                                <span class="font-semibold text-gray-800">{{ $item['phase'] }}</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-gray-500">Rentang Siklus:</span>
-                                <span class="font-medium text-gray-700">{{ $item['start_date'] }} &mdash; {{ $item['end_date'] }}</span>
-                            </div>
-                            <div class="text-[11px] text-gray-500 italic pt-1">
-                                &bull; {{ $item['detail'] }}
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="col-span-full py-8 text-center text-sm text-gray-400 bg-(--bg-colour) rounded-xl border border-dashed border-gray-300">
-                        Tidak ada aktivitas siklus yang teridentifikasi dalam rentang waktu tanggal ini.
-                    </div>
-                @endforelse
-            </div>
-        </div>
-    @endif
-
-    <!-- Tabel 1: Analisis Performa Per Fase Budidaya -->
-    <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-        <div class="flex flex-row gap-(--size-16) items-center">
-            <x-lucide-bar-chart-3 class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
-            <div>
-                <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    {{ $reportMode === 'periodic' ? 'Analisis Performa Fase dalam Periode Terpilih' : 'Analisis Performa Per Fase Budidaya' }}
-                </h2>
-                <p class="text-xs text-gray-400">
-                    {{ $reportMode === 'periodic' ? 'Ringkasan observasi dan kondisi lingkungan per fase pada rentang waktu ini' : 'Ringkasan komparasi performa antar fase budidaya pada siklus ini' }}
-                </p>
-            </div>
+        <!-- 1. Ringkasan Parameter & Performa Utama -->
+        <div class="mb-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
+                1. Ringkasan Parameter & Performa Utama
+            </h3>
+            <table class="w-full text-xs border border-gray-300 border-collapse">
+                <tbody>
+                    <tr class="bg-gray-50 border-b border-gray-200">
+                        <td class="p-2 font-bold text-left w-1/4 border-r border-gray-200">Total Konsumsi Pakan:</td>
+                        <td class="p-2 text-left w-1/4 border-r border-gray-200 font-semibold">{{ number_format($totalFeed, 2) }} kg</td>
+                        <td class="p-2 font-bold text-left w-1/4 border-r border-gray-200">Rata-rata Suhu:</td>
+                        <td class="p-2 text-left w-1/4 font-semibold">{{ $avgTemp }}°C</td>
+                    </tr>
+                    <tr class="border-b border-gray-200">
+                        <td class="p-2 font-bold text-left border-r border-gray-200">Bobot Maggot Akhir:</td>
+                        <td class="p-2 text-left border-r border-gray-200 font-semibold">{{ number_format($finalMaggotWeight, 2) }} kg</td>
+                        <td class="p-2 font-bold text-left border-r border-gray-200">Rata-rata Kelembapan:</td>
+                        <td class="p-2 text-left font-semibold">{{ $avgHumid }}%</td>
+                    </tr>
+                    <tr class="bg-gray-50">
+                        <td class="p-2 font-bold text-left border-r border-gray-200">Pertambahan Bobot Bersih:</td>
+                        <td class="p-2 text-left border-r border-gray-200 font-semibold">+{{ number_format($netMaggotGain, 2) }} kg</td>
+                        <td class="p-2 font-bold text-left border-r border-gray-200">Konversi Pakan (FCR):</td>
+                        <td class="p-2 text-left font-semibold">{{ $fcr > 0 ? number_format($fcr, 2) . ' per kg maggot' : '-' }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
-            <table class="w-full text-left border-collapse">
-                <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
+        <!-- 2. Analisis Performa Per Fase Budidaya -->
+        <div class="mb-5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
+                2. Analisis Performa Per Fase Budidaya
+            </h3>
+            <table class="w-full text-xs border border-gray-300 text-left border-collapse">
+                <thead class="bg-gray-100 font-bold border-b border-gray-300">
                     <tr>
-                        <th class="min-w-[160px]">Fase Budidaya</th>
-                        <th class="min-w-[130px]">Jumlah Log</th>
-                        <th class="min-w-[130px]">Total Pakan</th>
-                        <th class="min-w-[160px]">Bobot Maggot Fase</th>
-                        <th class="min-w-[160px]">Suhu Aktual (Ideal)</th>
-                        <th class="border-r-0 min-w-[160px]">Kelembapan Aktual (Ideal)</th>
+                        <th class="p-2 border-r border-gray-300 text-black text-left">Fase Budidaya</th>
+                        <th class="p-2 border-r border-gray-300 text-black text-center">Frekuensi Log</th>
+                        <th class="p-2 border-r border-gray-300 text-black text-right">Total Pakan (kg)</th>
+                        <th class="p-2 border-r border-gray-300 text-black text-right">Bobot Maggot (kg)</th>
+                        <th class="p-2 border-r border-gray-300 text-black text-center">Suhu Aktual (Ideal)</th>
+                        <th class="p-2 text-black text-center">Kelembapan Aktual (Ideal)</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($phaseBreakdown as $key => $p)
-                        <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                            <td class="font-bold text-(--prime-colour)">
-                                <div class="flex items-center justify-center gap-2">
-                                    @if($key === 'penetasan')
-                                        <x-lucide-egg class="w-4 h-4 text-(--prime-colour)" />
-                                    @elseif($key === 'pembesaran')
-                                        <x-lucide-worm class="w-4 h-4 text-(--prime-colour)" />
-                                    @else
-                                        <x-lucide-bug class="w-4 h-4 text-(--prime-colour)" />
-                                    @endif
-                                    <span>{{ $p['name'] }}</span>
-                                </div>
-                            </td>
-                            <td>{{ $p['log_count'] }} kali observasi</td>
-                            <td class="font-semibold">{{ number_format($p['total_feed'], 1) }} kg</td>
-                            <td>
-                                <div class="font-semibold text-gray-900">{{ number_format($p['end_maggot'], 1) }} kg</div>
+                        <tr class="border-b border-gray-200">
+                            <td class="p-2 font-bold border-r border-gray-200">{{ $p['name'] }}</td>
+                            <td class="p-2 border-r border-gray-200 text-center">{{ $p['log_count'] }} kali</td>
+                            <td class="p-2 border-r border-gray-200 text-right">{{ number_format($p['total_feed'], 2) }}</td>
+                            <td class="p-2 border-r border-gray-200 text-right font-semibold">
+                                {{ number_format($p['end_maggot'], 2) }}
                                 @if($p['growth_gain'] > 0)
-                                    <div class="text-[11px] text-emerald-700 font-medium">(+{{ number_format($p['growth_gain'], 1) }} kg pada fase ini)</div>
+                                    <span class="text-[10px] text-gray-500 block">(+{{ number_format($p['growth_gain'], 2) }})</span>
                                 @endif
                             </td>
-                            <td>
-                                <span class="font-semibold">{{ $p['avg_temp'] !== '-' ? $p['avg_temp'] . '°C' : '-' }}</span>
-                                <span class="text-xs text-gray-400 block">({{ $p['ideal_temp'] }})</span>
+                            <td class="p-2 border-r border-gray-200 text-center">
+                                {{ $p['avg_temp'] !== '-' ? $p['avg_temp'] . '°C' : '-' }}
+                                <span class="text-[10px] text-gray-500 block">({{ $p['ideal_temp'] }})</span>
                             </td>
-                            <td class="border-r-0">
-                                <span class="font-semibold">{{ $p['avg_humid'] !== '-' ? $p['avg_humid'] . '%' : '-' }}</span>
-                                <span class="text-xs text-gray-400 block">({{ $p['ideal_humid'] }})</span>
+                            <td class="p-2 text-center">
+                                {{ $p['avg_humid'] !== '-' ? $p['avg_humid'] . '%' : '-' }}
+                                <span class="text-[10px] text-gray-500 block">({{ $p['ideal_humid'] }})</span>
                             </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Tabel 2: Rincian Log Catatan Observasi -->
-    <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-        <div class="flex flex-row gap-(--size-16) items-center">
-            <x-lucide-table class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
-            <div>
-                <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                    {{ $reportMode === 'periodic' ? 'Rincian Log Observasi Periode' : 'Rincian Log Harian Siklus' }}
-                </h2>
-                <p class="text-xs text-gray-400">
-                    {{ $reportMode === 'periodic' ? 'Daftar catatan harian yang terekam pada rentang tanggal ' . Carbon::parse($startDate)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($endDate)->translatedFormat('d M Y') : 'Daftar catatan harian yang terekam pada siklus terpilih' }}
-                </p>
+        <!-- 3. Rincian Siklus yang Terlibat (Khusus Mode Periodik) -->
+        @if($reportMode === 'periodic' && count(array_merge($completedCycles, $partialCycles)) > 0)
+            <div class="mb-5">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
+                    3. Rincian Status Siklus dalam Periode
+                </h3>
+                <table class="w-full text-xs border border-gray-300 text-left border-collapse">
+                    <thead class="bg-gray-100 font-bold border-b border-gray-300">
+                        <tr>
+                            <th class="p-2 border-r border-gray-300 text-black text-left">Nama Siklus</th>
+                            <th class="p-2 border-r border-gray-300 text-black text-left">Klasifikasi</th>
+                            <th class="p-2 border-r border-gray-300 text-black text-left">Fase Terakhir</th>
+                            <th class="p-2 border-r border-gray-300 text-black text-left">Rentang Tanggal</th>
+                            <th class="p-2 text-black text-left">Keterangan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach(array_merge($completedCycles, $partialCycles) as $cItem)
+                            <tr class="border-b border-gray-200">
+                                <td class="p-2 font-bold border-r border-gray-200">{{ $cItem['name'] }}</td>
+                                <td class="p-2 border-r border-gray-200 font-semibold">
+                                    {{ $cItem['label'] }}
+                                </td>
+                                <td class="p-2 border-r border-gray-200">{{ $cItem['phase'] }}</td>
+                                <td class="p-2 border-r border-gray-200">{{ $cItem['start_date'] }} s/d {{ $cItem['end_date'] }}</td>
+                                <td class="p-2 text-gray-600">{{ $cItem['detail'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-        </div>
+        @endif
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
-            <table class="w-full text-left border-collapse">
-                <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
+        <!-- 4. Rincian Seluruh Catatan Log Observasi -->
+        <div class="mb-6">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
+                {{ $reportMode === 'periodic' ? '4. Daftar Lengkap Log Catatan Observasi' : '3. Daftar Lengkap Log Catatan Observasi' }}
+            </h3>
+            <table class="w-full text-[11px] border border-gray-300 text-left border-collapse">
+                <thead class="bg-gray-100 font-bold border-b border-gray-300">
                     <tr>
-                        <th class="min-w-[180px]">Tanggal & Waktu</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-center w-8">No</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Waktu</th>
                         @if($reportMode === 'periodic')
-                            <th class="min-w-[110px]">Siklus</th>
+                            <th class="p-1.5 border-r border-gray-300 text-black text-left">Siklus</th>
                         @endif
-                        <th class="min-w-[130px]">Fase</th>
-                        <th class="min-w-[100px]">Suhu</th>
-                        <th class="min-w-[120px]">Kelembapan</th>
-                        <th class="min-w-[140px]">Pakan Diberikan</th>
-                        <th class="border-r-0 min-w-[140px]">Berat Maggot</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Fase</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-center">Suhu</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-center">Kelembapan</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-right">Pakan (kg)</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-right">Bobot Maggot (kg)</th>
+                        <th class="p-1.5 text-black text-left">Catatan</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($observationLogs as $item)
-                        <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                            <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y - H:i') : '-' }}</td>
+                    @forelse($printLogs as $idx => $log)
+                        <tr class="border-b border-gray-200">
+                            <td class="p-1.5 border-r border-gray-200 text-center">{{ $idx + 1 }}</td>
+                            <td class="p-1.5 border-r border-gray-200 font-medium whitespace-nowrap">{{ $log->timestamp ? $log->timestamp->format('d/m/Y H:i') : '-' }}</td>
                             @if($reportMode === 'periodic')
-                                <td>
-                                    <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded-md text-xs border border-emerald-200">
-                                        Siklus {{ $item->cycle_id ?? '-' }}
-                                    </span>
-                                </td>
+                                <td class="p-1.5 border-r border-gray-200 whitespace-nowrap">Siklus {{ $log->cycle_id ?? '-' }}</td>
                             @endif
-                            <td>
-                                <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs capitalize">
-                                    {{ $item->phase_name }}
-                                </span>
-                            </td>
-                            <td>{{ $item->environmentLog->temperature ?? '-' }}&deg;C</td>
-                            <td>{{ $item->environmentLog->humidity ?? '-' }}%</td>
-                            <td>{{ $item->feed_weight }} kg</td>
-                            <td class="border-r-0">{{ $item->maggot_weight }} kg</td>
+                            <td class="p-1.5 border-r border-gray-200 capitalize whitespace-nowrap">{{ $log->phase_name }}</td>
+                            <td class="p-1.5 border-r border-gray-200 text-center whitespace-nowrap">{{ $log->environmentLog->temperature ?? '-' }}°C</td>
+                            <td class="p-1.5 border-r border-gray-200 text-center whitespace-nowrap">{{ $log->environmentLog->humidity ?? '-' }}%</td>
+                            <td class="p-1.5 border-r border-gray-200 text-right whitespace-nowrap">{{ number_format((float)$log->feed_weight, 2) }}</td>
+                            <td class="p-1.5 border-r border-gray-200 text-right font-semibold whitespace-nowrap">{{ number_format((float)$log->maggot_weight, 2) }}</td>
+                            <td class="p-1.5 text-gray-700">{{ $log->notes ?: '-' }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $reportMode === 'periodic' ? 7 : 6 }}" class="border-r-0 py-8 text-center text-gray-400">
-                                Tidak ada catatan observasi untuk {{ $reportMode === 'periodic' ? 'rentang periode tanggal ini' : 'siklus ini' }}.
+                            <td colspan="{{ $reportMode === 'periodic' ? 9 : 8 }}" class="p-4 text-center text-gray-400">
+                                Tidak ada data catatan observasi.
                             </td>
                         </tr>
                     @endforelse
@@ -944,10 +1098,25 @@ new class extends Component
             </table>
         </div>
 
-        @if($observationLogs->hasPages())
-            <div class="pt-2">
-                {{ $observationLogs->links() }}
+        <!-- 5. Lembar Pengesahan & Tanda Tangan -->
+        <div class="mt-8 pt-4 border-t border-gray-400 break-inside-avoid">
+            <div class="flex justify-between items-end text-xs">
+                <div class="text-center w-52">
+                    <p class="text-gray-700 mb-14">Petugas Lapangan / Operator,</p>
+                    <p class="font-bold text-black border-b border-black pb-1">
+                        {{ auth()->user()->name ?? 'Administrator' }}
+                    </p>
+                    <p class="text-gray-500 text-[10px] mt-0.5">Petugas Monitoring Kandang</p>
+                </div>
+
+                <div class="text-center w-52">
+                    <p class="text-gray-700 mb-14">Penanggung Jawab Budidaya,</p>
+                    <p class="font-bold text-black border-b border-black pb-1">
+                        ( .................................................... )
+                    </p>
+                    <p class="text-gray-500 text-[10px] mt-0.5">Supervisor Operasional</p>
+                </div>
             </div>
-        @endif
+        </div>
     </div>
 </div>
