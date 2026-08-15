@@ -158,7 +158,7 @@ new class extends Component
 
             $filename = "laporan_periodik_" . $start->format('Ymd') . "_sd_" . $end->format('Ymd') . ".csv";
 
-            // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom (tanpa kolom catatan)
+            // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
             return response()->streamDownload(function () use ($logs) {
                 $handle = fopen('php://output', 'w');
                 fputs($handle, "\xEF\xBB\xBF");
@@ -204,7 +204,7 @@ new class extends Component
 
         $filename = "laporan_siklus_{$cycleId}_" . now()->format('Ymd_His') . ".csv";
 
-        // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom (tanpa kolom catatan)
+        // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
         return response()->streamDownload(function () use ($logs) {
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
@@ -539,7 +539,7 @@ new class extends Component
                     </button>
 
                     <button
-                        onclick="window.print()"
+                        onclick="preparePrintCharts(); window.print();"
                         type="button"
                         class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
                     >
@@ -1117,10 +1117,31 @@ new class extends Component
             </table>
         </div>
 
-        <!-- 2. Analisis Performa Per Fase Budidaya -->
+        <!-- 2. Visualisasi Grafik Tren Pertumbuhan & Kondisi Lingkungan (Tampil Bersih di Cetak Dokumen) -->
+        <div class="mb-5 break-inside-avoid">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-2 pb-0.5 border-b border-gray-400">
+                2. Visualisasi Grafik Tren Pertumbuhan & Kondisi Lingkungan
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="border border-gray-300 p-2.5 rounded bg-gray-50/20 text-center">
+                    <div class="text-[11px] font-bold text-black mb-1.5">
+                        Pertumbuhan Bobot Maggot vs Konsumsi Pakan (kg)
+                    </div>
+                    <img id="printGrowthChartImg" class="w-full h-[170px] object-contain mx-auto" alt="Grafik Pertumbuhan Bobot & Pakan">
+                </div>
+                <div class="border border-gray-300 p-2.5 rounded bg-gray-50/20 text-center">
+                    <div class="text-[11px] font-bold text-black mb-1.5">
+                        Fluktuasi Suhu (&deg;C) & Kelembapan (%)
+                    </div>
+                    <img id="printEnvChartImg" class="w-full h-[170px] object-contain mx-auto" alt="Grafik Tren Lingkungan">
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Analisis Performa Per Fase Budidaya -->
         <div class="mb-5">
             <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
-                2. Analisis Performa Per Fase Budidaya
+                3. Analisis Performa Per Fase Budidaya
             </h3>
             <table class="w-full text-xs border border-gray-300 text-left border-collapse">
                 <thead class="bg-gray-100 font-bold border-b border-gray-300">
@@ -1159,11 +1180,11 @@ new class extends Component
             </table>
         </div>
 
-        <!-- 3. Rincian Siklus yang Terlibat (Khusus Mode Periodik) -->
+        <!-- 4. Rincian Siklus yang Terlibat (Khusus Mode Periodik) -->
         @if($reportMode === 'periodic' && count(array_merge($completedCycles, $partialCycles)) > 0)
             <div class="mb-5">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
-                    3. Rincian Status Siklus dalam Periode
+                    4. Rincian Status Siklus dalam Periode
                 </h3>
                 <table class="w-full text-xs border border-gray-300 text-left border-collapse">
                     <thead class="bg-gray-100 font-bold border-b border-gray-300">
@@ -1192,10 +1213,10 @@ new class extends Component
             </div>
         @endif
 
-        <!-- 4. Rincian Seluruh Catatan Log Observasi (Tanpa Kolom Catatan Tambahan) -->
+        <!-- 5. Rincian Seluruh Catatan Log Observasi -->
         <div class="mb-6">
             <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
-                {{ $reportMode === 'periodic' ? '4. Daftar Lengkap Log Catatan Observasi' : '3. Daftar Lengkap Log Catatan Observasi' }}
+                {{ $reportMode === 'periodic' ? '5. Daftar Lengkap Log Catatan Observasi' : '4. Daftar Lengkap Log Catatan Observasi' }}
             </h3>
             <table class="w-full text-[11px] border border-gray-300 text-left border-collapse">
                 <thead class="bg-gray-100 font-bold border-b border-gray-300">
@@ -1235,27 +1256,6 @@ new class extends Component
                     @endforelse
                 </tbody>
             </table>
-        </div>
-
-        <!-- 5. Lembar Pengesahan & Tanda Tangan -->
-        <div class="mt-8 pt-4 border-t border-gray-400 break-inside-avoid">
-            <div class="flex justify-between items-end text-xs">
-                <div class="text-center w-52">
-                    <p class="text-gray-700 mb-14">Petugas Lapangan / Operator,</p>
-                    <p class="font-bold text-black border-b border-black pb-1">
-                        {{ auth()->user()->name ?? 'Administrator' }}
-                    </p>
-                    <p class="text-gray-500 text-[10px] mt-0.5">Petugas Monitoring Kandang</p>
-                </div>
-
-                <div class="text-center w-52">
-                    <p class="text-gray-700 mb-14">Penanggung Jawab Budidaya,</p>
-                    <p class="font-bold text-black border-b border-black pb-1">
-                        ( .................................................... )
-                    </p>
-                    <p class="text-gray-500 text-[10px] mt-0.5">Supervisor Operasional</p>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -1456,6 +1456,30 @@ new class extends Component
         });
     }
 
+    function preparePrintCharts() {
+        const growthCanvas = document.getElementById('growthReportChartCanvas');
+        const envCanvas = document.getElementById('envReportChartCanvas');
+        const printGrowthImg = document.getElementById('printGrowthChartImg');
+        const printEnvImg = document.getElementById('printEnvChartImg');
+
+        if (growthCanvas && printGrowthImg) {
+            try {
+                printGrowthImg.src = growthCanvas.toDataURL('image/png');
+            } catch (e) {
+                console.error('Error generating growth chart image for print:', e);
+            }
+        }
+        if (envCanvas && printEnvImg) {
+            try {
+                printEnvImg.src = envCanvas.toDataURL('image/png');
+            } catch (e) {
+                console.error('Error generating env chart image for print:', e);
+            }
+        }
+    }
+
+    window.addEventListener('beforeprint', preparePrintCharts);
+
     function syncAllReportCharts() {
         const holder = document.getElementById('reportChartDataHolder');
         if (!holder) return;
@@ -1469,6 +1493,9 @@ new class extends Component
 
             initOrUpdateGrowthChart(labels, maggot, feed);
             initOrUpdateEnvChart(labels, temp, humid);
+
+            // Pre-render print images
+            setTimeout(preparePrintCharts, 50);
         } catch (e) {
             console.error('Failed to parse chart data from DOM holder:', e);
         }
@@ -1479,6 +1506,7 @@ new class extends Component
         if (payload) {
             initOrUpdateGrowthChart(payload.labels, payload.maggot, payload.feed);
             initOrUpdateEnvChart(payload.labels, payload.temp, payload.humid);
+            setTimeout(preparePrintCharts, 50);
         }
     });
 
