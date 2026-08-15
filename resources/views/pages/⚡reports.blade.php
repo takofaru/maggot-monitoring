@@ -492,9 +492,9 @@ new class extends Component
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
     <div class="no-print space-y-(--size-26) w-full">
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
             <div>
-                <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                     Laporan Budidaya
                 </h1>
                 <p class="text-sm text-gray-500 mt-1">
@@ -697,7 +697,7 @@ new class extends Component
         </div>
 
         <!-- 3 Kartu Ringkasan KPI Utama (Seragam 100% Ukuran & Proporsinya antara Mode Periodik dan Mode Siklus) -->
-        <div class="grid grid-cols-3 gap-(--size-26) w-full">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-(--size-26) w-full">
             <!-- 1. Total Pakan Kumulatif / Periode -->
             <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div class="flex flex-row items-center gap-(--size-16)">
@@ -772,8 +772,8 @@ new class extends Component
             </div>
         </div>
 
-        <!-- 2 Grafik Analitik (Tetap 2 Kolom Bersebelahan, Tidak Mengalami Wrap Saat Lebar Mengecil) -->
-        <div class="grid grid-cols-2 gap-(--size-26) w-full items-stretch">
+        <!-- 2 Grafik Analitik (Responsif 1 Kolom di Mobile, 2 Kolom di Desktop) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-(--size-26) w-full items-stretch">
             <!-- Grafik 1: Pertumbuhan Bobot Maggot vs Konsumsi Pakan -->
             <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div>

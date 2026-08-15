@@ -220,9 +220,9 @@ new class extends Component
 
 <div class="space-y-(--size-26) w-full">
     <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                 Pengaturan Perangkat
             </h1>
             <p class="text-sm text-gray-500 mt-1">
@@ -245,8 +245,8 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Status Alat & Waktu Terakhir Terhubung (Persis settings.png) -->
-    <div wire:poll.10s class="flex flex-row items-center justify-between text-sm py-1 flex-nowrap gap-2">
+    <!-- Status Alat & Waktu Terakhir Terhubung -->
+    <div wire:poll.10s class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm py-1 gap-2">
         <!-- Status Alat -->
         <div class="flex items-center gap-3 whitespace-nowrap shrink-0">
             <span class="font-bold text-(--text-colour) text-base">Status Alat:</span>
@@ -264,9 +264,9 @@ new class extends Component
         </div>
 
         <!-- Terakhir Terhubung -->
-        <div class="text-xs text-gray-400 font-medium whitespace-nowrap shrink-0">
+        <div class="text-(--text-colour) text-xs sm:text-sm">
             @if($lastSeen)
-                Terakhir terhubung pada {{ $lastSeen->translatedFormat('l, d F Y - H:i:s') }}
+                Terakhir terhubung: <span class="font-semibold">{{ $lastSeen->translatedFormat('l, d F Y - H:i:s') }}</span>
                 @if($diffInSeconds !== null)
                     <span class="{{ $isOnline ? 'text-emerald-700' : 'text-red-500' }} font-bold">({{ $diffInSeconds }} detik yang lalu)</span>
                 @endif
@@ -276,9 +276,9 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Form Batas Lingkungan Fase (Grid 2 Kolom Persis settings.png) -->
+    <!-- Form Batas Lingkungan Fase (Grid Responsif) -->
     <form wire:submit.prevent="changePhaseSettings" onsubmit="event.preventDefault();" id="changePhaseSettingsForm" class="space-y-(--size-26)">
-        <div class="grid grid-cols-2 gap-(--size-26) w-full">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-(--size-26) w-full">
             
             <!-- 1. Fase Penetasan -->
             <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">

@@ -182,10 +182,10 @@ new class extends Component
 
 <div wire:poll.5s class="space-y-(--size-26) w-full">
     <!-- Header Dashboard & Status Indikator di Samping Judul & Tombol Lonceng Aktivitas -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
             <div class="flex items-center gap-3.5">
-                <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                     Dashboard
                 </h1>
 
@@ -204,7 +204,7 @@ new class extends Component
     </div>
 
     <!-- 3 Pill Badges Status Siklus -->
-    <div class="flex flex-nowrap items-center gap-(--size-10)">
+    <div class="flex flex-wrap items-center gap-(--size-10)">
         <!-- Pill 1: Siklus ke -->
         <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
             <x-lucide-refresh-cw class="w-(--size-16) text-(--prime-colour)"/>
@@ -225,7 +225,7 @@ new class extends Component
     </div>
 
     <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) -->
-    <div class="grid grid-cols-3 gap-(--size-26) w-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-(--size-26) w-full">
         <!-- 1. Total Pakan Kumulatif -->
         <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16) h-full">
@@ -305,8 +305,8 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Baris Bawah: Suhu & Kelembapan Bersampingan (Grid 2 Kolom) -->
-    <div class="grid grid-cols-2 gap-(--size-26) w-full items-stretch">
+    <!-- Baris Bawah: Suhu & Kelembapan Bersampingan (Grid Responsif) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-(--size-26) w-full items-stretch">
 
         <!-- 1. Box Grafik Suhu (Col 1) -->
         <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">

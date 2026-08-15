@@ -227,9 +227,9 @@ new class extends Component
 
 <div class="space-y-(--size-26) w-full">
     <!-- Header Halaman & Tombol Lonceng Notifikasi -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                 Manajemen Akun
             </h1>
             @cannot('manage-accounts')
@@ -246,7 +246,7 @@ new class extends Component
         <livewire:notification-bell />
     </div>
 
-    <div class="grid grid-cols-2 gap-(--size-26) w-full">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-(--size-26) w-full">
         <!-- Box Profil Saya -->
         <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
             <div class="flex flex-row gap-(--size-16) items-center">

@@ -288,9 +288,9 @@ new class extends Component
 
 <div class="space-y-(--size-26) w-full">
     <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
-    <div class="flex flex-row justify-between w-full items-center">
+    <div class="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-3">
         <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                 Catatan Observasi
             </h1>
             <p class="text-sm text-gray-500 mt-1">
