@@ -108,7 +108,7 @@ new class extends Component
                 ->orderBy('id', 'asc')
                 ->get();
 
-            // Hitung siklus yang terjadi pada rentang periode ini
+            // Hitung siklus yang terjadi pada rentang periode ini (Logika Lengkap vs Separuh)
             $allCycles = Cycle::all();
             $logCycleIds = $logs->pluck('cycle_id')->filter()->unique();
             $involvedCycleIds = collect();
@@ -131,8 +131,13 @@ new class extends Component
             $completedCount = 0;
             $partialCount = 0;
             foreach ($involvedCycles as $c) {
+                $cStart = $c->start_date ? Carbon::parse($c->start_date)->startOfDay() : null;
                 $cEnd = $c->end_date ? Carbon::parse($c->end_date)->endOfDay() : null;
-                if ($cEnd !== null && $cEnd <= $end && (!$c->is_active || $c->current_phase === 'panen')) {
+
+                // Siklus Selesai Penuh: Harus dimulai pada/setelah start DAN selesai pada/sebelum end
+                $isFullCompleted = ($cStart !== null && $cStart >= $start && $cEnd !== null && $cEnd <= $end && (!$c->is_active || $c->current_phase === 'panen'));
+
+                if ($isFullCompleted) {
                     $completedCount++;
                 } else {
                     $partialCount++;
@@ -147,8 +152,8 @@ new class extends Component
 
                 fputcsv($handle, ["LAPORAN PERIODIK REKAPITULASI BUDIDAYA MAGGOT"], ',', '"', "\\");
                 fputcsv($handle, ["Rentang Periode", $start->format('d/m/Y') . " s/d " . $end->format('d/m/Y')], ',', '"', "\\");
-                fputcsv($handle, ["Siklus Selesai", "{$completedCount} siklus (Panen)"], ',', '"', "\\");
-                fputcsv($handle, ["Siklus Separuh", "{$partialCount} siklus (Sedang berjalan / sebagian)"], ',', '"', "\\");
+                fputcsv($handle, ["Siklus Selesai Penuh", "{$completedCount} siklus (Dimulai & Panen di periode ini)"], ',', '"', "\\");
+                fputcsv($handle, ["Siklus Separuh", "{$partialCount} siklus (Sebagian periode / sedang berjalan)"], ',', '"', "\\");
                 fputcsv($handle, ["Jumlah Log Observasi", $logs->count() . " data"], ',', '"', "\\");
                 fputcsv($handle, ["Tanggal Unduh", now()->translatedFormat('d F Y H:i:s')], ',', '"', "\\");
                 fputcsv($handle, [], ',', '"', "\\");
@@ -265,7 +270,7 @@ new class extends Component
             $avgTemp = $envLogs->count() > 0 ? round((float) $envLogs->avg('temperature'), 1) : 0.0;
             $avgHumid = $envLogs->count() > 0 ? round((float) $envLogs->avg('humidity'), 1) : 0.0;
 
-            // Hitung siklus yang terjadi pada rentang waktu ini (Selesai vs Separuh)
+            // Hitung siklus yang terjadi pada rentang waktu ini (Logika Presisi: Selesai Penuh vs Separuh)
             $allCycles = Cycle::all();
             $logCycleIds = $allLogs->pluck('cycle_id')->filter()->unique();
             $involvedCycleIds = collect();
@@ -291,25 +296,41 @@ new class extends Component
             $partialCycles = [];
 
             foreach ($involvedCycles as $c) {
+                $cStart = $c->start_date ? Carbon::parse($c->start_date)->startOfDay() : null;
                 $cEnd = $c->end_date ? Carbon::parse($c->end_date)->endOfDay() : null;
-                $isCompleted = ($cEnd !== null && $cEnd <= $end && (!$c->is_active || $c->current_phase === 'panen'));
 
-                if ($isCompleted) {
+                // Definisi Siklus Selesai Penuh dalam Periode:
+                // Dimulai pada/setelah batas awal periode DAN Selesai/Panen pada/sebelum batas akhir periode
+                $isFullCompleted = ($cStart !== null && $cStart >= $start && $cEnd !== null && $cEnd <= $end && (!$c->is_active || $c->current_phase === 'panen'));
+
+                if ($isFullCompleted) {
                     $completedCycles[] = [
                         'id'          => $c->id,
                         'name'        => "Siklus {$c->id}",
                         'type'        => 'completed',
-                        'label'       => 'Selesai / Panen',
+                        'label'       => 'Selesai Penuh (Panen)',
+                        'detail'      => 'Dimulai & Selesai di dalam periode ini',
                         'start_date'  => $c->start_date ? $c->start_date->translatedFormat('d M Y') : '-',
                         'end_date'    => $c->end_date ? $c->end_date->translatedFormat('d M Y') : '-',
                         'phase'       => 'Panen',
                     ];
                 } else {
+                    // Tentukan alasan separuh untuk transparansi pengguna
+                    $reason = 'Sebagian Periode';
+                    if ($cStart !== null && $cStart < $start && $cEnd !== null && $cEnd <= $end) {
+                        $reason = 'Dimulai sebelum periode & selesai di periode ini';
+                    } elseif ($cStart !== null && $cStart >= $start && ($cEnd === null || $cEnd > $end || $c->is_active)) {
+                        $reason = 'Dimulai di periode ini & sedang berjalan (' . ucfirst($c->current_phase) . ')';
+                    } elseif ($cStart !== null && $cStart < $start && ($cEnd === null || $cEnd > $end || $c->is_active)) {
+                        $reason = 'Lintas periode (dimulai sebelum & masih berjalan)';
+                    }
+
                     $partialCycles[] = [
                         'id'          => $c->id,
                         'name'        => "Siklus {$c->id}",
                         'type'        => 'partial',
-                        'label'       => $c->is_active ? 'Sedang Berjalan (' . ucfirst($c->current_phase) . ')' : 'Sebagian Periode',
+                        'label'       => 'Siklus Separuh',
+                        'detail'      => $reason,
                         'start_date'  => $c->start_date ? $c->start_date->translatedFormat('d M Y') : 'Belum Dimulai',
                         'end_date'    => $c->end_date ? $c->end_date->translatedFormat('d M Y') : 'Sekarang',
                         'phase'       => ucfirst($c->current_phase),
@@ -635,227 +656,124 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Ringkasan KPI Utama -->
-    @if($reportMode === 'periodic')
-        <!-- Grid 4 Kolom untuk Mode Periodik (Termasuk Metrik Siklus Selesai & Separuh) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-(--size-26) w-full">
-            <!-- 1. Total Pakan Periode -->
-            <div class="flex flex-col justify-between gap-(--size-20) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-3">
-                    <div class="p-2.5 bg-(--prime-colour) text-(--fg-colour) rounded-xl shrink-0 flex items-center justify-center">
-                        <x-lucide-apple class="w-5 h-5"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-base font-bold leading-tight">
-                        Total Pakan
-                    </span>
+    <!-- 3 Kartu Ringkasan KPI Utama (Seragam 100% Ukuran & Proporsinya antara Mode Periodik dan Mode Siklus) -->
+    <div class="grid grid-cols-3 gap-(--size-26) w-full">
+        <!-- 1. Total Pakan Kumulatif / Periode -->
+        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
                 </div>
-                <div>
-                    <div class="flex items-baseline gap-1.5">
-                        <span class="text-3xl font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($totalFeed, 1) }}
-                        </span>
-                        <span class="text-sm font-bold text-gray-500">kg</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">
-                        Konsumsi pakan periode
-                    </p>
-                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    {{ $reportMode === 'periodic' ? 'Total Pakan Periode' : 'Total Pakan Kumulatif' }}
+                </span>
             </div>
-
-            <!-- 2. Hasil Bobot Maggot -->
-            <div class="flex flex-col justify-between gap-(--size-20) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-3">
-                    <div class="p-2.5 bg-(--prime-colour) text-(--fg-colour) rounded-xl shrink-0 flex items-center justify-center">
-                        <x-lucide-weight class="w-5 h-5"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-base font-bold leading-tight">
-                        Bobot Maggot Akhir
+            <div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($totalFeed, 1) }}
                     </span>
+                    <span class="text-base font-bold text-gray-500">kg</span>
                 </div>
-                <div>
-                    <div class="flex items-baseline gap-1.5">
-                        <span class="text-3xl font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($finalMaggotWeight, 1) }}
-                        </span>
-                        <span class="text-sm font-bold text-gray-500">kg</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">
-                        @if($netMaggotGain > 0)
-                            Pertambahan: <span class="font-semibold text-emerald-600">+{{ number_format($netMaggotGain, 1) }} kg</span>
-                        @else
-                            Biomassa maggot tercatat
-                        @endif
-                    </p>
-                </div>
-            </div>
-
-            <!-- 3. Konversi Rasio Pakan (FCR) -->
-            <div class="flex flex-col justify-between gap-(--size-20) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-3">
-                    <div class="p-2.5 bg-(--prime-colour) text-(--fg-colour) rounded-xl shrink-0 flex items-center justify-center">
-                        <x-lucide-ruler class="w-5 h-5"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-base font-bold leading-tight">
-                        Rasio Pakan (FCR)
-                    </span>
-                </div>
-                <div>
-                    <div class="flex items-baseline gap-1.5">
-                        <span class="text-3xl font-extrabold text-(--prime-colour) leading-none">
-                            {{ $fcr > 0 ? number_format($fcr, 1) : '-' }}
-                        </span>
-                        <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">
-                        Suhu {{ $avgTemp }}&deg;C &bull; Humid {{ $avgHumid }}%
-                    </p>
-                </div>
-            </div>
-
-            <!-- 4. Siklus Budidaya Terlibat (Selesai & Separuh) -->
-            <div class="flex flex-col justify-between gap-(--size-20) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-3">
-                    <div class="p-2.5 bg-(--prime-colour) text-(--fg-colour) rounded-xl shrink-0 flex items-center justify-center">
-                        <x-lucide-refresh-cw class="w-5 h-5"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-base font-bold leading-tight">
-                        Siklus Terlibat
-                    </span>
-                </div>
-                <div>
-                    <div class="flex items-baseline gap-1.5">
-                        <span class="text-3xl font-extrabold text-(--prime-colour) leading-none">
-                            {{ $totalInvolvedCycles }}
-                        </span>
-                        <span class="text-sm font-bold text-gray-500">Siklus</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 mt-2 flex-wrap text-xs">
-                        <span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold">
-                            {{ count($completedCycles) }} Selesai
-                        </span>
-                        <span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-semibold">
-                            {{ count($partialCycles) }} Separuh
-                        </span>
-                    </div>
-                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    {{ $reportMode === 'periodic' ? 'Akumulasi pakan pada rentang tanggal terpilih' : 'Akumulasi konsumsi pakan siklus' }}
+                </p>
             </div>
         </div>
-    @else
-        <!-- Grid 3 Kolom untuk Mode Siklus -->
-        <div class="grid grid-cols-3 gap-(--size-26) w-full">
-            <!-- 1. Total Pakan Kumulatif -->
-            <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-apple class="w-(--size-26) h-(--size-26)"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Total Pakan Kumulatif
-                    </span>
-                </div>
-                <div>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($totalFeed, 1) }}
-                        </span>
-                        <span class="text-base font-bold text-gray-500">kg</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">
-                        Akumulasi konsumsi pakan siklus
-                    </p>
-                </div>
-            </div>
 
-            <!-- 2. Hasil Akhir Maggot -->
-            <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Hasil Akhir Maggot
-                    </span>
+        <!-- 2. Hasil Akhir / Bobot Maggot -->
+        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-weight class="w-(--size-26) h-(--size-26)"/>
                 </div>
-                <div>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                            {{ number_format($finalMaggotWeight, 1) }}
-                        </span>
-                        <span class="text-base font-bold text-gray-500">kg</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    {{ $reportMode === 'periodic' ? 'Bobot Maggot Akhir' : 'Hasil Akhir Maggot' }}
+                </span>
+            </div>
+            <div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ number_format($finalMaggotWeight, 1) }}
+                    </span>
+                    <span class="text-base font-bold text-gray-500">kg</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    @if($netMaggotGain > 0)
+                        Pertambahan bersih: <span class="font-semibold text-emerald-600">+{{ number_format($netMaggotGain, 1) }} kg</span>
+                    @else
                         Biomassa maggot tercatat
-                    </p>
-                </div>
-            </div>
-
-            <!-- 3. Konversi Rasio Pakan (FCR) -->
-            <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex flex-row items-center gap-(--size-16)">
-                    <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
-                        <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
-                    </div>
-                    <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        Konversi Rasio Pakan (FCR)
-                    </span>
-                </div>
-                <div>
-                    <div class="flex items-baseline gap-2">
-                        <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
-                            {{ $fcr > 0 ? number_format($fcr, 1) : '-' }}
-                        </span>
-                        <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
-                    </div>
-                    <p class="text-xs text-gray-400 mt-2">
-                        Rata-rata lingkungan: {{ $avgTemp }}&deg;C &bull; {{ $avgHumid }}%
-                    </p>
-                </div>
+                    @endif
+                </p>
             </div>
         </div>
-    @endif
 
-    <!-- Rekapitulasi Rincian Siklus dalam Periode (Khusus Mode Periodik) -->
+        <!-- 3. Konversi Rasio Pakan (FCR) -->
+        <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row items-center gap-(--size-16)">
+                <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
+                    <x-lucide-ruler class="w-(--size-26) h-(--size-26)"/>
+                </div>
+                <span class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                    Konversi Rasio Pakan (FCR)
+                </span>
+            </div>
+            <div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
+                        {{ $fcr > 0 ? number_format($fcr, 1) : '-' }}
+                    </span>
+                    <span class="text-xs font-semibold text-gray-500">per kg maggot</span>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">
+                    Rata-rata lingkungan: {{ $avgTemp }}&deg;C &bull; {{ $avgHumid }}%
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Kontainer Luas & Rinci) -->
     @if($reportMode === 'periodic')
         <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex items-center justify-between flex-wrap gap-3">
                 <div class="flex flex-row gap-(--size-16) items-center">
-                    <x-lucide-git-branch class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                    <x-lucide-refresh-cw class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                     <div>
                         <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                            Rincian Siklus dalam Periode Terpilih
+                            Rekapitulasi Siklus dalam Periode (Total {{ $totalInvolvedCycles }} Siklus)
                         </h2>
                         <p class="text-xs text-gray-400">
-                            Status kelengkapan siklus budidaya yang berjalan pada rentang waktu ini
+                            Klasifikasi siklus yang berjalan penuh vs siklus separuh/sebagian pada rentang tanggal ini
                         </p>
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
-                    <span class="px-3 py-1 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-xs font-bold flex items-center gap-1.5">
-                        <x-lucide-check-circle-2 class="w-3.5 h-3.5 text-emerald-700"/>
-                        {{ count($completedCycles) }} Siklus Selesai (Panen)
+                    <span class="px-3.5 py-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                        <x-lucide-check-circle-2 class="w-4 h-4 text-emerald-700"/>
+                        {{ count($completedCycles) }} Siklus Selesai Penuh
                     </span>
-                    <span class="px-3 py-1 bg-amber-100 text-amber-900 border border-amber-300 rounded-lg text-xs font-bold flex items-center gap-1.5">
-                        <x-lucide-clock class="w-3.5 h-3.5 text-amber-700"/>
-                        {{ count($partialCycles) }} Siklus Separuh (Sebagian)
+                    <span class="px-3.5 py-1.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                        <x-lucide-clock class="w-4 h-4 text-amber-700"/>
+                        {{ count($partialCycles) }} Siklus Separuh
                     </span>
                 </div>
             </div>
 
             <!-- Grid Kartu Siklus -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 mt-1">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
                 @forelse(array_merge($completedCycles, $partialCycles) as $item)
-                    <div class="p-4 rounded-xl border {{ $item['type'] === 'completed' ? 'border-emerald-200 bg-emerald-50/40' : 'border-amber-200 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
+                    <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-full {{ $item['type'] === 'completed' ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
                                 <span class="font-bold text-base text-[#163428]">{{ $item['name'] }}</span>
                             </div>
                             <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $item['type'] === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                {{ $item['type'] === 'completed' ? 'Siklus Selesai' : 'Siklus Separuh' }}
+                                {{ $item['label'] }}
                             </span>
                         </div>
-                        <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-200/60 pt-2">
+                        <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-200/70 pt-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-500">Status Fase:</span>
                                 <span class="font-semibold text-gray-800">{{ $item['phase'] }}</span>
@@ -864,10 +782,13 @@ new class extends Component
                                 <span class="text-gray-500">Rentang Siklus:</span>
                                 <span class="font-medium text-gray-700">{{ $item['start_date'] }} &mdash; {{ $item['end_date'] }}</span>
                             </div>
+                            <div class="text-[11px] text-gray-500 italic pt-1">
+                                &bull; {{ $item['detail'] }}
+                            </div>
                         </div>
                     </div>
                 @empty
-                    <div class="col-span-full py-6 text-center text-sm text-gray-400 bg-(--bg-colour) rounded-xl border border-dashed border-gray-300">
+                    <div class="col-span-full py-8 text-center text-sm text-gray-400 bg-(--bg-colour) rounded-xl border border-dashed border-gray-300">
                         Tidak ada aktivitas siklus yang teridentifikasi dalam rentang waktu tanggal ini.
                     </div>
                 @endforelse
