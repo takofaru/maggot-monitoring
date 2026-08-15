@@ -418,12 +418,12 @@ new class extends Component
     <div class="space-y-3 md:hidden">
         @forelse($observationData as $item)
             <div wire:key="obs-mobile-card-{{ $item->id }}" class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
-                <!-- Baris Atas: Tanggal & Fase Badge (Tanpa Jam) -->
+                <!-- Baris Atas: Tanggal & Waktu & Fase Badge -->
                 <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
                     <div class="flex items-center gap-2">
                         <x-lucide-calendar class="w-4 h-4 text-(--prime-colour)"/>
                         <span class="font-bold text-sm text-(--prime-colour)">
-                            {{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y') : '-' }}
+                            {{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y, H:i') : '-' }}
                         </span>
                     </div>
                     <span class="px-2.5 py-0.5 bg-gray-100 text-gray-800 rounded-md font-bold text-xs capitalize">
@@ -502,7 +502,7 @@ new class extends Component
         <table class="w-full text-left border-collapse">
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>
-                    <th class="min-w-[200px]">Tanggal</th>
+                    <th class="min-w-[200px]">Tanggal & Waktu</th>
                     <th class="min-w-[130px]">Fase</th>
                     <th class="min-w-[100px]">Suhu</th>
                     <th class="min-w-[120px]">Kelembapan</th>
@@ -514,7 +514,7 @@ new class extends Component
             <tbody>
                 @forelse($observationData as $item)
                     <tr wire:key="obs-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                        <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y') : '-' }}</td>
+                        <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y - H:i') : '-' }}</td>
                         <td>
                             <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs capitalize">
                                 {{ $item->phase_name }}
