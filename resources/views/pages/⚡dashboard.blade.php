@@ -190,8 +190,8 @@ new class extends Component
                 </h1>
 
                 <!-- Dot Status Perangkat IoT di Samping Judul -->
-                <div class="w-7 h-7 rounded-full {{ $isDeviceOnline ? 'bg-green-200' : 'bg-red-200' }} flex items-center justify-center shrink-0" title="{{ $isDeviceOnline ? 'Perangkat Online' : 'Perangkat Offline' }}">
-                    <span class="w-2.5 h-2.5 rounded-full {{ $isDeviceOnline ? 'bg-(--prime-colour)' : 'bg-red-500' }}"></span>
+                <div class="w-7 h-7 rounded-full {{ $isDeviceOnline ? 'bg-green-200' : 'bg-red-100' }} flex items-center justify-center shrink-0" title="{{ $isDeviceOnline ? 'Perangkat Online' : 'Perangkat Offline' }}">
+                    <span class="w-2.5 h-2.5 rounded-full {{ $isDeviceOnline ? 'bg-(--prime-colour)' : 'bg-red-800' }}"></span>
                 </div>
             </div>
             <p class="text-sm text-gray-500 mt-1">
