@@ -313,9 +313,9 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah (Responsif di Mobile, Sejajar di Desktop) -->
+    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah (Vertikal di Mobile, Sejajar di Desktop) -->
     <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
             <!-- Dropdown Pilihan Siklus -->
             <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                 <span>Siklus ke:</span>
@@ -371,9 +371,9 @@ new class extends Component
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
-            <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
+            <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) whitespace-nowrap w-full md:w-auto shrink-0">
                 <div class="gap-(--size-6) flex items-center">
-                    <span>Fase terkini:</span>
+                    <span class="text-gray-500">Fase terkini:</span>
                     <span class="font-bold text-(--prime-colour) capitalize ml-1">{{ $activeCycleObj->current_phase ?? '-' }}</span>
                 </div>
                 @if($isSelectedCurrent && $currPhase !== 'panen')
@@ -455,13 +455,13 @@ new class extends Component
                     </div>
                 </div>
 
-                <!-- Baris Bawah: Tombol Aksi Edit & Hapus (Jika Siklus Aktif) -->
+                <!-- Baris Bawah: Tombol Aksi Edit & Hapus (Sesuai & Selaras dengan Style UI Desktop) -->
                 @if($isSelectedCurrent)
                     <div class="flex items-center justify-end gap-2 pt-2 border-t border-(--outline-colour)/40">
                         <button
                             wire:click="openEditModal({{ $item->id }})"
                             type="button"
-                            class="px-3.5 py-1.5 bg-(--prime-light-colour) text-(--prime-colour) rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:opacity-80 transition cursor-pointer"
+                            class="h-9 px-4 bg-(--prime-colour) hover:opacity-90 active:scale-95 text-(--fg-colour) rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                         >
                             <x-lucide-square-pen class="w-3.5 h-3.5"/>
                             <span>Ubah</span>
@@ -478,11 +478,6 @@ new class extends Component
                                 icon: 'trash',
                                 onConfirm: () => $wire.deleteObservationLog({{ $item->id }})
                             })"
-                            class="px-3.5 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-red-100 transition cursor-pointer"
-                        >
-                            <x-lucide-trash-2 class="w-3.5 h-3.5 text-red-600"/>
-                            <span>Hapus</span>
-                        </button>
                     </div>
                 @endif
             </div>

@@ -432,7 +432,7 @@ new class extends Component
                         <button
                             wire:click="openEditUserModal({{ $item->id }})"
                             type="button"
-                            class="px-3.5 py-1.5 bg-(--prime-light-colour) text-(--prime-colour) rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:opacity-80 transition cursor-pointer"
+                            class="h-9 px-4 bg-(--prime-colour) hover:opacity-90 active:scale-95 text-(--fg-colour) rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                         >
                             <x-lucide-square-pen class="w-3.5 h-3.5"/>
                             <span>Ubah</span>
@@ -450,9 +450,9 @@ new class extends Component
                                     icon: 'trash',
                                     onConfirm: () => $wire.deleteUser({{ $item->id }})
                                 })"
-                                class="px-3.5 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:bg-red-100 transition cursor-pointer"
+                                class="h-9 px-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
                             >
-                                <x-lucide-trash-2 class="w-3.5 h-3.5 text-red-600"/>
+                                <x-lucide-trash-2 class="w-3.5 h-3.5"/>
                                 <span>Hapus</span>
                             </button>
                         @endif
