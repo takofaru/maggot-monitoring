@@ -562,25 +562,11 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Manual (Dari - Sampai) -->
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari - Sampai dengan format dd Mon yyyy) -->
                     <div class="inline-flex h-[58px] gap-3 items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-medium text-gray-500">Dari:</span>
-                            <input
-                                type="date"
-                                wire:model.live="startDate"
-                                class="bg-(--bg-colour) border border-(--outline-colour) rounded-lg px-2.5 py-1 text-sm font-medium text-(--text-colour) focus:outline-none focus:ring-1 focus:ring-(--prime-colour) cursor-pointer"
-                            />
-                        </div>
+                        <x-custom-date-picker wire:model.live="startDate" label="Dari" />
                         <span class="text-gray-300 font-bold">&mdash;</span>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-medium text-gray-500">Sampai:</span>
-                            <input
-                                type="date"
-                                wire:model.live="endDate"
-                                class="bg-(--bg-colour) border border-(--outline-colour) rounded-lg px-2.5 py-1 text-sm font-medium text-(--text-colour) focus:outline-none focus:ring-1 focus:ring-(--prime-colour) cursor-pointer"
-                            />
-                        </div>
+                        <x-custom-date-picker wire:model.live="endDate" label="Sampai" />
                     </div>
 
                     <!-- Pill Ringkasan Periode Terpilih -->
