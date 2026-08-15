@@ -413,7 +413,7 @@ new class extends Component
     <!-- 1. Tampilan Card Khusus Layar Mobile (Mencegah Tabel Overflow ke Samping) -->
     <div class="space-y-3 md:hidden">
         @forelse($observationData as $item)
-            <div class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
+            <div wire:key="obs-mobile-card-{{ $item->id }}" class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
                 <!-- Baris Atas: Tanggal & Fase Badge -->
                 <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
                     <div class="flex items-center gap-2">
@@ -478,6 +478,11 @@ new class extends Component
                                 icon: 'trash',
                                 onConfirm: () => $wire.deleteObservationLog({{ $item->id }})
                             })"
+                            class="h-9 px-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                        >
+                            <x-lucide-trash-2 class="w-3.5 h-3.5"/>
+                            <span>Hapus</span>
+                        </button>
                     </div>
                 @endif
             </div>
@@ -504,7 +509,7 @@ new class extends Component
             </thead>
             <tbody>
                 @forelse($observationData as $item)
-                    <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                    <tr wire:key="obs-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
                         <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y') : '-' }}</td>
                         <td>
                             <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs capitalize">

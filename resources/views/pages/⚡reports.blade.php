@@ -1042,7 +1042,7 @@ new class extends Component
             <!-- 1. Tampilan Card Khusus Mobile (Log Observasi) -->
             <div class="space-y-3 md:hidden mt-1">
                 @forelse($observationLogs as $item)
-                    <div class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
+                    <div wire:key="rep-obs-mobile-card-{{ $item->id }}" class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
                         <div class="flex items-center justify-between border-b border-gray-200 pb-2">
                             <div class="flex items-center gap-2 text-xs font-bold text-(--prime-colour)">
                                 <x-lucide-calendar class="w-3.5 h-3.5"/>
@@ -1095,7 +1095,7 @@ new class extends Component
                     </thead>
                     <tbody>
                         @forelse($observationLogs as $item)
-                            <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                            <tr wire:key="rep-obs-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
                                 <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y - H:i') : '-' }}</td>
                                 @if($reportMode === 'periodic')
                                     <td>

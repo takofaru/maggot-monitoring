@@ -405,7 +405,7 @@ new class extends Component
         <!-- 1. Tampilan Card Khusus Layar Mobile (Daftar Pengguna) -->
         <div class="space-y-3 md:hidden">
             @forelse($users as $item)
-                <div class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
+                <div wire:key="user-mobile-card-{{ $item->id }}" class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
                     <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
                         <div class="flex items-center gap-2">
                             <div class="w-8 h-8 rounded-full bg-emerald-100 text-[#163428] flex items-center justify-center font-bold text-xs">
@@ -478,7 +478,7 @@ new class extends Component
                 </thead>
                 <tbody>
                     @forelse($users as $item)
-                    <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                    <tr wire:key="user-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
                         <td>
                             <div class="font-medium text-gray-900 flex items-center gap-2">
                                 <span>{{ $item->full_name }}</span>

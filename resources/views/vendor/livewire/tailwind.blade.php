@@ -21,37 +21,41 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
             <!-- Kontrol Tombol Pagination Sesuai pagination.png -->
             <div class="flex items-center gap-1.5 sm:gap-2">
                 <!-- Tombol Sebelumnya (<) -->
-                @if ($paginator->onFirstPage())
-                    <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 cursor-not-allowed">
-                        <x-lucide-chevron-left class="w-5 h-5"/>
-                    </span>
-                @else
-                    <button
-                        type="button"
-                        wire:click="previousPage('{{ $paginator->getPageName() }}')"
-                        x-on:click="{{ $scrollIntoViewJsSnippet }}"
-                        class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-(--text-colour) hover:text-(--prime-colour) hover:bg-gray-100 rounded-xl transition cursor-pointer"
-                        aria-label="{{ __('pagination.previous') }}"
-                    >
-                        <x-lucide-chevron-left class="w-5 h-5"/>
-                    </button>
-                @endif
+                <span wire:key="paginator-{{ $paginator->getPageName() }}-prev">
+                    @if ($paginator->onFirstPage())
+                        <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 cursor-not-allowed select-none">
+                            <x-lucide-chevron-left class="w-5 h-5"/>
+                        </span>
+                    @else
+                        <button
+                            type="button"
+                            wire:click="previousPage('{{ $paginator->getPageName() }}')"
+                            x-on:click="{{ $scrollIntoViewJsSnippet }}"
+                            class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-(--text-colour) hover:text-(--prime-colour) hover:bg-gray-100 rounded-xl transition cursor-pointer"
+                            aria-label="{{ __('pagination.previous') }}"
+                        >
+                            <x-lucide-chevron-left class="w-5 h-5"/>
+                        </button>
+                    @endif
+                </span>
 
                 <!-- Angka Halaman -->
                 @foreach ($elements as $element)
                     {{-- Separator Titik Tiga (...) --}}
                     @if (is_string($element))
-                        <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-(--fg-colour) border border-(--outline-colour) rounded-xl text-xs sm:text-sm font-semibold text-gray-600 shadow-2xs">
-                            {{ $element }}
+                        <span wire:key="paginator-{{ $paginator->getPageName() }}-dots-{{ $loop->index }}" aria-disabled="true">
+                            <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-(--fg-colour) border border-(--outline-colour) rounded-xl text-xs sm:text-sm font-semibold text-gray-600 shadow-2xs select-none">
+                                {{ $element }}
+                            </span>
                         </span>
                     @endif
 
                     {{-- Link Halaman --}}
                     @if (is_array($element))
                         @foreach ($element as $page => $url)
-                            <span wire:key="paginator-{{ $paginator->getPageName() }}-page{{ $page }}">
+                            <span wire:key="paginator-{{ $paginator->getPageName() }}-page-{{ $page }}">
                                 @if ($page == $paginator->currentPage())
-                                    <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-(--prime-colour) text-(--fg-colour) rounded-xl text-xs sm:text-sm font-bold shadow-2xs">
+                                    <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center bg-(--prime-colour) text-(--fg-colour) rounded-xl text-xs sm:text-sm font-bold shadow-2xs select-none">
                                         {{ $page }}
                                     </span>
                                 @else
@@ -71,21 +75,23 @@ $scrollIntoViewJsSnippet = ($scrollTo !== false)
                 @endforeach
 
                 <!-- Tombol Berikutnya (>) -->
-                @if ($paginator->hasMorePages())
-                    <button
-                        type="button"
-                        wire:click="nextPage('{{ $paginator->getPageName() }}')"
-                        x-on:click="{{ $scrollIntoViewJsSnippet }}"
-                        class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-(--text-colour) hover:text-(--prime-colour) hover:bg-gray-100 rounded-xl transition cursor-pointer"
-                        aria-label="{{ __('pagination.next') }}"
-                    >
-                        <x-lucide-chevron-right class="w-5 h-5"/>
-                    </button>
-                @else
-                    <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 cursor-not-allowed">
-                        <x-lucide-chevron-right class="w-5 h-5"/>
-                    </span>
-                @endif
+                <span wire:key="paginator-{{ $paginator->getPageName() }}-next">
+                    @if ($paginator->hasMorePages())
+                        <button
+                            type="button"
+                            wire:click="nextPage('{{ $paginator->getPageName() }}')"
+                            x-on:click="{{ $scrollIntoViewJsSnippet }}"
+                            class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-(--text-colour) hover:text-(--prime-colour) hover:bg-gray-100 rounded-xl transition cursor-pointer"
+                            aria-label="{{ __('pagination.next') }}"
+                        >
+                            <x-lucide-chevron-right class="w-5 h-5"/>
+                        </button>
+                    @else
+                        <span class="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-300 cursor-not-allowed select-none">
+                            <x-lucide-chevron-right class="w-5 h-5"/>
+                        </span>
+                    @endif
+                </span>
             </div>
         </nav>
     @endif
