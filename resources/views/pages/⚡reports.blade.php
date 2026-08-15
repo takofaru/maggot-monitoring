@@ -158,7 +158,7 @@ new class extends Component
 
             $filename = "laporan_periodik_" . $start->format('Ymd') . "_sd_" . $end->format('Ymd') . ".csv";
 
-            // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
+            // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom (tanpa kolom catatan)
             return response()->streamDownload(function () use ($logs) {
                 $handle = fopen('php://output', 'w');
                 fputs($handle, "\xEF\xBB\xBF");
@@ -172,7 +172,6 @@ new class extends Component
                     'Kelembapan (%)',
                     'Pakan Diberikan (kg)',
                     'Berat Maggot (kg)',
-                    'Catatan Tambahan',
                 ], ',', '"', "\\");
 
                 foreach ($logs as $index => $log) {
@@ -185,7 +184,6 @@ new class extends Component
                         $log->environmentLog?->humidity ?? '-',
                         number_format((float) $log->feed_weight, 2, '.', ''),
                         number_format((float) $log->maggot_weight, 2, '.', ''),
-                        $log->notes ?? '-',
                     ], ',', '"', "\\");
                 }
 
@@ -206,7 +204,7 @@ new class extends Component
 
         $filename = "laporan_siklus_{$cycleId}_" . now()->format('Ymd_His') . ".csv";
 
-        // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
+        // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom (tanpa kolom catatan)
         return response()->streamDownload(function () use ($logs) {
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
@@ -219,7 +217,6 @@ new class extends Component
                 'Kelembapan (%)',
                 'Pakan Diberikan (kg)',
                 'Berat Maggot (kg)',
-                'Catatan Tambahan',
             ], ',', '"', "\\");
 
             foreach ($logs as $index => $log) {
@@ -231,7 +228,6 @@ new class extends Component
                     $log->environmentLog?->humidity ?? '-',
                     number_format((float) $log->feed_weight, 2, '.', ''),
                     number_format((float) $log->maggot_weight, 2, '.', ''),
-                    $log->notes ?? '-',
                 ], ',', '"', "\\");
             }
 
@@ -779,7 +775,7 @@ new class extends Component
             </div>
         </div>
 
-        <!-- 2 Grafik Analitik (1. Pertumbuhan Maggot vs Pakan, 2. Tren Lingkungan Suhu & Kelembapan) -->
+        <!-- 2 Grafik Analitik (1. Pertumbuhan Maggot vs Pakan, 2. Tren Lingkungan Suhu & Kelembapan Harmonis) -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-(--size-26) w-full items-stretch">
             <!-- Grafik 1: Pertumbuhan Bobot Maggot vs Konsumsi Pakan -->
             <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
@@ -817,7 +813,7 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Grafik 2: Tren Kondisi Lingkungan (Suhu & Kelembapan) -->
+            <!-- Grafik 2: Tren Kondisi Lingkungan (Suhu & Kelembapan yang Diharmonisasikan) -->
             <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div>
                     <div class="flex flex-row items-center justify-between flex-wrap gap-2">
@@ -835,13 +831,13 @@ new class extends Component
                             </div>
                         </div>
 
-                        <!-- Legend Indikator -->
+                        <!-- Legend Indikator Elegan dan Lembut -->
                         <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
-                            <span class="flex items-center gap-1.5 text-emerald-800 font-semibold">
-                                <span class="w-3 h-3 rounded-sm bg-emerald-600"></span> Suhu (&deg;C)
+                            <span class="flex items-center gap-1.5 text-[#163428] font-semibold">
+                                <span class="w-3.5 h-0.5 bg-[#163428] rounded"></span> Suhu (&deg;C)
                             </span>
-                            <span class="flex items-center gap-1.5 text-blue-700 font-semibold">
-                                <span class="w-3 h-3 rounded-sm bg-blue-500"></span> Kelembapan (%)
+                            <span class="flex items-center gap-1.5 text-sky-700 font-semibold">
+                                <span class="w-3.5 h-0.5 bg-sky-600 border-b border-dashed border-sky-600"></span> Kelembapan (%)
                             </span>
                         </div>
                     </div>
@@ -1196,7 +1192,7 @@ new class extends Component
             </div>
         @endif
 
-        <!-- 4. Rincian Seluruh Catatan Log Observasi -->
+        <!-- 4. Rincian Seluruh Catatan Log Observasi (Tanpa Kolom Catatan Tambahan) -->
         <div class="mb-6">
             <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
                 {{ $reportMode === 'periodic' ? '4. Daftar Lengkap Log Catatan Observasi' : '3. Daftar Lengkap Log Catatan Observasi' }}
@@ -1213,8 +1209,7 @@ new class extends Component
                         <th class="p-1.5 border-r border-gray-300 text-black text-center">Suhu</th>
                         <th class="p-1.5 border-r border-gray-300 text-black text-center">Kelembapan</th>
                         <th class="p-1.5 border-r border-gray-300 text-black text-right">Pakan (kg)</th>
-                        <th class="p-1.5 border-r border-gray-300 text-black text-right">Bobot Maggot (kg)</th>
-                        <th class="p-1.5 text-black text-left">Catatan</th>
+                        <th class="p-1.5 text-black text-right">Bobot Maggot (kg)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -1229,12 +1224,11 @@ new class extends Component
                             <td class="p-1.5 border-r border-gray-200 text-center whitespace-nowrap">{{ $log->environmentLog->temperature ?? '-' }}°C</td>
                             <td class="p-1.5 border-r border-gray-200 text-center whitespace-nowrap">{{ $log->environmentLog->humidity ?? '-' }}%</td>
                             <td class="p-1.5 border-r border-gray-200 text-right whitespace-nowrap">{{ number_format((float)$log->feed_weight, 2) }}</td>
-                            <td class="p-1.5 border-r border-gray-200 text-right font-semibold whitespace-nowrap">{{ number_format((float)$log->maggot_weight, 2) }}</td>
-                            <td class="p-1.5 text-gray-700">{{ $log->notes ?: '-' }}</td>
+                            <td class="p-1.5 text-right font-semibold whitespace-nowrap">{{ number_format((float)$log->maggot_weight, 2) }}</td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="{{ $reportMode === 'periodic' ? 9 : 8 }}" class="p-4 text-center text-gray-400">
+                            <td colspan="{{ $reportMode === 'periodic' ? 8 : 7 }}" class="p-4 text-center text-gray-400">
                                 Tidak ada data catatan observasi.
                             </td>
                         </tr>
@@ -1301,7 +1295,7 @@ new class extends Component
                         label: 'Bobot Maggot (kg)',
                         data: safeMaggot,
                         borderColor: '#163428',
-                        backgroundColor: 'rgba(22, 52, 40, 0.12)',
+                        backgroundColor: 'rgba(22, 52, 40, 0.08)',
                         fill: true,
                         tension: 0.3,
                         borderWidth: 2.5,
@@ -1312,7 +1306,7 @@ new class extends Component
                         label: 'Pakan (kg)',
                         data: safeFeed,
                         borderColor: '#F59E0B',
-                        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                        backgroundColor: 'transparent',
                         fill: false,
                         borderDash: [4, 4],
                         tension: 0.3,
@@ -1380,24 +1374,27 @@ new class extends Component
                     {
                         label: 'Suhu (°C)',
                         data: safeTemp,
-                        borderColor: '#059669',
-                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        borderColor: '#163428',
+                        backgroundColor: 'transparent',
                         yAxisID: 'yTemp',
                         tension: 0.3,
-                        borderWidth: 2.5,
-                        pointBackgroundColor: '#059669',
-                        pointRadius: safeLabels.length > 20 ? 2 : 4,
+                        borderWidth: 2.2,
+                        pointBackgroundColor: '#163428',
+                        pointRadius: safeLabels.length > 20 ? 1.5 : 3.5,
+                        fill: false,
                     },
                     {
                         label: 'Kelembapan (%)',
                         data: safeHumid,
-                        borderColor: '#2563EB',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderColor: '#0284C7',
+                        backgroundColor: 'transparent',
                         yAxisID: 'yHumid',
+                        borderDash: [5, 4],
                         tension: 0.3,
-                        borderWidth: 2.5,
-                        pointBackgroundColor: '#2563EB',
-                        pointRadius: safeLabels.length > 20 ? 2 : 4,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#0284C7',
+                        pointRadius: safeLabels.length > 20 ? 1.5 : 3.5,
+                        fill: false,
                     }
                 ]
             },
@@ -1412,25 +1409,43 @@ new class extends Component
                         backgroundColor: '#163428',
                         padding: 10,
                         titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 12 }
+                        bodyFont: { size: 12 },
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.yAxisID === 'yTemp') {
+                                    return ' Suhu: ' + (context.parsed.y !== null ? context.parsed.y.toFixed(1) + '°C' : '-');
+                                }
+                                return ' Kelembapan: ' + (context.parsed.y !== null ? context.parsed.y.toFixed(1) + '%' : '-');
+                            }
+                        }
                     }
                 },
                 scales: {
                     yTemp: {
                         type: 'linear',
                         position: 'left',
-                        title: { display: true, text: 'Suhu (°C)', font: { size: 11 } },
-                        grid: { color: '#E5E7EB' },
-                        ticks: { font: { size: 11 } }
+                        min: 0,
+                        max: 50,
+                        title: { display: true, text: 'Suhu (°C)', color: '#163428', font: { size: 11, weight: '600' } },
+                        grid: { color: '#F3F4F6' },
+                        ticks: {
+                            stepSize: 10,
+                            font: { size: 11 },
+                            callback: (v) => v + '°C'
+                        }
                     },
                     yHumid: {
                         type: 'linear',
                         position: 'right',
                         min: 0,
                         max: 100,
-                        title: { display: true, text: 'Kelembapan (%)', font: { size: 11 } },
+                        title: { display: true, text: 'Kelembapan (%)', color: '#0284C7', font: { size: 11, weight: '600' } },
                         grid: { display: false },
-                        ticks: { font: { size: 11 } }
+                        ticks: {
+                            stepSize: 20,
+                            font: { size: 11 },
+                            callback: (v) => v + '%'
+                        }
                     },
                     x: {
                         grid: { display: false },
