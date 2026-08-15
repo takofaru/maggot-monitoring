@@ -182,10 +182,10 @@ new class extends Component
 
 <div wire:poll.5s class="space-y-(--size-26) w-full">
     <!-- Header Dashboard & Status Indikator di Samping Judul & Tombol Lonceng Aktivitas -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
             <div class="flex items-center gap-3.5">
-                <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                     Dashboard
                 </h1>
 
@@ -203,29 +203,35 @@ new class extends Component
         <livewire:notification-bell />
     </div>
 
-    <!-- 3 Pill Badges Status Siklus -->
-    <div class="flex flex-nowrap items-center gap-(--size-10)">
+    <!-- 3 Pill Badges Status Siklus (Vertikal di Mobile, Horisontal di Desktop) -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-(--size-10)">
         <!-- Pill 1: Siklus ke -->
-        <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
-            <x-lucide-refresh-cw class="w-(--size-16) text-(--prime-colour)"/>
-            <span>Siklus ke: {{ sprintf('%02d', $cycleNumber) }}</span>
+        <div class="inline-flex gap-(--size-10) items-center justify-between sm:justify-start px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap w-full sm:w-auto shrink-0">
+            <div class="flex items-center gap-(--size-10)">
+                <x-lucide-refresh-cw class="w-(--size-16) text-(--prime-colour)"/>
+                <span>Siklus ke: {{ sprintf('%02d', $cycleNumber) }}</span>
+            </div>
         </div>
 
         <!-- Pill 2: Hari ke -->
-        <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
-            <x-lucide-calendar class="w-(--size-16) text-(--prime-colour)"/>
-            <span>Hari ke: {{ $dayNumber !== null ? sprintf('%02d', $dayNumber) : '-' }}</span>
+        <div class="inline-flex gap-(--size-10) items-center justify-between sm:justify-start px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap w-full sm:w-auto shrink-0">
+            <div class="flex items-center gap-(--size-10)">
+                <x-lucide-calendar class="w-(--size-16) text-(--prime-colour)"/>
+                <span>Hari ke: {{ $dayNumber !== null ? sprintf('%02d', $dayNumber) : '-' }}</span>
+            </div>
         </div>
 
         <!-- Pill 3: Fase Sekarang -->
-        <div class="inline-flex gap-(--size-10) items-center px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap shrink-0">
-            <x-lucide-move-up-right class="w-(--size-16) text-(--prime-colour)"/>
-            <span>Fase Sekarang: {{ $currentPhase }}</span>
+        <div class="inline-flex gap-(--size-10) items-center justify-between sm:justify-start px-(--size-16) py-(--size-10) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm font-semibold text-(--text-colour) whitespace-nowrap w-full sm:w-auto shrink-0">
+            <div class="flex items-center gap-(--size-10)">
+                <x-lucide-move-up-right class="w-(--size-16) text-(--prime-colour)"/>
+                <span>Fase Sekarang: {{ $currentPhase }}</span>
+            </div>
         </div>
     </div>
 
-    <!-- 3 Kartu Ringkasan KPI Utama (Baris Atas) -->
-    <div class="grid grid-cols-3 gap-(--size-26) w-full">
+    <!-- 3 Kartu Ringkasan KPI Utama (Vertikal 1 Kolom di Mobile, Horisontal 3 Kolom di Desktop) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-(--size-26) w-full">
         <!-- 1. Total Pakan Kumulatif -->
         <div class="flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row items-center gap-(--size-16) h-full">
@@ -237,7 +243,7 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2 flex-nowrap">
+                <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($totalFeed, 1) }}
                     </span>
@@ -263,7 +269,7 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-2 flex-nowrap">
+                <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($latestMaggotWeight, 1) }}
                     </span>
@@ -289,7 +295,7 @@ new class extends Component
                 </span>
             </div>
             <div>
-                <div class="flex items-baseline gap-1.5 flex-nowrap">
+                <div class="flex items-baseline gap-1.5 flex-wrap">
                     <span class="text-(length:--size-42) font-extrabold text-(--prime-colour) leading-none">
                         {{ number_format($fcr, 1) }}
                     </span>
@@ -305,13 +311,13 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Baris Bawah: Suhu & Kelembapan Bersampingan (Grid 2 Kolom) -->
-    <div class="grid grid-cols-2 gap-(--size-26) w-full items-stretch">
+    <!-- Baris Bawah: Suhu & Kelembapan Bersampingan (Grid Responsif) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-(--size-26) w-full items-stretch">
 
         <!-- 1. Box Grafik Suhu (Col 1) -->
         <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div>
-                <div class="flex flex-row items-center justify-between">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div class="flex flex-row items-center gap-(--size-16)">
                         <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                             <x-lucide-thermometer class="w-(--size-26) h-(--size-26)"/>
@@ -322,7 +328,7 @@ new class extends Component
                     </div>
 
                     <!-- Keterangan Garis Batas Suhu -->
-                    <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
+                    <div class="flex items-center gap-2 sm:gap-3 text-xs flex-wrap sm:flex-nowrap shrink-0">
                         <span class="flex items-center gap-1 text-gray-600 font-medium">
                             <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
                         </span>
@@ -361,7 +367,7 @@ new class extends Component
         <!-- 2. Box Grafik Kelembapan (Col 2) -->
         <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div>
-                <div class="flex flex-row items-center justify-between">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div class="flex flex-row items-center gap-(--size-16)">
                         <div class="p-(--size-10) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) shrink-0 flex items-center justify-center">
                             <x-lucide-droplets class="w-(--size-26) h-(--size-26)"/>
@@ -372,7 +378,7 @@ new class extends Component
                     </div>
 
                     <!-- Keterangan Garis Batas Kelembapan -->
-                    <div class="flex items-center gap-3 text-xs whitespace-nowrap shrink-0">
+                    <div class="flex items-center gap-2 sm:gap-3 text-xs flex-wrap sm:flex-nowrap shrink-0">
                         <span class="flex items-center gap-1 text-gray-600 font-medium">
                             <span class="w-3 h-0.5 bg-[#163428] rounded"></span> Aktual
                         </span>

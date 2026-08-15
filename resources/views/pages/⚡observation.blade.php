@@ -247,7 +247,7 @@ new class extends Component
                 'cycle_id'           => $cycle->id,
                 'phase_name'         => $phaseName,
                 'environment_log_id' => $envLogId,
-                'timestamp'          => now()->toDateString(),
+                'timestamp'          => now(),
                 'feed_weight'        => $this->feed,
                 'maggot_weight'      => $this->maggot,
             ]);
@@ -281,43 +281,47 @@ new class extends Component
                 ->orderBy('timestamp', 'desc')
                 ->orderBy('id', 'desc')
                 ->paginate(10),
+            'selectedCycleName' => ($cycle = Cycle::find($this->selectedCycleId)) ? "Siklus {$cycle->id}" : 'Pilih Siklus',
+            'isSelectedCurrent' => (bool) ($cycle?->is_active ?? false),
         ];
     }
 };
 ?>
 
 <div class="space-y-(--size-26) w-full">
-    <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
-    <div class="flex flex-row justify-between w-full items-center">
+    <!-- Header Halaman Catatan Observasi & Tombol Lonceng Notifikasi Global -->
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                 Catatan Observasi
             </h1>
             <p class="text-sm text-gray-500 mt-1">
-                Pencatatan data harian pakan, bobot biomassa maggot, dan sinkronisasi kondisi lingkungan.
+                Catat dan pantau pemberian pakan serta perkembangan biomassa maggot secara harian.
             </p>
         </div>
+
         <div class="flex items-center gap-3">
             @if ($flashMessage)
                 <div
                     x-data="{ show: true }"
                     x-show="show"
-                    x-init="setTimeout(() => show = false, 4500)"
-                    class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
+                    x-init="setTimeout(() => show = false, 4000)"
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold"
                 >
                     <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{{ $flashMessage }}</span>
                 </div>
             @endif
+
             <livewire:notification-bell />
         </div>
     </div>
 
-    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah -->
-    <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
-        <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+    <!-- Toolbar: Selector Siklus, Fase Terkini, & Tombol Tambah (Vertikal di Mobile, Sejajar di Desktop) -->
+    <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
             <!-- Dropdown Pilihan Siklus -->
-            <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+            <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                 <span>Siklus ke:</span>
                 <div class="relative inline-block">
                     <button
@@ -333,7 +337,7 @@ new class extends Component
                         x-show="openDropdown"
                         @click.outside="openDropdown = false"
                         x-transition.opacity.duration.200ms
-                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                        class="absolute left-0 top-full mt-(--size-10) w-(--size-492) max-w-[calc(100vw-3rem)] bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
                         x-cloak
                     >
                         @foreach($cycleData as $item)
@@ -360,7 +364,7 @@ new class extends Component
                 </div>
             </div>
 
-            <!-- Fase Terkini & Tombol Ganti Fase dengan Konfirmasi (Tinggi Sama Persis dengan Siklus) -->
+            <!-- Fase Terkini & Tombol Ganti Fase -->
             @php
                 $activeCycleObj = $cycleData->firstWhere('id', $selectedCycleId);
                 $currPhase = strtolower($activeCycleObj->current_phase ?? '');
@@ -371,9 +375,9 @@ new class extends Component
                     default     => 'Yakin ingin melanjutkan ke fase berikutnya?'
                 };
             @endphp
-            <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+            <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) whitespace-nowrap w-full md:w-auto shrink-0">
                 <div class="gap-(--size-6) flex items-center">
-                    Fase terkini:
+                    <span class="text-gray-500">Fase terkini:</span>
                     <span class="font-bold text-(--prime-colour) capitalize ml-1">{{ $activeCycleObj->current_phase ?? '-' }}</span>
                 </div>
                 @if($isSelectedCurrent && $currPhase !== 'panen')
@@ -402,20 +406,103 @@ new class extends Component
             <button
                 wire:click="openCreateModal"
                 type="button"
-                class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
             >
-                <x-lucide-plus class="w-(--size-26)"/>
+                <x-lucide-plus class="w-5 md:w-(--size-26)"/>
                 <span>Tambah Catatan Baru</span>
             </button>
         @endif
     </div>
 
-    <!-- Tabel Catatan Observasi -->
-    <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
+    <!-- 1. Tampilan Card Khusus Layar Mobile (Mencegah Tabel Overflow ke Samping) -->
+    <div class="space-y-3 md:hidden">
+        @forelse($observationData as $item)
+            <div wire:key="obs-mobile-card-{{ $item->id }}" class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
+                <!-- Baris Atas: Tanggal & Waktu & Fase Badge -->
+                <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <x-lucide-calendar class="w-4 h-4 text-(--prime-colour)"/>
+                        <span class="font-bold text-sm text-(--prime-colour)">
+                            {{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y, H:i') : '-' }}
+                        </span>
+                    </div>
+                    <span class="px-2.5 py-0.5 bg-gray-100 text-gray-800 rounded-md font-bold text-xs capitalize">
+                        {{ $item->phase_name }}
+                    </span>
+                </div>
+
+                <!-- Grid 2x2 Parameter Observasi -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Suhu Lingkungan</span>
+                        <span class="font-bold text-gray-900 text-sm mt-0.5">
+                            {{ $item->environmentLog->temperature ?? '-' }}&deg;C
+                        </span>
+                    </div>
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Kelembapan</span>
+                        <span class="font-bold text-gray-900 text-sm mt-0.5">
+                            {{ $item->environmentLog->humidity ?? '-' }}%
+                        </span>
+                    </div>
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Berat Pakan</span>
+                        <span class="font-bold text-gray-900 text-sm mt-0.5">
+                            {{ $item->feed_weight }} kg
+                        </span>
+                    </div>
+                    <div class="p-2.5 bg-(--bg-colour) rounded-xl flex flex-col">
+                        <span class="text-gray-500 text-[11px]">Berat Maggot</span>
+                        <span class="font-bold text-emerald-800 text-sm mt-0.5">
+                            {{ $item->maggot_weight }} kg
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Baris Bawah: Tombol Aksi Edit & Hapus (Sesuai & Selaras dengan Style UI Desktop) -->
+                @if($isSelectedCurrent)
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-(--outline-colour)/40">
+                        <button
+                            wire:click="openEditModal({{ $item->id }})"
+                            type="button"
+                            class="h-9 px-4 bg-(--prime-colour) hover:opacity-90 active:scale-95 text-(--fg-colour) rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                        >
+                            <x-lucide-square-pen class="w-3.5 h-3.5"/>
+                            <span>Ubah</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            @click="$confirm({
+                                title: 'Hapus Catatan Observasi',
+                                message: 'Apakah Anda yakin ingin menghapus catatan observasi tanggal {{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y') : '' }}? Data yang dihapus tidak dapat dipulihkan.',
+                                confirmText: 'Ya, Hapus',
+                                cancelText: 'Batal',
+                                variant: 'danger',
+                                icon: 'trash',
+                                onConfirm: () => $wire.deleteObservationLog({{ $item->id }})
+                            })"
+                            class="h-9 px-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                        >
+                            <x-lucide-trash-2 class="w-3.5 h-3.5"/>
+                            <span>Hapus</span>
+                        </button>
+                    </div>
+                @endif
+            </div>
+        @empty
+            <div class="py-8 text-center text-gray-400 bg-(--fg-colour) rounded-(--size-16) border border-(--outline-colour) text-sm">
+                Belum ada catatan observasi untuk siklus ini.
+            </div>
+        @endforelse
+    </div>
+
+    <!-- 2. Tampilan Tabel Khusus Layar Desktop (hidden md:block) -->
+    <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
         <table class="w-full text-left border-collapse">
             <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                 <tr>
-                    <th class="min-w-[200px]">Tanggal</th>
+                    <th class="min-w-[200px]">Tanggal & Waktu</th>
                     <th class="min-w-[130px]">Fase</th>
                     <th class="min-w-[100px]">Suhu</th>
                     <th class="min-w-[120px]">Kelembapan</th>
@@ -426,8 +513,8 @@ new class extends Component
             </thead>
             <tbody>
                 @forelse($observationData as $item)
-                    <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                        <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y') : '-' }}</td>
+                    <tr wire:key="obs-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                        <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('l, d F Y - H:i') : '-' }}</td>
                         <td>
                             <span class="px-2.5 py-1 bg-gray-100 text-gray-800 rounded-md font-medium text-xs capitalize">
                                 {{ $item->phase_name }}

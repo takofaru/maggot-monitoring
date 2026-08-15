@@ -492,9 +492,9 @@ new class extends Component
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
     <div class="no-print space-y-(--size-26) w-full">
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
-        <div class="flex items-center justify-between">
+        <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
             <div>
-                <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+                <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                     Laporan Budidaya
                 </h1>
                 <p class="text-sm text-gray-500 mt-1">
@@ -505,12 +505,12 @@ new class extends Component
         </div>
 
         <!-- Mode Switch Tabs -->
-        <div class="flex items-center">
-            <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs shrink-0">
+        <div class="flex items-center w-full sm:w-auto">
+            <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs w-full sm:w-auto shrink-0">
                 <button
                     type="button"
                     wire:click="setReportMode('periodic')"
-                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                    class="flex-1 sm:flex-initial h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
                 >
                     <x-lucide-calendar-range class="w-4 h-4"/>
                     <span>Laporan Periodik</span>
@@ -518,7 +518,7 @@ new class extends Component
                 <button
                     type="button"
                     wire:click="setReportMode('cycle')"
-                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                    class="flex-1 sm:flex-initial h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
                 >
                     <x-lucide-refresh-cw class="w-4 h-4"/>
                     <span>Laporan Siklus</span>
@@ -526,13 +526,13 @@ new class extends Component
             </div>
         </div>
 
-        <!-- Filter Toolbar & Tombol Aksi (Sejajar Horisontal 1 Baris, Bebas Wrap) -->
-        <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
+        <!-- Filter Toolbar & Tombol Aksi (Responsif di Mobile, Sejajar di Desktop) -->
+        <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
             @if($reportMode === 'periodic')
                 <!-- Toolbar Mode Periodik: Preset & Tanggal -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Preset:</span>
                         <div class="relative inline-block">
                             <button
@@ -602,23 +602,29 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai dengan format dd Mon yyyy beserta total hari) -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                        <div class="flex items-center gap-(--size-10)">
-                            <span>Dari:</span>
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai - Responsif Bebas Overflow) -->
+                    <div class="flex flex-col sm:flex-row md:inline-flex md:h-[58px] gap-2.5 md:gap-(--size-10) items-stretch sm:items-center px-3 sm:px-4 md:px-(--size-16) py-2.5 md:py-0 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full md:w-auto shrink-0">
+                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
+                            <span class="font-medium text-(--text-colour) shrink-0">Dari:</span>
                             <x-custom-date-picker wire:model.live="startDate" />
-                            <span class="text-gray-300 font-bold">&mdash;</span>
-                            <span>Sampai:</span>
+                        </div>
+                        <span class="text-gray-300 font-bold hidden sm:inline md:inline">&mdash;</span>
+                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
+                            <span class="font-medium text-(--text-colour) shrink-0">Sampai:</span>
                             <x-custom-date-picker wire:model.live="endDate" />
-                            <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
+                        </div>
+                        <div class="flex items-center justify-center pt-1 sm:pt-0">
+                            <span class="text-xs text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">
+                                {{ $durationDays }} Hari
+                            </span>
                         </div>
                     </div>
                 </div>
             @else
-                <!-- Toolbar Mode Siklus: Siklus ke & Status -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
+                <!-- Toolbar Mode Siklus: Siklus ke & Status (Vertikal di Mobile, Horisontal di Desktop) -->
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Siklus -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Siklus ke:</span>
                         <div class="relative inline-block">
                             <button
@@ -634,7 +640,7 @@ new class extends Component
                                 x-show="openDropdown"
                                 @click.outside="openDropdown = false"
                                 x-transition.opacity.duration.200ms
-                                class="absolute left-0 top-full mt-(--size-10) w-(--size-492) bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
+                                class="absolute left-0 top-full mt-(--size-10) w-(--size-492) max-w-[calc(100vw-3rem)] bg-white border border-gray-300 rounded-(--size-16) shadow-xl z-50 max-h-72 overflow-y-auto"
                                 x-cloak
                             >
                                 @foreach($cycleData as $item)
@@ -662,42 +668,44 @@ new class extends Component
                     </div>
 
                     <!-- Status Siklus Pill -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                        <div class="gap-(--size-6) flex items-center">
-                            <span>Status:</span>
-                            <span class="font-bold text-(--prime-colour) ml-1">
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full md:w-auto shrink-0">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-gray-500 font-medium">Status:</span>
+                            <span class="font-bold text-(--prime-colour)">
                                 {{ $currentCycle?->is_active ? 'Aktif (' . ucfirst($currentCycle->current_phase) . ')' : 'Selesai / Panen' }}
                             </span>
-                            <span class="text-xs text-gray-400 ml-1">({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})</span>
                         </div>
+                        <span class="text-xs text-gray-400 font-semibold shrink-0 ml-2">
+                            ({{ $currentCycle?->start_date ? $durationDays . ' Hari' : 'Belum Dimulai' }})
+                        </span>
                     </div>
                 </div>
             @endif
 
-            <!-- Tombol Ekspor CSV & Cetak Laporan (Sejajar di Sisi Kanan) -->
-            <div class="flex flex-row items-center gap-(--size-10) flex-nowrap shrink-0">
+            <!-- Tombol Ekspor CSV & Cetak Laporan -->
+            <div class="grid grid-cols-2 md:flex md:flex-row items-center gap-2.5 w-full md:w-auto shrink-0">
                 <button
                     wire:click="exportCsv"
                     type="button"
-                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                    class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
-                    <x-lucide-download class="w-(--size-26)"/>
+                    <x-lucide-download class="w-5 md:w-(--size-26)"/>
                     <span>Ekspor CSV</span>
                 </button>
 
                 <button
                     onclick="window.printReport ? window.printReport() : window.print()"
                     type="button"
-                    class="h-[58px] gap-(--size-10) px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center whitespace-nowrap shrink-0 shadow-xs"
+                    class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
-                    <x-lucide-printer class="w-(--size-26)"/>
+                    <x-lucide-printer class="w-5 md:w-(--size-26)"/>
                     <span>Cetak Laporan</span>
                 </button>
             </div>
         </div>
 
-        <!-- 3 Kartu Ringkasan KPI Utama (Seragam 100% Ukuran & Proporsinya antara Mode Periodik dan Mode Siklus) -->
-        <div class="grid grid-cols-3 gap-(--size-26) w-full">
+        <!-- 3 Kartu Ringkasan KPI Utama (Vertikal 1 Kolom Penuh di Mobile, Horisontal 3 Kolom di Desktop) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-(--size-26) w-full">
             <!-- 1. Total Pakan Kumulatif / Periode -->
             <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div class="flex flex-row items-center gap-(--size-16)">
@@ -772,8 +780,8 @@ new class extends Component
             </div>
         </div>
 
-        <!-- 2 Grafik Analitik (Tetap 2 Kolom Bersebelahan, Tidak Mengalami Wrap Saat Lebar Mengecil) -->
-        <div class="grid grid-cols-2 gap-(--size-26) w-full items-stretch">
+        <!-- 2 Grafik Analitik (Responsif 1 Kolom di Mobile, 2 Kolom di Desktop) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-(--size-26) w-full items-stretch">
             <!-- Grafik 1: Pertumbuhan Bobot Maggot vs Konsumsi Pakan -->
             <div class="col-span-1 flex flex-col justify-between gap-(--size-16) p-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div>
@@ -850,11 +858,11 @@ new class extends Component
         <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Fixed wxh = 3x2, Overflow > 6 Scrollable ke Bawah) -->
         @if($reportMode === 'periodic')
             <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex items-center justify-between flex-nowrap gap-3">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div class="flex flex-row gap-(--size-16) items-center">
                         <x-lucide-refresh-cw class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                         <div>
-                            <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                            <h2 class="text-(--prime-colour) text-lg sm:text-(length:--size-26) font-bold leading-tight">
                                 Rekapitulasi Siklus dalam Periode (Total {{ $totalInvolvedCycles }} Siklus)
                             </h2>
                             <p class="text-xs text-gray-400">
@@ -863,7 +871,7 @@ new class extends Component
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 flex-nowrap shrink-0">
+                    <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
                         <span class="px-3.5 py-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
                             <x-lucide-check-circle-2 class="w-4 h-4 text-emerald-700"/>
                             {{ count($completedCycles) }} Siklus Selesai Penuh
@@ -875,9 +883,9 @@ new class extends Component
                     </div>
                 </div>
 
-                <!-- Fixed 3x2 Grid (3 Kolom, Maksimal 2 Baris Terlihat, > 6 Kartu Scroll Vertikal ke Bawah) -->
-                <div class="max-h-[285px] overflow-y-auto pr-1">
-                    <div class="grid grid-cols-3 gap-4">
+                <!-- Fixed Grid (1 Kolom Vertikal di Mobile, 3 Kolom di Desktop, Overflow Scroll Vertikal) -->
+                <div class="max-h-[380px] md:max-h-[285px] overflow-y-auto pr-1">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         @forelse(array_merge($completedCycles, $partialCycles) as $item)
                             <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
                                 <div class="flex items-center justify-between">
@@ -927,7 +935,47 @@ new class extends Component
                 </div>
             </div>
 
-            <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <!-- 1. Tampilan Card Khusus Mobile (Analisis Fase) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:hidden mt-1">
+                @foreach($phaseBreakdown as $key => $p)
+                    <div class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <div class="flex items-center gap-2 font-bold text-sm text-(--prime-colour)">
+                                @if($key === 'penetasan')
+                                    <x-lucide-egg class="w-4 h-4 text-(--prime-colour)" />
+                                @elseif($key === 'pembesaran')
+                                    <x-lucide-worm class="w-4 h-4 text-(--prime-colour)" />
+                                @else
+                                    <x-lucide-bug class="w-4 h-4 text-(--prime-colour)" />
+                                @endif
+                                <span>{{ $p['name'] }}</span>
+                            </div>
+                            <span class="text-xs text-gray-500 font-semibold">{{ $p['log_count'] }} kali log</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Total Pakan</span>
+                                <span class="font-bold text-gray-800">{{ number_format($p['total_feed'], 1) }} kg</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Bobot Akhir</span>
+                                <span class="font-bold text-emerald-800">{{ number_format($p['end_maggot'], 1) }} kg</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Suhu Rata-rata</span>
+                                <span class="font-semibold text-gray-800">{{ $p['avg_temp'] !== '-' ? $p['avg_temp'] . '°C' : '-' }}</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Kelembapan</span>
+                                <span class="font-semibold text-gray-800">{{ $p['avg_humid'] !== '-' ? $p['avg_humid'] . '%' : '-' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            <!-- 2. Tampilan Tabel Khusus Desktop (Analisis Fase) -->
+            <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                         <tr>
@@ -991,7 +1039,46 @@ new class extends Component
                 </div>
             </div>
 
-            <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+            <!-- 1. Tampilan Card Khusus Mobile (Log Observasi) -->
+            <div class="space-y-3 md:hidden mt-1">
+                @forelse($observationLogs as $item)
+                    <div wire:key="rep-obs-mobile-card-{{ $item->id }}" class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <div class="flex items-center gap-2 text-xs font-bold text-(--prime-colour)">
+                                <x-lucide-calendar class="w-3.5 h-3.5"/>
+                                <span>{{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y, H:i') : '-' }}</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                @if($reportMode === 'periodic')
+                                    <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded text-[11px] border border-emerald-200">
+                                        Siklus {{ $item->cycle_id ?? '-' }}
+                                    </span>
+                                @endif
+                                <span class="px-2.5 py-0.5 bg-gray-100 text-gray-700 font-bold rounded text-[11px] capitalize">
+                                    {{ $item->phase_name }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Suhu & Kelembapan</span>
+                                <span class="font-bold text-gray-800">{{ $item->environmentLog->temperature ?? '-' }}&deg;C &bull; {{ $item->environmentLog->humidity ?? '-' }}%</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Pakan / Bobot</span>
+                                <span class="font-bold text-gray-800">{{ $item->feed_weight }} kg / {{ $item->maggot_weight }} kg</span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-6 text-center text-xs text-gray-400 bg-(--bg-colour) rounded-xl border border-(--outline-colour)">
+                        Tidak ada catatan observasi untuk {{ $reportMode === 'periodic' ? 'rentang periode tanggal ini' : 'siklus ini' }}.
+                    </div>
+                @endforelse
+            </div>
+
+            <!-- 2. Tampilan Tabel Khusus Desktop (Log Observasi) -->
+            <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                         <tr>
@@ -1008,8 +1095,8 @@ new class extends Component
                     </thead>
                     <tbody>
                         @forelse($observationLogs as $item)
-                            <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                                <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y - H:i') : '-' }}</td>
+                            <tr wire:key="rep-obs-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                                <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y, H:i') : '-' }}</td>
                                 @if($reportMode === 'periodic')
                                     <td>
                                         <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded-md text-xs border border-emerald-200">
@@ -1221,7 +1308,7 @@ new class extends Component
                 <thead class="bg-gray-100 font-bold border-b border-gray-300">
                     <tr>
                         <th class="p-1.5 border-r border-gray-300 text-black text-center w-8">No</th>
-                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Waktu</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Tanggal & Waktu</th>
                         @if($reportMode === 'periodic')
                             <th class="p-1.5 border-r border-gray-300 text-black text-left">Siklus</th>
                         @endif

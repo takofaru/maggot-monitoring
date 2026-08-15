@@ -227,9 +227,9 @@ new class extends Component
 
 <div class="space-y-(--size-26) w-full">
     <!-- Header Halaman & Tombol Lonceng Notifikasi -->
-    <div class="flex items-center justify-between">
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
-            <h1 class="text-(--prime-colour) text-(length:--size-42) font-bold leading-tight">
+            <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                 Manajemen Akun
             </h1>
             @cannot('manage-accounts')
@@ -246,7 +246,7 @@ new class extends Component
         <livewire:notification-bell />
     </div>
 
-    <div class="grid grid-cols-2 gap-(--size-26) w-full">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-(--size-26) w-full">
         <!-- Box Profil Saya -->
         <div class="flex flex-col gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) w-full min-w-0 shadow-xs">
             <div class="flex flex-row gap-(--size-16) items-center">
@@ -377,7 +377,7 @@ new class extends Component
 
     <!-- Bagian Daftar Pengguna (Khusus Admin) -->
     @can('manage-accounts')
-        <div class="flex flex-row justify-between items-center pt-2">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2">
             <div class="flex items-center gap-3">
                 <span class="text-(--prime-colour) text-(length:--size-26) font-bold">Daftar Pengguna</span>
                 @if ($userMessage)
@@ -402,7 +402,71 @@ new class extends Component
             </button>
         </div>
 
-        <div class="overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
+        <!-- 1. Tampilan Card Khusus Layar Mobile (Daftar Pengguna) -->
+        <div class="space-y-3 md:hidden">
+            @forelse($users as $item)
+                <div wire:key="user-mobile-card-{{ $item->id }}" class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
+                    <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-full bg-emerald-100 text-[#163428] flex items-center justify-center font-bold text-xs">
+                                <x-lucide-user class="w-4 h-4"/>
+                            </div>
+                            <div>
+                                <div class="font-bold text-sm text-gray-900 flex items-center gap-1.5">
+                                    <span>{{ $item->full_name }}</span>
+                                    @if($item->id === Auth::id())
+                                        <span class="px-2 py-0.2 bg-emerald-100 text-emerald-800 rounded-full text-[10px] font-bold">Anda</span>
+                                    @endif
+                                </div>
+                                <span class="text-xs text-gray-500 font-medium">&#64;{{ $item->username }}</span>
+                            </div>
+                        </div>
+
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {{ $item->role === 'admin' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-gray-100 text-gray-800' }}">
+                            {{ ($item->role === 'admin') ? 'Admin' : 'Pengguna' }}
+                        </span>
+                    </div>
+
+                    <!-- Tombol Aksi Mobile Card -->
+                    <div class="flex items-center justify-end gap-2 pt-1">
+                        <button
+                            wire:click="openEditUserModal({{ $item->id }})"
+                            type="button"
+                            class="h-9 px-4 bg-(--prime-colour) hover:opacity-90 active:scale-95 text-(--fg-colour) rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                        >
+                            <x-lucide-square-pen class="w-3.5 h-3.5"/>
+                            <span>Ubah</span>
+                        </button>
+
+                        @if($item->id !== Auth::id())
+                            <button
+                                type="button"
+                                @click="$confirm({
+                                    title: 'Hapus Pengguna',
+                                    message: 'Apakah Anda yakin ingin menghapus pengguna {{ $item->username }}? Akun ini tidak akan dapat mengakses sistem kembali.',
+                                    confirmText: 'Ya, Hapus Pengguna',
+                                    cancelText: 'Batal',
+                                    variant: 'danger',
+                                    icon: 'trash',
+                                    onConfirm: () => $wire.deleteUser({{ $item->id }})
+                                })"
+                                class="h-9 px-4 bg-red-600 hover:bg-red-700 active:scale-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                            >
+                                <x-lucide-trash-2 class="w-3.5 h-3.5"/>
+                                <span>Hapus</span>
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="py-8 text-center text-sm text-gray-400 bg-(--fg-colour) rounded-(--size-16) border border-(--outline-colour)">
+                    Tidak ada pengguna ditemukan.
+                </div>
+            @endforelse
+        </div>
+
+        <!-- 2. Tampilan Tabel Khusus Layar Desktop (Daftar Pengguna) -->
+        <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs">
             <table class="w-full text-left border-collapse">
                 <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                     <tr>
@@ -414,7 +478,7 @@ new class extends Component
                 </thead>
                 <tbody>
                     @forelse($users as $item)
-                    <tr class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                    <tr wire:key="user-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
                         <td>
                             <div class="font-medium text-gray-900 flex items-center gap-2">
                                 <span>{{ $item->full_name }}</span>

@@ -135,19 +135,19 @@
             return days;
         }
     }"
-    class="relative inline-block"
+    class="relative inline-block w-full md:w-auto"
     @click.outside="open = false"
     @keydown.escape.window="open = false"
 >
     <!-- Trigger Button Input (Format dd Mon yyyy, Harmonized dengan style input-text) -->
-    <div class="flex items-center gap-(--size-10)">
+    <div class="flex items-center gap-(--size-10) w-full">
         @if($label)
             <span class="text-(length:--size-16) font-normal text-(--text-colour) whitespace-nowrap">{{ $label }}:</span>
         @endif
         <button
             type="button"
             @click="open = !open"
-            class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0 transition-all focus:outline-none focus:ring-1 focus:ring-(--prime-colour)"
+            class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap w-full md:w-auto transition-all focus:outline-none focus:ring-1 focus:ring-(--prime-colour)"
             x-bind:class="open ? 'border-(--prime-colour) ring-1 ring-(--prime-colour)' : ''"
         >
             <span class="font-bold text-[#163428]" x-text="formattedDisplay"></span>
@@ -164,7 +164,7 @@
         x-transition:leave="transition ease-in duration-100"
         x-transition:leave-start="opacity-100 translate-y-0 scale-100"
         x-transition:leave-end="opacity-0 translate-y-2 scale-95"
-        class="absolute {{ $align === 'right' ? 'right-0' : 'left-0' }} top-full mt-(--size-10) w-72 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xl z-50 p-4 select-none"
+        class="absolute {{ $align === 'right' ? 'right-0' : 'left-0' }} top-full mt-(--size-10) w-72 max-w-[calc(100vw-2.5rem)] bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xl z-50 p-4 select-none"
         x-cloak
     >
         <!-- Header Navigasi Bulan & Tahun -->

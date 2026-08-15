@@ -16,7 +16,7 @@ class ObservationLog extends Model
     ];
 
     protected $casts = [
-        'timestamp'     => 'date',
+        'timestamp'     => 'datetime',
         'feed_weight'   => 'float',
         'maggot_weight' => 'float',
     ];

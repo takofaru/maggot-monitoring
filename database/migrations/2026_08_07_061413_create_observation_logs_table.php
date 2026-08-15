@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();
             $table->enum('phase_name', ['penetasan', 'pembesaran', 'prepupa']);
             $table->foreignId('environment_log_id')->constrained()->cascadeOnDelete();
-            $table->date('timestamp');
+            $table->dateTime('timestamp');
             $table->decimal('feed_weight', 8, 2)->default(0);
             $table->decimal('maggot_weight', 8, 2)->default(0);
             $table->timestamps();
