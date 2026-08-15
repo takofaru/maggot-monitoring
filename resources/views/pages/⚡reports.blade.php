@@ -464,153 +464,7 @@ new class extends Component
 
 <div>
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
-    <div
-        x-data="{
-            growthChart: null,
-            envChart: null,
-            initCharts() {
-                this.renderGrowth(@js($chartLabels), @js($chartMaggot), @js($chartFeed));
-                this.renderEnv(@js($chartLabels), @js($chartTemp), @js($chartHumid));
-            },
-            renderGrowth(labels, maggot, feed) {
-                const canvas = document.getElementById('growthReportChartCanvas');
-                if (!canvas || typeof Chart === 'undefined') return;
-
-                if (this.growthChart) this.growthChart.destroy();
-                this.growthChart = new Chart(canvas, {
-                    type: 'line',
-                    data: {
-                        labels: labels.length ? labels : ['Belum ada data'],
-                        datasets: [
-                            {
-                                label: 'Bobot Maggot (kg)',
-                                data: maggot.length ? maggot : [0],
-                                borderColor: '#163428',
-                                backgroundColor: 'rgba(22, 52, 40, 0.12)',
-                                fill: true,
-                                tension: 0.3,
-                                borderWidth: 2.5,
-                                pointBackgroundColor: '#163428',
-                                pointRadius: labels.length > 20 ? 2 : 4,
-                            },
-                            {
-                                label: 'Pakan (kg)',
-                                data: feed.length ? feed : [0],
-                                borderColor: '#F59E0B',
-                                backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                                fill: false,
-                                borderDash: [4, 4],
-                                tension: 0.3,
-                                borderWidth: 2,
-                                pointBackgroundColor: '#F59E0B',
-                                pointRadius: labels.length > 20 ? 2 : 4,
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#163428',
-                                padding: 10,
-                                titleFont: { size: 12, weight: 'bold' },
-                                bodyFont: { size: 12 }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: { color: '#E5E7EB' },
-                                ticks: { font: { size: 11 } }
-                            },
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { size: 11 }, maxRotation: 45 }
-                            }
-                        }
-                    }
-                });
-            },
-            renderEnv(labels, temp, humid) {
-                const canvas = document.getElementById('envReportChartCanvas');
-                if (!canvas || typeof Chart === 'undefined') return;
-
-                if (this.envChart) this.envChart.destroy();
-                this.envChart = new Chart(canvas, {
-                    type: 'line',
-                    data: {
-                        labels: labels.length ? labels : ['Belum ada data'],
-                        datasets: [
-                            {
-                                label: 'Suhu (°C)',
-                                data: temp.length ? temp : [0],
-                                borderColor: '#059669',
-                                backgroundColor: 'rgba(5, 150, 105, 0.1)',
-                                yAxisID: 'yTemp',
-                                tension: 0.3,
-                                borderWidth: 2.5,
-                                pointBackgroundColor: '#059669',
-                                pointRadius: labels.length > 20 ? 2 : 4,
-                            },
-                            {
-                                label: 'Kelembapan (%)',
-                                data: humid.length ? humid : [0],
-                                borderColor: '#2563EB',
-                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                                yAxisID: 'yHumid',
-                                tension: 0.3,
-                                borderWidth: 2.5,
-                                pointBackgroundColor: '#2563EB',
-                                pointRadius: labels.length > 20 ? 2 : 4,
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                backgroundColor: '#163428',
-                                padding: 10,
-                                titleFont: { size: 12, weight: 'bold' },
-                                bodyFont: { size: 12 }
-                            }
-                        },
-                        scales: {
-                            yTemp: {
-                                type: 'linear',
-                                position: 'left',
-                                title: { display: true, text: 'Suhu (°C)', font: { size: 11 } },
-                                grid: { color: '#E5E7EB' },
-                                ticks: { font: { size: 11 } }
-                            },
-                            yHumid: {
-                                type: 'linear',
-                                position: 'right',
-                                min: 0,
-                                max: 100,
-                                title: { display: true, text: 'Kelembapan (%)', font: { size: 11 } },
-                                grid: { display: false },
-                                ticks: { font: { size: 11 } }
-                            },
-                            x: {
-                                grid: { display: false },
-                                ticks: { font: { size: 11 }, maxRotation: 45 }
-                            }
-                        }
-                    }
-                });
-            }
-        }"
-        x-init="$nextTick(() => initCharts())"
-        x-effect="renderGrowth(@js($chartLabels), @js($chartMaggot), @js($chartFeed)); renderEnv(@js($chartLabels), @js($chartTemp), @js($chartHumid));"
-        class="no-print space-y-(--size-26) w-full"
-    >
+    <div class="no-print space-y-(--size-26) w-full">
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
         <div class="flex items-center justify-between">
             <div>
@@ -1381,3 +1235,204 @@ new class extends Component
         </div>
     </div>
 </div>
+
+@script
+<script>
+    let growthReportChart = null;
+    let envReportChart = null;
+
+    function initOrUpdateGrowthChart(labels, maggot, feed) {
+        const canvas = document.getElementById('growthReportChartCanvas');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        const safeLabels = (labels && labels.length) ? labels : ['Belum ada data'];
+        const safeMaggot = (maggot && maggot.length) ? maggot : [0];
+        const safeFeed   = (feed && feed.length) ? feed : [0];
+
+        if (growthReportChart) {
+            growthReportChart.data.labels = safeLabels;
+            growthReportChart.data.datasets[0].data = safeMaggot;
+            growthReportChart.data.datasets[1].data = safeFeed;
+            growthReportChart.update('none');
+            return;
+        }
+
+        const existing = Chart.getChart(canvas);
+        if (existing) {
+            existing.destroy();
+        }
+
+        growthReportChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: safeLabels,
+                datasets: [
+                    {
+                        label: 'Bobot Maggot (kg)',
+                        data: safeMaggot,
+                        borderColor: '#163428',
+                        backgroundColor: 'rgba(22, 52, 40, 0.12)',
+                        fill: true,
+                        tension: 0.3,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#163428',
+                        pointRadius: safeLabels.length > 20 ? 2 : 4,
+                    },
+                    {
+                        label: 'Pakan (kg)',
+                        data: safeFeed,
+                        borderColor: '#F59E0B',
+                        backgroundColor: 'rgba(245, 158, 11, 0.08)',
+                        fill: false,
+                        borderDash: [4, 4],
+                        tension: 0.3,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#F59E0B',
+                        pointRadius: safeLabels.length > 20 ? 2 : 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#163428',
+                        padding: 10,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#E5E7EB' },
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 }, maxRotation: 45 }
+                    }
+                }
+            }
+        });
+    }
+
+    function initOrUpdateEnvChart(labels, temp, humid) {
+        const canvas = document.getElementById('envReportChartCanvas');
+        if (!canvas || typeof Chart === 'undefined') return;
+
+        const safeLabels = (labels && labels.length) ? labels : ['Belum ada data'];
+        const safeTemp   = (temp && temp.length) ? temp : [0];
+        const safeHumid  = (humid && humid.length) ? humid : [0];
+
+        if (envReportChart) {
+            envReportChart.data.labels = safeLabels;
+            envReportChart.data.datasets[0].data = safeTemp;
+            envReportChart.data.datasets[1].data = safeHumid;
+            envReportChart.update('none');
+            return;
+        }
+
+        const existing = Chart.getChart(canvas);
+        if (existing) {
+            existing.destroy();
+        }
+
+        envReportChart = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels: safeLabels,
+                datasets: [
+                    {
+                        label: 'Suhu (°C)',
+                        data: safeTemp,
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        yAxisID: 'yTemp',
+                        tension: 0.3,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#059669',
+                        pointRadius: safeLabels.length > 20 ? 2 : 4,
+                    },
+                    {
+                        label: 'Kelembapan (%)',
+                        data: safeHumid,
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        yAxisID: 'yHumid',
+                        tension: 0.3,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: '#2563EB',
+                        pointRadius: safeLabels.length > 20 ? 2 : 4,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#163428',
+                        padding: 10,
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 }
+                    }
+                },
+                scales: {
+                    yTemp: {
+                        type: 'linear',
+                        position: 'left',
+                        title: { display: true, text: 'Suhu (°C)', font: { size: 11 } },
+                        grid: { color: '#E5E7EB' },
+                        ticks: { font: { size: 11 } }
+                    },
+                    yHumid: {
+                        type: 'linear',
+                        position: 'right',
+                        min: 0,
+                        max: 100,
+                        title: { display: true, text: 'Kelembapan (%)', font: { size: 11 } },
+                        grid: { display: false },
+                        ticks: { font: { size: 11 } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 11 }, maxRotation: 45 }
+                    }
+                }
+            }
+        });
+    }
+
+    function syncAllReportCharts() {
+        const labels = @js($chartLabels);
+        const maggot = @js($chartMaggot);
+        const feed   = @js($chartFeed);
+        const temp   = @js($chartTemp);
+        const humid  = @js($chartHumid);
+
+        initOrUpdateGrowthChart(labels, maggot, feed);
+        initOrUpdateEnvChart(labels, temp, humid);
+    }
+
+    $wire.hook('commit', ({ succeed }) => {
+        succeed(() => {
+            setTimeout(syncAllReportCharts, 50);
+        });
+    });
+
+    document.addEventListener('livewire:navigated', () => {
+        setTimeout(syncAllReportCharts, 50);
+    });
+
+    setTimeout(syncAllReportCharts, 50);
+</script>
+@endscript
+
