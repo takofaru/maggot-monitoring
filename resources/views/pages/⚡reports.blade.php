@@ -505,12 +505,12 @@ new class extends Component
         </div>
 
         <!-- Mode Switch Tabs -->
-        <div class="flex items-center">
-            <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs shrink-0">
+        <div class="flex items-center w-full sm:w-auto">
+            <div class="inline-flex h-[58px] p-1.5 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] items-center gap-1.5 shadow-xs w-full sm:w-auto shrink-0">
                 <button
                     type="button"
                     wire:click="setReportMode('periodic')"
-                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                    class="flex-1 sm:flex-initial h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 {{ $reportMode === 'periodic' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
                 >
                     <x-lucide-calendar-range class="w-4 h-4"/>
                     <span>Laporan Periodik</span>
@@ -518,7 +518,7 @@ new class extends Component
                 <button
                     type="button"
                     wire:click="setReportMode('cycle')"
-                    class="h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
+                    class="flex-1 sm:flex-initial h-full px-5 rounded-xl font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 {{ $reportMode === 'cycle' ? 'bg-(--prime-colour) text-(--fg-colour) shadow-xs' : 'text-(--text-colour) hover:bg-gray-100' }}"
                 >
                     <x-lucide-refresh-cw class="w-4 h-4"/>
                     <span>Laporan Siklus</span>
@@ -530,9 +530,9 @@ new class extends Component
         <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
             @if($reportMode === 'periodic')
                 <!-- Toolbar Mode Periodik: Preset & Tanggal -->
-                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Preset:</span>
                         <div class="relative inline-block">
                             <button
@@ -602,23 +602,29 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai) -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
-                        <div class="flex items-center gap-(--size-10)">
-                            <span>Dari:</span>
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai - Responsif Bebas Overflow) -->
+                    <div class="flex flex-col sm:flex-row md:inline-flex md:h-[58px] gap-2.5 md:gap-(--size-10) items-stretch sm:items-center px-3 sm:px-4 md:px-(--size-16) py-2.5 md:py-0 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full md:w-auto shrink-0">
+                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
+                            <span class="font-medium text-(--text-colour) shrink-0">Dari:</span>
                             <x-custom-date-picker wire:model.live="startDate" />
-                            <span class="text-gray-300 font-bold">&mdash;</span>
-                            <span>Sampai:</span>
+                        </div>
+                        <span class="text-gray-300 font-bold hidden sm:inline md:inline">&mdash;</span>
+                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
+                            <span class="font-medium text-(--text-colour) shrink-0">Sampai:</span>
                             <x-custom-date-picker wire:model.live="endDate" />
-                            <span class="text-xs text-gray-400 ml-1 font-semibold">({{ $durationDays }} Hari)</span>
+                        </div>
+                        <div class="flex items-center justify-center pt-1 sm:pt-0">
+                            <span class="text-xs text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full font-bold whitespace-nowrap">
+                                {{ $durationDays }} Hari
+                            </span>
                         </div>
                     </div>
                 </div>
             @else
                 <!-- Toolbar Mode Siklus: Siklus ke & Status -->
-                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+                <div class="flex flex-col sm:flex-row md:inline-flex items-stretch sm:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Siklus -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Siklus ke:</span>
                         <div class="relative inline-block">
                             <button
@@ -662,7 +668,7 @@ new class extends Component
                     </div>
 
                     <!-- Status Siklus Pill -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-(length:--size-16) whitespace-nowrap shrink-0">
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between sm:justify-start px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) whitespace-nowrap w-full md:w-auto shrink-0">
                         <div class="gap-(--size-6) flex items-center">
                             <span>Status:</span>
                             <span class="font-bold text-(--prime-colour) ml-1">
@@ -675,29 +681,29 @@ new class extends Component
             @endif
 
             <!-- Tombol Ekspor CSV & Cetak Laporan -->
-            <div class="flex flex-row items-center gap-2.5 shrink-0">
+            <div class="grid grid-cols-2 md:flex md:flex-row items-center gap-2.5 w-full md:w-auto shrink-0">
                 <button
                     wire:click="exportCsv"
                     type="button"
-                    class="h-[58px] flex-1 sm:flex-initial gap-(--size-10) px-4 sm:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm sm:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
+                    class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
-                    <x-lucide-download class="w-5 sm:w-(--size-26)"/>
+                    <x-lucide-download class="w-5 md:w-(--size-26)"/>
                     <span>Ekspor CSV</span>
                 </button>
 
                 <button
                     onclick="window.printReport ? window.printReport() : window.print()"
                     type="button"
-                    class="h-[58px] flex-1 sm:flex-initial gap-(--size-10) px-4 sm:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm sm:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
+                    class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
-                    <x-lucide-printer class="w-5 sm:w-(--size-26)"/>
+                    <x-lucide-printer class="w-5 md:w-(--size-26)"/>
                     <span>Cetak Laporan</span>
                 </button>
             </div>
         </div>
 
-        <!-- 3 Kartu Ringkasan KPI Utama (Seragam 100% Ukuran & Proporsinya antara Mode Periodik dan Mode Siklus) -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-(--size-26) w-full">
+        <!-- 3 Kartu Ringkasan KPI Utama (Vertikal 1 Kolom Penuh di Mobile, Horisontal 3 Kolom di Desktop) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-(--size-26) w-full">
             <!-- 1. Total Pakan Kumulatif / Periode -->
             <div class="flex flex-col justify-between gap-(--size-26) px-(--size-26) py-(--size-42) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
                 <div class="flex flex-row items-center gap-(--size-16)">
@@ -850,11 +856,11 @@ new class extends Component
         <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Fixed wxh = 3x2, Overflow > 6 Scrollable ke Bawah) -->
         @if($reportMode === 'periodic')
             <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex items-center justify-between flex-nowrap gap-3">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div class="flex flex-row gap-(--size-16) items-center">
                         <x-lucide-refresh-cw class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                         <div>
-                            <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                            <h2 class="text-(--prime-colour) text-lg sm:text-(length:--size-26) font-bold leading-tight">
                                 Rekapitulasi Siklus dalam Periode (Total {{ $totalInvolvedCycles }} Siklus)
                             </h2>
                             <p class="text-xs text-gray-400">
@@ -863,7 +869,7 @@ new class extends Component
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 flex-nowrap shrink-0">
+                    <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
                         <span class="px-3.5 py-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
                             <x-lucide-check-circle-2 class="w-4 h-4 text-emerald-700"/>
                             {{ count($completedCycles) }} Siklus Selesai Penuh
@@ -875,9 +881,9 @@ new class extends Component
                     </div>
                 </div>
 
-                <!-- Fixed 3x2 Grid (3 Kolom, Maksimal 2 Baris Terlihat, > 6 Kartu Scroll Vertikal ke Bawah) -->
-                <div class="max-h-[285px] overflow-y-auto pr-1">
-                    <div class="grid grid-cols-3 gap-4">
+                <!-- Fixed Grid (1 Kolom Vertikal di Mobile, 3 Kolom di Desktop, Overflow Scroll Vertikal) -->
+                <div class="max-h-[380px] md:max-h-[285px] overflow-y-auto pr-1">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         @forelse(array_merge($completedCycles, $partialCycles) as $item)
                             <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
                                 <div class="flex items-center justify-between">
