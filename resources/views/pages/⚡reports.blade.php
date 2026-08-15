@@ -526,11 +526,11 @@ new class extends Component
             </div>
         </div>
 
-        <!-- Filter Toolbar & Tombol Aksi (Sejajar Horisontal dalam 1 Baris) -->
-        <div class="flex items-center justify-between w-full flex-wrap gap-3">
+        <!-- Filter Toolbar & Tombol Aksi (Sejajar Horisontal 1 Baris, Bebas Wrap) -->
+        <div class="inline-flex gap-(--size-10) justify-between w-full flex-nowrap items-center">
             @if($reportMode === 'periodic')
                 <!-- Toolbar Mode Periodik: Preset & Tanggal -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
                     <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
                     <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                         <span>Preset:</span>
@@ -616,7 +616,7 @@ new class extends Component
                 </div>
             @else
                 <!-- Toolbar Mode Siklus: Siklus ke & Status -->
-                <div class="flex flex-row items-center gap-(--size-10) flex-wrap">
+                <div class="flex flex-row items-center gap-(--size-10) flex-nowrap">
                     <!-- Dropdown Pilihan Siklus -->
                     <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap shrink-0">
                         <span>Siklus ke:</span>
@@ -847,10 +847,10 @@ new class extends Component
             </div>
         </div>
 
-        <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Kontainer Luas & Rinci) -->
+        <!-- Rekapitulasi Siklus dalam Periode (Khusus Mode Periodik: Fixed wxh = 3x2, Overflow > 6 Scrollable ke Bawah) -->
         @if($reportMode === 'periodic')
             <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
-                <div class="flex items-center justify-between flex-wrap gap-3">
+                <div class="flex items-center justify-between flex-nowrap gap-3">
                     <div class="flex flex-row gap-(--size-16) items-center">
                         <x-lucide-refresh-cw class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                         <div>
@@ -863,7 +863,7 @@ new class extends Component
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2 flex-wrap">
+                    <div class="flex items-center gap-2 flex-nowrap shrink-0">
                         <span class="px-3.5 py-1.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-xl text-xs font-bold flex items-center gap-1.5">
                             <x-lucide-check-circle-2 class="w-4 h-4 text-emerald-700"/>
                             {{ count($completedCycles) }} Siklus Selesai Penuh
@@ -875,38 +875,40 @@ new class extends Component
                     </div>
                 </div>
 
-                <!-- Grid Kartu Siklus -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
-                    @forelse(array_merge($completedCycles, $partialCycles) as $item)
-                        <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <span class="w-2.5 h-2.5 rounded-full {{ $item['type'] === 'completed' ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
-                                    <span class="font-bold text-base text-[#163428]">{{ $item['name'] }}</span>
-                                </div>
-                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $item['type'] === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
-                                    {{ $item['label'] }}
-                                </span>
-                            </div>
-                            <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-200/70 pt-2">
+                <!-- Fixed 3x2 Grid (3 Kolom, Maksimal 2 Baris Terlihat, > 6 Kartu Scroll Vertikal ke Bawah) -->
+                <div class="max-h-[285px] overflow-y-auto pr-1">
+                    <div class="grid grid-cols-3 gap-4">
+                        @forelse(array_merge($completedCycles, $partialCycles) as $item)
+                            <div class="p-4 rounded-xl border-[1.5px] {{ $item['type'] === 'completed' ? 'border-emerald-300 bg-emerald-50/40' : 'border-amber-300 bg-amber-50/40' }} flex flex-col justify-between gap-3 shadow-2xs">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-gray-500">Status Fase:</span>
-                                    <span class="font-semibold text-gray-800">{{ $item['phase'] }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-2.5 h-2.5 rounded-full {{ $item['type'] === 'completed' ? 'bg-emerald-600' : 'bg-amber-500' }}"></span>
+                                        <span class="font-bold text-base text-[#163428]">{{ $item['name'] }}</span>
+                                    </div>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold {{ $item['type'] === 'completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800' }}">
+                                        {{ $item['label'] }}
+                                    </span>
                                 </div>
-                                <div class="flex items-center justify-between">
-                                    <span class="text-gray-500">Rentang Siklus:</span>
-                                    <span class="font-medium text-gray-700">{{ $item['start_date'] }} &mdash; {{ $item['end_date'] }}</span>
-                                </div>
-                                <div class="text-[11px] text-gray-500 italic pt-1">
-                                    &bull; {{ $item['detail'] }}
+                                <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-200/70 pt-2">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-500">Status Fase:</span>
+                                        <span class="font-semibold text-gray-800">{{ $item['phase'] }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-gray-500">Rentang Siklus:</span>
+                                        <span class="font-medium text-gray-700">{{ $item['start_date'] }} &mdash; {{ $item['end_date'] }}</span>
+                                    </div>
+                                    <div class="text-[11px] text-gray-500 italic pt-1 truncate">
+                                        &bull; {{ $item['detail'] }}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    @empty
-                        <div class="col-span-full py-8 text-center text-sm text-gray-400 bg-(--bg-colour) rounded-xl border border-dashed border-gray-300">
-                            Tidak ada aktivitas siklus yang teridentifikasi dalam rentang waktu tanggal ini.
-                        </div>
-                    @endforelse
+                        @empty
+                            <div class="col-span-3 py-8 text-center text-sm text-gray-400 bg-(--bg-colour) rounded-xl border border-dashed border-gray-300">
+                                Tidak ada aktivitas siklus yang teridentifikasi dalam rentang waktu tanggal ini.
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         @endif
