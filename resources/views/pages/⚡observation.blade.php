@@ -247,7 +247,7 @@ new class extends Component
                 'cycle_id'           => $cycle->id,
                 'phase_name'         => $phaseName,
                 'environment_log_id' => $envLogId,
-                'timestamp'          => now()->toDateString(),
+                'timestamp'          => now(),
                 'feed_weight'        => $this->feed,
                 'maggot_weight'      => $this->maggot,
             ]);
@@ -281,34 +281,38 @@ new class extends Component
                 ->orderBy('timestamp', 'desc')
                 ->orderBy('id', 'desc')
                 ->paginate(10),
+            'selectedCycleName' => ($cycle = Cycle::find($this->selectedCycleId)) ? "Siklus {$cycle->id}" : 'Pilih Siklus',
+            'isSelectedCurrent' => (bool) ($cycle?->is_active ?? false),
         ];
     }
 };
 ?>
 
 <div class="space-y-(--size-26) w-full">
-    <!-- Header & Notifikasi Flash & Tombol Lonceng Notifikasi -->
-    <div class="flex flex-col sm:flex-row justify-between w-full items-start sm:items-center gap-3">
+    <!-- Header Halaman Catatan Observasi & Tombol Lonceng Notifikasi Global -->
+    <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
         <div>
             <h1 class="text-(--prime-colour) text-3xl sm:text-(length:--size-42) font-bold leading-tight">
                 Catatan Observasi
             </h1>
             <p class="text-sm text-gray-500 mt-1">
-                Pencatatan data harian pakan, bobot biomassa maggot, dan sinkronisasi kondisi lingkungan.
+                Catat dan pantau pemberian pakan serta perkembangan biomassa maggot secara harian.
             </p>
         </div>
+
         <div class="flex items-center gap-3">
             @if ($flashMessage)
                 <div
                     x-data="{ show: true }"
                     x-show="show"
-                    x-init="setTimeout(() => show = false, 4500)"
-                    class="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-xl text-xs font-semibold shadow-sm transition-all"
+                    x-init="setTimeout(() => show = false, 4000)"
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold"
                 >
                     <x-lucide-check-circle class="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{{ $flashMessage }}</span>
                 </div>
             @endif
+
             <livewire:notification-bell />
         </div>
     </div>
@@ -414,12 +418,12 @@ new class extends Component
     <div class="space-y-3 md:hidden">
         @forelse($observationData as $item)
             <div wire:key="obs-mobile-card-{{ $item->id }}" class="p-4 bg-(--fg-colour) border-[1.5px] border-(--outline-colour) rounded-(--size-16) shadow-xs flex flex-col gap-3">
-                <!-- Baris Atas: Tanggal & Fase Badge -->
+                <!-- Baris Atas: Tanggal & Fase Badge (Tanpa Jam) -->
                 <div class="flex items-center justify-between border-b border-(--outline-colour)/40 pb-2.5">
                     <div class="flex items-center gap-2">
                         <x-lucide-calendar class="w-4 h-4 text-(--prime-colour)"/>
                         <span class="font-bold text-sm text-(--prime-colour)">
-                            {{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y - H:i') : '-' }}
+                            {{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y') : '-' }}
                         </span>
                     </div>
                     <span class="px-2.5 py-0.5 bg-gray-100 text-gray-800 rounded-md font-bold text-xs capitalize">

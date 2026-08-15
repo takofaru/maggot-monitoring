@@ -165,7 +165,7 @@ new class extends Component
 
                 fputcsv($handle, [
                     'No',
-                    'Tanggal & Waktu',
+                    'Tanggal',
                     'Siklus',
                     'Fase',
                     'Suhu (°C)',
@@ -177,7 +177,7 @@ new class extends Component
                 foreach ($logs as $index => $log) {
                     fputcsv($handle, [
                         $index + 1,
-                        $log->timestamp ? $log->timestamp->format('d/m/Y H:i') : '-',
+                        $log->timestamp ? $log->timestamp->format('d/m/Y') : '-',
                         $log->cycle ? "Siklus {$log->cycle->id}" : '-',
                         ucfirst($log->phase_name),
                         $log->environmentLog?->temperature ?? '-',
@@ -211,7 +211,7 @@ new class extends Component
 
             fputcsv($handle, [
                 'No',
-                'Tanggal & Waktu',
+                'Tanggal',
                 'Fase',
                 'Suhu (°C)',
                 'Kelembapan (%)',
@@ -222,7 +222,7 @@ new class extends Component
             foreach ($logs as $index => $log) {
                 fputcsv($handle, [
                     $index + 1,
-                    $log->timestamp ? $log->timestamp->format('d/m/Y H:i') : '-',
+                    $log->timestamp ? $log->timestamp->format('d/m/Y') : '-',
                     ucfirst($log->phase_name),
                     $log->environmentLog?->temperature ?? '-',
                     $log->environmentLog?->humidity ?? '-',
@@ -1046,7 +1046,7 @@ new class extends Component
                         <div class="flex items-center justify-between border-b border-gray-200 pb-2">
                             <div class="flex items-center gap-2 text-xs font-bold text-(--prime-colour)">
                                 <x-lucide-calendar class="w-3.5 h-3.5"/>
-                                <span>{{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y - H:i') : '-' }}</span>
+                                <span>{{ $item->timestamp ? $item->timestamp->translatedFormat('d M Y') : '-' }}</span>
                             </div>
                             <div class="flex items-center gap-1.5">
                                 @if($reportMode === 'periodic')
@@ -1082,7 +1082,7 @@ new class extends Component
                 <table class="w-full text-left border-collapse">
                     <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
                         <tr>
-                            <th class="min-w-[180px]">Tanggal & Waktu</th>
+                            <th class="min-w-[180px]">Tanggal</th>
                             @if($reportMode === 'periodic')
                                 <th class="min-w-[110px]">Siklus</th>
                             @endif
@@ -1096,7 +1096,7 @@ new class extends Component
                     <tbody>
                         @forelse($observationLogs as $item)
                             <tr wire:key="rep-obs-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
-                                <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y - H:i') : '-' }}</td>
+                                <td>{{ $item->timestamp ? $item->timestamp->translatedFormat('d F Y') : '-' }}</td>
                                 @if($reportMode === 'periodic')
                                     <td>
                                         <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded-md text-xs border border-emerald-200">
@@ -1308,7 +1308,7 @@ new class extends Component
                 <thead class="bg-gray-100 font-bold border-b border-gray-300">
                     <tr>
                         <th class="p-1.5 border-r border-gray-300 text-black text-center w-8">No</th>
-                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Waktu</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Tanggal</th>
                         @if($reportMode === 'periodic')
                             <th class="p-1.5 border-r border-gray-300 text-black text-left">Siklus</th>
                         @endif
@@ -1323,7 +1323,7 @@ new class extends Component
                     @forelse($printLogs as $idx => $log)
                         <tr class="border-b border-gray-200">
                             <td class="p-1.5 border-r border-gray-200 text-center">{{ $idx + 1 }}</td>
-                            <td class="p-1.5 border-r border-gray-200 font-medium whitespace-nowrap">{{ $log->timestamp ? $log->timestamp->format('d/m/Y H:i') : '-' }}</td>
+                            <td class="p-1.5 border-r border-gray-200 font-medium whitespace-nowrap">{{ $log->timestamp ? $log->timestamp->format('d/m/Y') : '-' }}</td>
                             @if($reportMode === 'periodic')
                                 <td class="p-1.5 border-r border-gray-200 whitespace-nowrap">Siklus {{ $log->cycle_id ?? '-' }}</td>
                             @endif
