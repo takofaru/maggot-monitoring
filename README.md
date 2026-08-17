@@ -149,20 +149,20 @@ Aplikasi dapat diakses melalui browser pada alamat: `http://localhost:8000`.
 
 ## Petunjuk Deployment ke Server (Production)
 
-Deployment ke server dilakukan menggunakan container stack berbasis `podman-compose` atau `docker compose` yang telah disediakan pada direktori `setup/`.
+Deployment ke server dilakukan menggunakan container stack berbasis `podman-compose` atau `docker compose` yang dikelola secara terpisah pada repositori **`maggot-monitoring-container`**.
 
 ### Arsitektur Container
 
 Container stack terdiri atas 3 layanan utama:
-- **`app`**: PHP 8.3-FPM, Nginx Web Server, Laravel Reverb (port 8085), MQTT Listener Daemon, dan Queue Worker yang dikelola oleh Supervisor.
+- **`app`**: PHP 8.3-FPM, Nginx Web Server, Laravel Reverb (port 8085), MQTT Listener Daemon, Queue Worker, dan Scheduler yang dikelola oleh Supervisor.
 - **`mysql`**: MySQL 8.0 dengan volume persisten data.
 - **`mosquitto`**: Eclipse Mosquitto MQTT Broker (port 1883) untuk komunikasi perangkat keras IoT.
 
 ### Langkah-langkah Deployment
 
-1. **Masuk ke Direktori Setup**
+1. **Masuk ke Direktori Container Stack**
    ```bash
-   cd setup
+   cd ../maggot-monitoring-container
    ```
 
 2. **Jalankan Container Stack**
@@ -213,8 +213,12 @@ Container stack terdiri atas 3 layanan utama:
   ```
 - **Pembaruan Aplikasi dari Git**:
   ```bash
+  # 1. Update source code
+  cd ../maggot-monitoring
   git pull origin main
-  cd setup
+
+  # 2. Re-build dan restart container
+  cd ../maggot-monitoring-container
   podman-compose up -d --build
   ```
 
@@ -267,8 +271,7 @@ maggot-monitoring/
 │       ├── components/         # Komponen UI Livewire (Sidebar, Navbar, Modal, Notification Bell)
 │       ├── layouts/            # Layout utama aplikasi
 │       └── pages/              # Halaman fungsional (Dashboard, Observasi, Laporan, Pengaturan, Akun)
-├── routes/                     # Definisi rute web, console, dan channel broadcast
-└── setup/                      # Konfigurasi containerization untuk deployment produksi
+└── routes/                     # Definisi rute web, console, dan channel broadcast
 ```
 
 ---
