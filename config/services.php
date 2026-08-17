@@ -39,6 +39,8 @@ return [
         'host' => env('MQTT_HOST', '127.0.0.1'),
         'port' => (int) env('MQTT_PORT', 1883),
         'client_id' => env('MQTT_CLIENT_ID', 'maggot-backend'),
+        'username' => env('MQTT_USERNAME', 'maggot_server'),
+        'password' => env('MQTT_PASSWORD', 'maggot_server_secret'),
     ],
 
 ];

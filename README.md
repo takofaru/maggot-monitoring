@@ -226,11 +226,13 @@ Container stack terdiri atas 3 layanan utama:
 
 ## Integrasi Hardware IoT (ESP32)
 
-Konfigurasikan firmware mikrokontroler (ESP32) untuk mengirim data telemetri ke server:
+Konfigurasikan firmware mikrokontroler (ESP32) untuk mengirim data telemetri ke server dengan autentikasi MQTT:
 
 - **Broker Host**: `<IP_ADDRESS_SERVER>`
 - **Broker Port**: `1883`
-- **Topic Publikasi Data (ESP32 -> Server)**: `environmentData`
+- **MQTT Username**: `maggot_esp32`
+- **MQTT Password**: `maggot_esp32_secret` *(atau sesuai konfigurasi di .env server)*
+- **Topic Publikasi Data (ESP32 -> Server)**: `environmentData` *(Izin: Publish)*
   Format JSON payload:
   ```json
   {
@@ -238,7 +240,7 @@ Konfigurasikan firmware mikrokontroler (ESP32) untuk mengirim data telemetri ke 
     "humidity": 70.2
   }
   ```
-- **Topic Batas Fase (Server -> ESP32)**: `environmentLimit`
+- **Topic Batas Fase (Server -> ESP32)**: `environmentLimit` *(Izin: Subscribe)*
   Format JSON payload:
   ```json
   {

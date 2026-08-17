@@ -21,6 +21,8 @@ class MqttService
     {
         $host = config('services.mqtt.host', env('MQTT_HOST', '127.0.0.1'));
         $port = (int) config('services.mqtt.port', env('MQTT_PORT', 1883));
+        $username = config('services.mqtt.username', env('MQTT_USERNAME', 'maggot_server'));
+        $password = config('services.mqtt.password', env('MQTT_PASSWORD', 'maggot_server_secret'));
         $clientId = 'maggot-publisher-' . uniqid();
 
         $message = is_array($payload) ? json_encode($payload) : (string) $payload;
@@ -29,6 +31,8 @@ class MqttService
             $mqtt = new MqttClient($host, $port, $clientId);
 
             $connectionSettings = (new ConnectionSettings)
+                ->setUsername($username)
+                ->setPassword($password)
                 ->setConnectTimeout(2)
                 ->setSocketTimeout(2);
 

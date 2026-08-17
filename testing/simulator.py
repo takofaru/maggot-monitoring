@@ -45,6 +45,8 @@ except ImportError:
 # Konfigurasi MQTT
 BROKER_HOST = os.getenv("MQTT_HOST", "localhost")
 BROKER_PORT = int(os.getenv("MQTT_PORT", 1883))
+MQTT_USERNAME = os.getenv("MQTT_USERNAME", "maggot_esp32")
+MQTT_PASSWORD = os.getenv("MQTT_PASSWORD", "maggot_esp32_secret")
 TOPIC_PUB = "environmentData"
 TOPIC_SUB = "environmentLimit"
 DEFAULT_INTERVAL = 10.0
@@ -209,6 +211,9 @@ def main():
         client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION2, client_id=client_id)
     else:
         client = mqtt.Client(client_id=client_id)
+
+    if MQTT_USERNAME and MQTT_PASSWORD:
+        client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 
     client.on_connect = on_connect
     client.on_message = on_message

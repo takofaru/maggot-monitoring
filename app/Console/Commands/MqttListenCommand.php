@@ -33,6 +33,8 @@ class MqttListenCommand extends Command
     {
         $host = config('services.mqtt.host', env('MQTT_HOST', '127.0.0.1'));
         $port = (int) config('services.mqtt.port', env('MQTT_PORT', 1883));
+        $username = config('services.mqtt.username', env('MQTT_USERNAME', 'maggot_server'));
+        $password = config('services.mqtt.password', env('MQTT_PASSWORD', 'maggot_server_secret'));
         $topic = $this->option('topic') ?: 'environmentData';
         $clientId = 'maggot-listener-' . uniqid();
 
@@ -40,6 +42,7 @@ class MqttListenCommand extends Command
         $this->info("   MAGGOT MONITORING - MQTT SUBSCRIBER DAEMON   ");
         $this->info("=================================================");
         $this->info(" • Broker Target : {$host}:{$port}");
+        $this->info(" • User Auth     : " . ($username ?: 'Anonymous'));
         $this->info(" • Topik Dengar  : {$topic}");
         $this->info(" • Status        : Menghubungkan ke broker...");
 
@@ -47,6 +50,8 @@ class MqttListenCommand extends Command
             $mqtt = new MqttClient($host, $port, $clientId);
 
             $connectionSettings = (new ConnectionSettings)
+                ->setUsername($username)
+                ->setPassword($password)
                 ->setKeepAliveInterval(60)
                 ->setConnectTimeout(5)
                 ->setSocketTimeout(5)
