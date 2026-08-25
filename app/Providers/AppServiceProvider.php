@@ -21,11 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        if (str_starts_with((string) config('app.url'), 'https://') || app()->environment('production') || request()->header('X-Forwarded-Proto') === 'https') {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-            request()->server->set('HTTPS', 'on');
-            request()->server->set('SERVER_PORT', 443);
-        }
+        // if (str_starts_with((string) config('app.url'), 'https://') || app()->environment('production') || request()->header('X-Forwarded-Proto') === 'https') {
+        //     \Illuminate\Support\Facades\URL::forceScheme('https');
+        //     request()->server->set('HTTPS', 'on');
+        //     request()->server->set('SERVER_PORT', 443);
+        // }
 
         Gate::define('has-account', function (User $user) {
             return in_array($user->role, [User::ROLE_ADMIN, User::ROLE_USER]);
