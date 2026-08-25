@@ -506,7 +506,11 @@ new class extends Component
                     ->whereBetween('timestamp', [$start, $end])
                     ->orderBy('timestamp', 'desc')
                     ->orderBy('id', 'desc')
-                    ->paginate(10),
+                    ->paginate(15, ['*'], 'obsPage'),
+                'environmentLogs'  => EnvironmentLog::whereBetween('timestamp', [$start, $end])
+                    ->orderBy('timestamp', 'desc')
+                    ->orderBy('id', 'desc')
+                    ->paginate(20, ['*'], 'envPage'),
             ];
         }
 
@@ -601,7 +605,11 @@ new class extends Component
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
                 ->orderBy('id', 'desc')
-                ->paginate(10),
+                ->paginate(15, ['*'], 'obsPage'),
+            'environmentLogs'  => EnvironmentLog::where('cycle_id', $this->selectedCycleId)
+                ->orderBy('timestamp', 'desc')
+                ->orderBy('id', 'desc')
+                ->paginate(20, ['*'], 'envPage'),
         ];
     }
 };
@@ -1300,6 +1308,101 @@ new class extends Component
             @if($observationLogs->hasPages())
                 <div class="pt-2">
                     {{ $observationLogs->links() }}
+                </div>
+            @endif
+        </div>
+
+        <!-- Tabel 3: Rincian Log Telemetri Lingkungan IoT (Paginated) -->
+        <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
+            <div class="flex flex-row gap-(--size-16) items-center">
+                <x-lucide-activity class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
+                <div>
+                    <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
+                        {{ $reportMode === 'periodic' ? 'Rincian Log Telemetri Lingkungan' : 'Rincian Telemetri Sensor Siklus' }}
+                    </h2>
+                    <p class="text-xs text-gray-400">
+                        {{ $reportMode === 'periodic'
+                            ? 'Data suhu & kelembapan otomatis dari sensor IoT — ' . Carbon::parse($startDate)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($endDate)->translatedFormat('d M Y')
+                            : 'Data suhu & kelembapan otomatis dari sensor IoT pada siklus terpilih' }}
+                        <span class="font-semibold text-gray-600">&bull; {{ $environmentLogs->total() }} total data</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mobile Card View -->
+            <div class="space-y-3 md:hidden mt-1">
+                @forelse($environmentLogs as $item)
+                    <div wire:key="rep-env-mobile-card-{{ $item->id }}" class="p-4 bg-(--bg-colour) border border-(--outline-colour) rounded-xl flex flex-col gap-2.5 shadow-2xs">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <div class="flex items-center gap-2 text-xs font-bold text-(--prime-colour)">
+                                <x-lucide-thermometer class="w-3.5 h-3.5"/>
+                                <span>{{ $item->timestamp ? Carbon::parse($item->timestamp)->translatedFormat('d M Y, H:i:s') : '-' }}</span>
+                            </div>
+                            @if($reportMode === 'periodic')
+                                <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded text-[11px] border border-emerald-200">
+                                    Siklus {{ $item->cycle_id ?? '-' }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Suhu</span>
+                                <span class="font-bold text-gray-800">{{ number_format((float) $item->temperature, 2) }}&deg;C</span>
+                            </div>
+                            <div>
+                                <span class="text-gray-400 text-[11px] block">Kelembapan</span>
+                                <span class="font-bold text-sky-700">{{ number_format((float) $item->humidity, 2) }}%</span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-6 text-center text-xs text-gray-400 bg-(--bg-colour) rounded-xl border border-(--outline-colour)">
+                        Tidak ada data telemetri lingkungan untuk {{ $reportMode === 'periodic' ? 'rentang periode ini' : 'siklus ini' }}.
+                    </div>
+                @endforelse
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="hidden md:block overflow-hidden border-[1.5px] border-(--prime-light-colour) rounded-(length:--size-16) w-full shadow-xs mt-2">
+                <table class="w-full text-left border-collapse">
+                    <thead class="border-b-[1.5px] border-(--prime-light-colour) bg-(--prime-colour)">
+                        <tr>
+                            <th class="min-w-[200px]">Tanggal & Waktu</th>
+                            @if($reportMode === 'periodic')
+                                <th class="min-w-[110px]">Siklus</th>
+                            @endif
+                            <th class="min-w-[140px]">Suhu (°C)</th>
+                            <th class="border-r-0 min-w-[140px]">Kelembapan (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($environmentLogs as $item)
+                            <tr wire:key="rep-env-desktop-row-{{ $item->id }}" class="border-b-[1.5px] border-(--outline-colour) hover:bg-gray-50 transition-colors">
+                                <td>{{ $item->timestamp ? Carbon::parse($item->timestamp)->translatedFormat('d F Y, H:i:s') : '-' }}</td>
+                                @if($reportMode === 'periodic')
+                                    <td>
+                                        <span class="px-2 py-0.5 bg-emerald-50 text-[#163428] font-bold rounded-md text-xs border border-emerald-200">
+                                            Siklus {{ $item->cycle_id ?? '-' }}
+                                        </span>
+                                    </td>
+                                @endif
+                                <td class="font-semibold text-gray-900">{{ number_format((float) $item->temperature, 2) }}&deg;C</td>
+                                <td class="border-r-0 font-semibold text-sky-700">{{ number_format((float) $item->humidity, 2) }}%</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="{{ $reportMode === 'periodic' ? 4 : 3 }}" class="border-r-0 py-8 text-center text-gray-400">
+                                    Tidak ada data telemetri lingkungan untuk {{ $reportMode === 'periodic' ? 'rentang periode tanggal ini' : 'siklus ini' }}.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if($environmentLogs->hasPages())
+                <div class="pt-2">
+                    {{ $environmentLogs->links() }}
                 </div>
             @endif
         </div>
