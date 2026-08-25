@@ -874,7 +874,7 @@ new class extends Component
                                     Tren Lingkungan
                                 </h3>
                                 <p class="text-xs text-gray-400 mt-0.5">
-                                    Rata-rata telemetri suhu (&deg;C) & kelembapan (%) dari sensor IoT (environmentLog)
+                                    Rata-rata telemetri suhu (&deg;C) & kelembapan (%)
                                 </p>
                             </div>
                         </div>
