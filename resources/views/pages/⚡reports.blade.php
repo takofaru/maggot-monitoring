@@ -506,7 +506,7 @@ new class extends Component
                     ->whereBetween('timestamp', [$start, $end])
                     ->orderBy('timestamp', 'desc')
                     ->orderBy('id', 'desc')
-                    ->paginate(15, ['*'], 'obsPage'),
+                    ->paginate(20, ['*'], 'obsPage'),
                 'environmentLogs'  => EnvironmentLog::whereBetween('timestamp', [$start, $end])
                     ->orderBy('timestamp', 'desc')
                     ->orderBy('id', 'desc')
@@ -628,7 +628,7 @@ new class extends Component
     ></div>
 
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
-    <div class="no-print space-y-(--size-26) w-full">
+    <div class="no-print space-y-(--size-26) w-full min-w-[1245px]">
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
         <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
             <div>
@@ -1211,7 +1211,7 @@ new class extends Component
                 <x-lucide-table class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                 <div>
                     <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        {{ $reportMode === 'periodic' ? 'Rincian Log Observasi Periode' : 'Rincian Log Harian Siklus' }}
+                        {{ $reportMode === 'periodic' ? 'Rincian Log Observasi Periode' : 'Rincian Log Observasi Siklus' }}
                     </h2>
                     <p class="text-xs text-gray-400">
                         {{ $reportMode === 'periodic' ? 'Daftar catatan harian yang terekam pada rentang tanggal ' . Carbon::parse($startDate)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($endDate)->translatedFormat('d M Y') : 'Daftar catatan harian yang terekam pada siklus terpilih' }}
@@ -1312,19 +1312,18 @@ new class extends Component
             @endif
         </div>
 
-        <!-- Tabel 3: Rincian Log Telemetri Lingkungan IoT (Paginated) -->
+        <!-- Tabel 3: Rincian Log Lingkungan IoT (Paginated) -->
         <div class="flex flex-col gap-(--size-16) px-(--size-26) py-(--size-26) bg-(--fg-colour) border-(--outline-colour) border-[1.5px] rounded-(--size-16) shadow-xs">
             <div class="flex flex-row gap-(--size-16) items-center">
                 <x-lucide-activity class="w-[46px] text-(--fg-colour) p-(--size-10) bg-(--prime-colour) rounded-(--size-16) shrink-0"/>
                 <div>
                     <h2 class="text-(--prime-colour) text-(length:--size-26) font-bold leading-tight">
-                        {{ $reportMode === 'periodic' ? 'Rincian Log Telemetri Lingkungan' : 'Rincian Telemetri Sensor Siklus' }}
+                        {{ $reportMode === 'periodic' ? 'Rincian Log Lingkungan Periode' : 'Rincian Log Lingkungan Siklus' }}
                     </h2>
                     <p class="text-xs text-gray-400">
                         {{ $reportMode === 'periodic'
-                            ? 'Data suhu & kelembapan otomatis dari sensor IoT — ' . Carbon::parse($startDate)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($endDate)->translatedFormat('d M Y')
-                            : 'Data suhu & kelembapan otomatis dari sensor IoT pada siklus terpilih' }}
-                        <span class="font-semibold text-gray-600">&bull; {{ $environmentLogs->total() }} total data</span>
+                            ? 'Daftar data suhu & kelembapan dari sensor IoT pada rentang tanggal ' . Carbon::parse($startDate)->translatedFormat('d M Y') . ' s/d ' . Carbon::parse($endDate)->translatedFormat('d M Y')
+                            : 'Daftar data suhu & kelembapan dari sensor IoT pada siklus terpilih' }}
                     </p>
                 </div>
             </div>
@@ -1351,7 +1350,7 @@ new class extends Component
                             </div>
                             <div>
                                 <span class="text-gray-400 text-[11px] block">Kelembapan</span>
-                                <span class="font-bold text-sky-700">{{ number_format((float) $item->humidity, 2) }}%</span>
+                                <span class="font-bold text-gray-800">{{ number_format((float) $item->humidity, 2) }}%</span>
                             </div>
                         </div>
                     </div>
@@ -1371,8 +1370,8 @@ new class extends Component
                             @if($reportMode === 'periodic')
                                 <th class="min-w-[110px]">Siklus</th>
                             @endif
-                            <th class="min-w-[140px]">Suhu (°C)</th>
-                            <th class="border-r-0 min-w-[140px]">Kelembapan (%)</th>
+                            <th class="min-w-[140px]">Suhu</th>
+                            <th class="border-r-0 min-w-[140px]">Kelembapan</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1386,8 +1385,8 @@ new class extends Component
                                         </span>
                                     </td>
                                 @endif
-                                <td class="font-semibold text-gray-900">{{ number_format((float) $item->temperature, 2) }}&deg;C</td>
-                                <td class="border-r-0 font-semibold text-sky-700">{{ number_format((float) $item->humidity, 2) }}%</td>
+                                <td>{{ number_format((float) $item->temperature, 2) }}&deg;C</td>
+                                <td>{{ number_format((float) $item->humidity, 2) }}%</td>
                             </tr>
                         @empty
                             <tr>
