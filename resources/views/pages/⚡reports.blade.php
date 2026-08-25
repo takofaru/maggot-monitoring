@@ -169,6 +169,11 @@ new class extends Component
 
     public function exportCsv(): StreamedResponse
     {
+        return $this->exportObservationCsv();
+    }
+
+    public function exportObservationCsv(): StreamedResponse
+    {
         if ($this->reportMode === 'periodic') {
             $start = Carbon::parse($this->startDate ?: now()->subDays(30))->startOfDay();
             $end = Carbon::parse($this->endDate ?: now())->endOfDay();
@@ -179,9 +184,8 @@ new class extends Component
                 ->orderBy('id', 'asc')
                 ->get();
 
-            $filename = "laporan_periodik_" . $start->format('Ymd') . "_sd_" . $end->format('Ymd') . ".csv";
+            $filename = "laporan_observasi_periodik_" . $start->format('Ymd') . "_sd_" . $end->format('Ymd') . ".csv";
 
-            // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
             return response()->streamDownload(function () use ($logs) {
                 $handle = fopen('php://output', 'w');
                 fputs($handle, "\xEF\xBB\xBF");
@@ -225,9 +229,8 @@ new class extends Component
             ->orderBy('id', 'asc')
             ->get();
 
-        $filename = "laporan_siklus_{$cycleId}_" . now()->format('Ymd_His') . ".csv";
+        $filename = "laporan_observasi_siklus_{$cycleId}_" . now()->format('Ymd_His') . ".csv";
 
-        // Ekspor data mentah murni (pure raw data) langsung dari baris header kolom
         return response()->streamDownload(function () use ($logs) {
             $handle = fopen('php://output', 'w');
             fputs($handle, "\xEF\xBB\xBF");
@@ -251,6 +254,88 @@ new class extends Component
                     $log->environmentLog?->humidity ?? '-',
                     number_format((float) $log->feed_weight, 2, '.', ''),
                     number_format((float) $log->maggot_weight, 2, '.', ''),
+                ], ',', '"', "\\");
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ]);
+    }
+
+    public function exportEnvironmentCsv(): StreamedResponse
+    {
+        if ($this->reportMode === 'periodic') {
+            $start = Carbon::parse($this->startDate ?: now()->subDays(30))->startOfDay();
+            $end = Carbon::parse($this->endDate ?: now())->endOfDay();
+
+            $logs = EnvironmentLog::whereBetween('timestamp', [$start, $end])
+                ->orderBy('timestamp', 'asc')
+                ->orderBy('id', 'asc')
+                ->get();
+
+            $filename = "laporan_lingkungan_periodik_" . $start->format('Ymd') . "_sd_" . $end->format('Ymd') . ".csv";
+
+            return response()->streamDownload(function () use ($logs) {
+                $handle = fopen('php://output', 'w');
+                fputs($handle, "\xEF\xBB\xBF");
+
+                fputcsv($handle, [
+                    'No',
+                    'Tanggal & Waktu',
+                    'Siklus',
+                    'Suhu (°C)',
+                    'Kelembapan (%)',
+                ], ',', '"', "\\");
+
+                foreach ($logs as $index => $log) {
+                    $ts = $log->timestamp ? Carbon::parse($log->timestamp)->format('d/m/Y H:i:s') : '-';
+                    fputcsv($handle, [
+                        $index + 1,
+                        $ts,
+                        $log->cycle_id ? "Siklus {$log->cycle_id}" : '-',
+                        number_format((float) $log->temperature, 2, '.', ''),
+                        number_format((float) $log->humidity, 2, '.', ''),
+                    ], ',', '"', "\\");
+                }
+
+                fclose($handle);
+            }, $filename, [
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            ]);
+        }
+
+        // Export Mode Siklus
+        $cycleId = $this->selectedCycleId;
+        $logs = EnvironmentLog::where('cycle_id', $cycleId)
+            ->orderBy('timestamp', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $filename = "laporan_lingkungan_siklus_{$cycleId}_" . now()->format('Ymd_His') . ".csv";
+
+        return response()->streamDownload(function () use ($logs, $cycleId) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, [
+                'No',
+                'Tanggal & Waktu',
+                'Siklus',
+                'Suhu (°C)',
+                'Kelembapan (%)',
+            ], ',', '"', "\\");
+
+            foreach ($logs as $index => $log) {
+                $ts = $log->timestamp ? Carbon::parse($log->timestamp)->format('d/m/Y H:i:s') : '-';
+                fputcsv($handle, [
+                    $index + 1,
+                    $ts,
+                    "Siklus {$cycleId}",
+                    number_format((float) $log->temperature, 2, '.', ''),
+                    number_format((float) $log->humidity, 2, '.', ''),
                 ], ',', '"', "\\");
             }
 
@@ -416,6 +501,7 @@ new class extends Component
                 'chartTemp'        => $chartData['temp'],
                 'chartHumid'       => $chartData['humid'],
                 'printLogs'        => $allLogs,
+                'printEnvLogs'     => $envLogs->sortBy('timestamp')->values(),
                 'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                     ->whereBetween('timestamp', [$start, $end])
                     ->orderBy('timestamp', 'desc')
@@ -510,6 +596,7 @@ new class extends Component
             'chartTemp'        => $chartData['temp'],
             'chartHumid'       => $chartData['humid'],
             'printLogs'        => $allLogs,
+            'printEnvLogs'     => $envLogs->sortBy('timestamp')->values(),
             'observationLogs'  => ObservationLog::with(['environmentLog', 'cycle'])
                 ->where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'desc')
@@ -725,16 +812,58 @@ new class extends Component
                 </div>
             @endif
 
-            <!-- Tombol Ekspor CSV & Cetak Laporan -->
+            <!-- Tombol Ekspor CSV (Dropdown Pilihan) & Cetak Laporan -->
             <div class="grid grid-cols-2 md:flex md:flex-row items-center gap-2.5 w-full md:w-auto shrink-0">
-                <button
-                    wire:click="exportCsv"
-                    type="button"
-                    class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
-                >
-                    <x-lucide-download class="w-5 md:w-(--size-26)"/>
-                    <span>Ekspor CSV</span>
-                </button>
+                <!-- Dropdown Pilihan Ekspor CSV -->
+                <div x-data="{ openCsvMenu: false }" class="relative w-full md:w-auto">
+                    <button
+                        @click="openCsvMenu = !openCsvMenu"
+                        type="button"
+                        class="h-[58px] w-full md:w-auto gap-2 px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
+                    >
+                        <x-lucide-download class="w-5 md:w-(--size-26)"/>
+                        <span>Ekspor CSV</span>
+                        <x-lucide-chevron-down class="w-4 h-4 ml-0.5 transition-transform" ::class="openCsvMenu ? 'rotate-180' : ''"/>
+                    </button>
+
+                    <div
+                        x-show="openCsvMenu"
+                        @click.outside="openCsvMenu = false"
+                        x-transition.opacity.duration.200ms
+                        class="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden py-1.5"
+                        x-cloak
+                    >
+                        <button
+                            type="button"
+                            wire:click="exportObservationCsv"
+                            @click="openCsvMenu = false"
+                            class="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 hover:bg-emerald-50/70 hover:text-(--prime-colour) transition-colors cursor-pointer border-b border-gray-100"
+                        >
+                            <div class="p-2 rounded-lg bg-emerald-100 text-[#163428] shrink-0">
+                                <x-lucide-notebook-pen class="w-4 h-4"/>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-gray-900">Data Log Observasi</div>
+                                <div class="text-[11px] text-gray-500">Pakan, bobot maggot & kondisi</div>
+                            </div>
+                        </button>
+
+                        <button
+                            type="button"
+                            wire:click="exportEnvironmentCsv"
+                            @click="openCsvMenu = false"
+                            class="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-gray-700 hover:bg-sky-50/70 hover:text-sky-900 transition-colors cursor-pointer"
+                        >
+                            <div class="p-2 rounded-lg bg-sky-100 text-sky-800 shrink-0">
+                                <x-lucide-activity class="w-4 h-4"/>
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-gray-900">Data Log Lingkungan</div>
+                                <div class="text-[11px] text-gray-500">Suhu & kelembapan sensor IoT</div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
 
                 <button
                     onclick="window.printReport ? window.printReport() : window.print()"
@@ -1342,11 +1471,24 @@ new class extends Component
             </div>
         @endif
 
-        <!-- 5. Rincian Seluruh Catatan Log Observasi -->
-        <div class="mb-6">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1.5 pb-0.5 border-b border-gray-400">
-                {{ $reportMode === 'periodic' ? '5. Daftar Lengkap Log Catatan Observasi' : '4. Daftar Lengkap Log Catatan Observasi' }}
+        <!-- PEMISAH HALAMAN: Data Log Observasi Memiliki Halaman Sendiri -->
+        <div style="page-break-before: always; break-before: page;"></div>
+
+        <!-- 5. Lampiran: Daftar Lengkap Log Catatan Observasi Budidaya -->
+        <div class="pt-2 mb-6">
+            <div class="border-b border-gray-400 pb-2 mb-4 flex justify-between items-center text-[10px] text-gray-500">
+                <span>SISTEM MONITORING BUDIDAYA MAGGOT BSF &mdash; LAMPIRAN DATA LOG OBSERVASI</span>
+                <span>Waktu Cetak: {{ now()->translatedFormat('d F Y, H:i') }} WIB</span>
+            </div>
+
+            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1 pb-0.5 border-b border-gray-400 flex justify-between items-center">
+                <span>5. Daftar Lengkap Log Catatan Observasi Budidaya</span>
+                <span class="text-[10px] font-semibold text-gray-600 lowercase">(total: {{ $printLogs->count() }} data observasi)</span>
             </h3>
+            <p class="text-[10px] text-gray-500 mb-2">
+                Catatan manual harian meliputi pemberian pakan, pertumbuhan bobot maggot, serta kondisi lingkungan saat observasi.
+            </p>
+
             <table class="w-full text-[11px] border border-gray-300 text-left border-collapse">
                 <thead class="bg-gray-100 font-bold border-b border-gray-300">
                     <tr>
@@ -1379,12 +1521,77 @@ new class extends Component
                     @empty
                         <tr>
                             <td colspan="{{ $reportMode === 'periodic' ? 8 : 7 }}" class="p-4 text-center text-gray-400">
-                                Tidak ada data catatan observasi.
+                                Tidak ada data catatan observasi untuk periode/siklus ini.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- PEMISAH HALAMAN: Data Log Lingkungan Memiliki Halaman Sendiri -->
+        <div style="page-break-before: always; break-before: page;"></div>
+
+        <!-- 6. Lampiran: Daftar Lengkap Log Telemetri Lingkungan Sensor IoT -->
+        <div class="pt-2 mb-6">
+            <div class="border-b border-gray-400 pb-2 mb-4 flex justify-between items-center text-[10px] text-gray-500">
+                <span>SISTEM MONITORING BUDIDAYA MAGGOT BSF &mdash; LAMPIRAN TELEMETRI LINGKUNGAN (IoT)</span>
+                <span>Waktu Cetak: {{ now()->translatedFormat('d F Y, H:i') }} WIB</span>
+            </div>
+
+            <h3 class="text-xs font-bold uppercase tracking-wider text-black mb-1 pb-0.5 border-b border-gray-400 flex justify-between items-center">
+                <span>6. Daftar Lengkap Log Telemetri Sensor Lingkungan (Suhu & Kelembapan)</span>
+                <span class="text-[10px] font-semibold text-gray-600 lowercase">(total: {{ $printEnvLogs->count() }} data sensor)</span>
+            </h3>
+            <p class="text-[10px] text-gray-500 mb-2">
+                Data telemetri mentah terekam langsung secara otomatis oleh perangkat mikrokontroler sensor IoT (tabel environment_logs).
+            </p>
+
+            <table class="w-full text-[11px] border border-gray-300 text-left border-collapse">
+                <thead class="bg-gray-100 font-bold border-b border-gray-300">
+                    <tr>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-center w-8">No</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Tanggal & Waktu</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-left">Siklus</th>
+                        <th class="p-1.5 border-r border-gray-300 text-black text-center">Suhu (°C)</th>
+                        <th class="p-1.5 text-black text-center">Kelembapan (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($printEnvLogs as $idx => $env)
+                        <tr class="border-b border-gray-200">
+                            <td class="p-1.5 border-r border-gray-200 text-center">{{ $idx + 1 }}</td>
+                            <td class="p-1.5 border-r border-gray-200 font-medium whitespace-nowrap">
+                                {{ $env->timestamp ? Carbon::parse($env->timestamp)->format('d/m/Y H:i:s') : '-' }}
+                            </td>
+                            <td class="p-1.5 border-r border-gray-200 whitespace-nowrap">
+                                Siklus {{ $env->cycle_id ?? '-' }}
+                            </td>
+                            <td class="p-1.5 border-r border-gray-200 text-center font-semibold whitespace-nowrap">
+                                {{ number_format((float) $env->temperature, 2) }}°C
+                            </td>
+                            <td class="p-1.5 text-center font-semibold whitespace-nowrap">
+                                {{ number_format((float) $env->humidity, 2) }}%
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="p-4 text-center text-gray-400">
+                                Tidak ada data telemetri sensor lingkungan untuk periode/siklus ini.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+
+            <!-- Kolom Tanda Tangan & Pengesahan Dokumen -->
+            <div class="mt-8 pt-4 border-t border-gray-300 flex justify-end text-xs text-black break-inside-avoid">
+                <div class="text-center w-56">
+                    <p class="mb-14">Penanggung Jawab Budidaya,</p>
+                    <p class="font-bold underline">{{ auth()->user()->full_name ?? auth()->user()->username ?? 'Administrator' }}</p>
+                    <p class="text-[10px] text-gray-500">Sistem Monitoring Maggot BSF</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>
