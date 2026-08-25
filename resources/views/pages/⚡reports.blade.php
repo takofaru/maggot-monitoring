@@ -102,18 +102,32 @@ new class extends Component
             $start = Carbon::parse($this->startDate ?: now()->subDays(30))->startOfDay();
             $end = Carbon::parse($this->endDate ?: now())->endOfDay();
 
-            $allLogs = ObservationLog::with('environmentLog')
-                ->whereBetween('timestamp', [$start, $end])
+            $allObsLogs = ObservationLog::whereBetween('timestamp', [$start, $end])
                 ->orderBy('timestamp', 'asc')
-                ->orderBy('id', 'asc')
                 ->get();
+
+            $dailyEnvLogs = EnvironmentLog::whereBetween('timestamp', [$start, $end])
+                ->selectRaw('DATE(timestamp) as date_key, AVG(temperature) as avg_temp, AVG(humidity) as avg_humid')
+                ->groupBy('date_key')
+                ->orderBy('date_key', 'asc')
+                ->get()
+                ->keyBy('date_key');
         } else {
-            $allLogs = ObservationLog::with('environmentLog')
-                ->where('cycle_id', $this->selectedCycleId)
+            $allObsLogs = ObservationLog::where('cycle_id', $this->selectedCycleId)
                 ->orderBy('timestamp', 'asc')
-                ->orderBy('id', 'asc')
                 ->get();
+
+            $dailyEnvLogs = EnvironmentLog::where('cycle_id', $this->selectedCycleId)
+                ->selectRaw('DATE(timestamp) as date_key, AVG(temperature) as avg_temp, AVG(humidity) as avg_humid')
+                ->groupBy('date_key')
+                ->orderBy('date_key', 'asc')
+                ->get()
+                ->keyBy('date_key');
         }
+
+        $obsDates = $allObsLogs->pluck('timestamp')->filter()->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))->unique();
+        $envDates = $dailyEnvLogs->keys();
+        $allDates = $obsDates->merge($envDates)->unique()->sort()->values();
 
         $chartLabels = [];
         $chartMaggot = [];
@@ -121,12 +135,21 @@ new class extends Component
         $chartTemp   = [];
         $chartHumid  = [];
 
-        foreach ($allLogs as $log) {
-            $chartLabels[] = $log->timestamp ? $log->timestamp->format('d M') : "#{$log->id}";
-            $chartMaggot[] = (float) $log->maggot_weight;
-            $chartFeed[]   = (float) $log->feed_weight;
-            $chartTemp[]   = $log->environmentLog ? (float) $log->environmentLog->temperature : null;
-            $chartHumid[]  = $log->environmentLog ? (float) $log->environmentLog->humidity : null;
+        $obsByDate = $allObsLogs->groupBy(fn($l) => $l->timestamp ? Carbon::parse($l->timestamp)->format('Y-m-d') : null);
+
+        foreach ($allDates as $dateKey) {
+            $parsedDate = Carbon::parse($dateKey);
+            $chartLabels[] = $parsedDate->format('d M');
+
+            // Data observasi harian
+            $dayObs = $obsByDate->get($dateKey);
+            $chartMaggot[] = $dayObs ? (float) $dayObs->last()->maggot_weight : null;
+            $chartFeed[]   = $dayObs ? (float) $dayObs->sum('feed_weight') : null;
+
+            // Data lingkungan murni langsung dari tabel EnvironmentLog
+            $envDay = $dailyEnvLogs->get($dateKey);
+            $chartTemp[]  = $envDay ? round((float) $envDay->avg_temp, 1) : null;
+            $chartHumid[] = $envDay ? round((float) $envDay->avg_humid, 1) : null;
         }
 
         return [
@@ -344,8 +367,18 @@ new class extends Component
                 $pEndMaggot = (float) ($pLogs->last()?->maggot_weight ?? 0.0);
                 $pGain = max(0, $pEndMaggot - $pStartMaggot);
 
-                $pEnvIds = $pLogs->pluck('environment_log_id')->filter();
-                $pEnvLogs = $envLogs->whereIn('id', $pEnvIds);
+                // Dapatkan rata-rata telemetri lingkungan langsung dari tabel EnvironmentLog sepanjang fase
+                if ($pLogs->count() > 0) {
+                    $pStart = Carbon::parse($pLogs->min('timestamp'))->startOfDay();
+                    $pEnd   = Carbon::parse($pLogs->max('timestamp'))->endOfDay();
+                    $pEnvLogs = $envLogs->filter(function ($item) use ($pStart, $pEnd) {
+                        $ts = Carbon::parse($item->timestamp);
+                        return $ts >= $pStart && $ts <= $pEnd;
+                    });
+                } else {
+                    $pEnvLogs = collect();
+                }
+
                 $pAvgTemp = $pEnvLogs->count() > 0 ? round((float) $pEnvLogs->avg('temperature'), 1) : '-';
                 $pAvgHumid = $pEnvLogs->count() > 0 ? round((float) $pEnvLogs->avg('humidity'), 1) : '-';
 
@@ -428,8 +461,18 @@ new class extends Component
             $pEndMaggot = (float) ($pLogs->last()?->maggot_weight ?? 0.0);
             $pGain = max(0, $pEndMaggot - $pStartMaggot);
 
-            $pEnvIds = $pLogs->pluck('environment_log_id')->filter();
-            $pEnvLogs = $envLogs->whereIn('id', $pEnvIds);
+            // Dapatkan rata-rata telemetri lingkungan langsung dari tabel EnvironmentLog sepanjang fase siklus ini
+            if ($pLogs->count() > 0) {
+                $pStart = Carbon::parse($pLogs->min('timestamp'))->startOfDay();
+                $pEnd   = Carbon::parse($pLogs->max('timestamp'))->endOfDay();
+                $pEnvLogs = $envLogs->filter(function ($item) use ($pStart, $pEnd) {
+                    $ts = Carbon::parse($item->timestamp);
+                    return $ts >= $pStart && $ts <= $pEnd;
+                });
+            } else {
+                $pEnvLogs = collect();
+            }
+
             $pAvgTemp = $pEnvLogs->count() > 0 ? round((float) $pEnvLogs->avg('temperature'), 1) : '-';
             $pAvgHumid = $pEnvLogs->count() > 0 ? round((float) $pEnvLogs->avg('humidity'), 1) : '-';
 
@@ -831,7 +874,7 @@ new class extends Component
                                     Tren Lingkungan
                                 </h3>
                                 <p class="text-xs text-gray-400 mt-0.5">
-                                    Kondisi suhu (&deg;C) dan kelembapan (%) saat observasi
+                                    Rata-rata telemetri suhu (&deg;C) & kelembapan (%) dari sensor IoT (environmentLog)
                                 </p>
                             </div>
                         </div>

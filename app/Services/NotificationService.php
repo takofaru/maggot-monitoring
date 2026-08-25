@@ -133,8 +133,8 @@ class NotificationService
                 if ($lastRecordedState !== null) {
                     ActivityLog::create([
                         'type'        => 'device_status',
-                        'title'       => 'Status Perangkat: Aktif',
-                        'description' => 'Perangkat monitoring IoT berhasil terhubung kembali dan aktif mengirimkan data telemetri.',
+                        'title'       => 'Status Koneksi Alat: Terhubung (Online)',
+                        'description' => 'Perangkat sensor monitoring IoT berhasil terhubung kembali dan aktif mengirimkan data telemetri suhu & kelembapan.',
                         'metadata'    => ['status' => 'online', 'timestamp' => now()->toIso8601String()],
                         'is_read'     => false,
                     ]);
@@ -146,8 +146,8 @@ class NotificationService
                 if ($lastRecordedState !== null) {
                     ActivityLog::create([
                         'type'        => 'device_status',
-                        'title'       => 'Status Perangkat: Tidak Aktif',
-                        'description' => 'Perangkat monitoring IoT tidak merespons atau terputus selama lebih dari 20 detik.',
+                        'title'       => 'Status Koneksi Alat: Terputus (Offline)',
+                        'description' => 'Perangkat sensor monitoring IoT tidak merespons atau koneksi terputus (tidak ada telemetri masuk > 20 detik).',
                         'metadata'    => ['status' => 'offline', 'timestamp' => now()->toIso8601String()],
                         'is_read'     => false,
                     ]);

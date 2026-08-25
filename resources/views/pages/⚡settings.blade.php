@@ -245,20 +245,20 @@ new class extends Component
         </div>
     </div>
 
-    <!-- Status Alat & Waktu Terakhir Terhubung -->
+    <!-- Status Koneksi Alat & Waktu Terakhir Terhubung -->
     <div wire:poll.10s class="flex flex-col sm:flex-row items-start sm:items-center justify-between text-sm py-1 gap-2">
-        <!-- Status Alat -->
+        <!-- Status Koneksi Alat -->
         <div class="flex items-center gap-3 whitespace-nowrap shrink-0">
-            <span class="font-bold text-(--text-colour) text-base">Status Alat:</span>
+            <span class="font-bold text-(--text-colour) text-base">Status Koneksi Alat:</span>
             @if($isOnline)
                 <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Online
+                    Online (Terhubung)
                 </span>
             @else
                 <span class="px-3.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800 border border-red-300 inline-flex items-center gap-1.5 whitespace-nowrap shrink-0">
                     <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                    Offline
+                    Offline (Terputus)
                 </span>
             @endif
         </div>
@@ -266,12 +266,12 @@ new class extends Component
         <!-- Terakhir Terhubung -->
         <div class="text-(--text-colour) text-xs sm:text-sm">
             @if($lastSeen)
-                Terakhir terhubung: <span class="font-semibold">{{ $lastSeen->translatedFormat('l, d F Y - H:i:s') }}</span>
+                Waktu Terakhir Terhubung: <span class="font-semibold">{{ $lastSeen->translatedFormat('l, d F Y - H:i:s') }}</span>
                 @if($diffInSeconds !== null)
                     <span class="{{ $isOnline ? 'text-emerald-700' : 'text-red-500' }} font-bold">({{ $diffInSeconds }} detik yang lalu)</span>
                 @endif
             @else
-                Terakhir terhubung: Belum ada data
+                Waktu Terakhir Terhubung: Belum ada data
             @endif
         </div>
     </div>

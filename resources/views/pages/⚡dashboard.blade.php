@@ -189,9 +189,10 @@ new class extends Component
                     Dashboard
                 </h1>
 
-                <!-- Dot Status Perangkat IoT di Samping Judul -->
-                <div class="w-7 h-7 rounded-full {{ $isDeviceOnline ? 'bg-green-200' : 'bg-red-100' }} flex items-center justify-center shrink-0" title="{{ $isDeviceOnline ? 'Perangkat Online' : 'Perangkat Offline' }}">
-                    <span class="w-2.5 h-2.5 rounded-full {{ $isDeviceOnline ? 'bg-(--prime-colour)' : 'bg-red-800' }}"></span>
+                <!-- Badge Status Koneksi Alat di Samping Judul -->
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold {{ $isDeviceOnline ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-100 text-red-800 border border-red-300' }}" title="{{ $isDeviceOnline ? 'Perangkat sensor terhubung dan aktif mengirim data telemetri' : 'Perangkat sensor tidak terhubung / koneksi terputus' }}">
+                    <span class="w-2 h-2 rounded-full {{ $isDeviceOnline ? 'bg-emerald-500 animate-pulse' : 'bg-red-500' }}"></span>
+                    <span>Status Koneksi Alat: {{ $isDeviceOnline ? 'Online (Terhubung)' : 'Offline (Terputus)' }}</span>
                 </div>
             </div>
             <p class="text-sm text-gray-500 mt-1">
