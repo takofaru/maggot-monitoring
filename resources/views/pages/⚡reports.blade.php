@@ -628,7 +628,7 @@ new class extends Component
     ></div>
 
     <!-- 1. TAMPILAN INTERAKTIF LAYAR (Hanya Muncul di Layar Web, Otomatis Tersembunyi Saat Dicetak) -->
-    <div class="no-print space-y-(--size-26) w-full min-w-max">
+    <div class="no-print space-y-(--size-26) w-full min-w-[980px]">
         <!-- Header Halaman & Tombol Lonceng Notifikasi -->
         <div class="flex items-start sm:items-center justify-between flex-col sm:flex-row gap-3">
             <div>
