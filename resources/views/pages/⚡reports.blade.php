@@ -664,19 +664,19 @@ new class extends Component
             </div>
         </div>
 
-        <!-- Filter Toolbar & Tombol Aksi (Responsif di Semua Ukuran Layar, Sejajar Presisi) -->
-        <div class="flex flex-col xl:flex-row gap-3 justify-between w-full items-stretch xl:items-center">
+        <!-- Filter Toolbar & Tombol Aksi (Mode Desktop 1 Baris Sejajar Penuh) -->
+        <div class="flex flex-col md:flex-row gap-3 justify-between w-full items-stretch md:items-center">
             @if($reportMode === 'periodic')
                 <!-- Toolbar Mode Periodik: Preset & Tanggal -->
-                <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full xl:w-auto">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Preset (Sama dengan Dropdown Siklus ke) -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full sm:w-auto">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Preset:</span>
                         <div class="relative inline-block">
                             <button
                                 @click="openDropdown = !openDropdown"
                                 type="button"
-                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap"
+                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
                             >
                                 <span>
                                     @if($periodicPreset === 'today') Hari Ini
@@ -740,14 +740,14 @@ new class extends Component
                         </div>
                     </div>
 
-                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai - Responsif Bebas Overflow) -->
-                    <div class="flex flex-col sm:flex-row min-h-[58px] gap-2.5 sm:gap-(--size-10) items-stretch sm:items-center px-3 sm:px-4 md:px-(--size-16) py-2.5 sm:py-0 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full sm:w-auto">
-                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                    <!-- Input Rentang Tanggal Kalender Kustom (Dari & Sampai - 1 Baris di Desktop) -->
+                    <div class="flex flex-col sm:flex-row md:inline-flex md:h-[58px] gap-2 md:gap-(--size-10) items-stretch sm:items-center px-3 sm:px-4 md:px-(--size-16) py-2.5 md:py-0 bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full md:w-auto shrink-0">
+                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
                             <span class="font-medium text-(--text-colour) shrink-0">Dari:</span>
                             <x-custom-date-picker wire:model.live="startDate" />
                         </div>
-                        <span class="text-gray-300 font-bold hidden sm:inline">&mdash;</span>
-                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                        <span class="text-gray-300 font-bold hidden sm:inline md:inline">&mdash;</span>
+                        <div class="flex items-center justify-between sm:justify-start gap-2 w-full md:w-auto">
                             <span class="font-medium text-(--text-colour) shrink-0">Sampai:</span>
                             <x-custom-date-picker wire:model.live="endDate" />
                         </div>
@@ -760,15 +760,15 @@ new class extends Component
                 </div>
             @else
                 <!-- Toolbar Mode Siklus: Siklus ke & Status -->
-                <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 w-full xl:w-auto">
+                <div class="flex flex-col md:flex-row items-stretch md:items-center gap-3 w-full md:w-auto">
                     <!-- Dropdown Pilihan Siklus -->
-                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full sm:w-auto">
+                    <div x-data="{ openDropdown: false }" class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs whitespace-nowrap w-full md:w-auto shrink-0">
                         <span>Siklus ke:</span>
                         <div class="relative inline-block">
                             <button
                                 @click="openDropdown = !openDropdown"
                                 type="button"
-                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap"
+                                class="rounded-(--size-16) inline-flex justify-between items-center gap-(--size-10) input-text text-(--size-16) hover:bg-(--bg2-colour) cursor-pointer whitespace-nowrap shrink-0"
                             >
                                 <span>{{ $selectedCycleName }}</span>
                                 <x-lucide-chevron-down class="w-(--size-16)"/>
@@ -806,7 +806,7 @@ new class extends Component
                     </div>
 
                     <!-- Status Siklus Pill -->
-                    <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full sm:w-auto">
+                    <div class="inline-flex h-[58px] gap-(--size-10) items-center justify-between px-4 md:px-(--size-16) bg-(--fg-colour) border-(--outline-colour) rounded-(--size-16) border-[1.5px] shadow-xs text-sm md:text-(length:--size-16) w-full md:w-auto shrink-0">
                         <div class="flex items-center gap-1.5 flex-wrap">
                             <span class="text-gray-500 font-medium">Status:</span>
                             <span class="font-bold text-(--prime-colour)">
@@ -821,13 +821,13 @@ new class extends Component
             @endif
 
             <!-- Tombol Ekspor CSV (Dropdown Pilihan) & Cetak Laporan -->
-            <div class="flex flex-row items-center gap-2.5 w-full xl:w-auto">
+            <div class="grid grid-cols-2 md:flex md:flex-row items-center gap-2.5 w-full md:w-auto shrink-0">
                 <!-- Dropdown Pilihan Ekspor CSV -->
-                <div x-data="{ openCsvMenu: false }" class="relative flex-1 xl:flex-initial">
+                <div x-data="{ openCsvMenu: false }" class="relative w-full md:w-auto">
                     <button
                         @click="openCsvMenu = !openCsvMenu"
                         type="button"
-                        class="h-[58px] w-full gap-2 px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
+                        class="h-[58px] w-full md:w-auto gap-2 px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                     >
                         <x-lucide-download class="w-5 md:w-(--size-26)"/>
                         <span>Ekspor CSV</span>
@@ -876,7 +876,7 @@ new class extends Component
                 <button
                     onclick="window.printReport ? window.printReport() : window.print()"
                     type="button"
-                    class="h-[58px] flex-1 xl:flex-initial gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
+                    class="h-[58px] w-full md:w-auto gap-(--size-10) px-4 md:px-(--size-26) bg-(--prime-colour) text-(--fg-colour) rounded-(--size-16) font-medium text-sm md:text-(length:--size-16) cursor-pointer hover:opacity-90 flex items-center justify-center whitespace-nowrap shadow-xs"
                 >
                     <x-lucide-printer class="w-5 md:w-(--size-26)"/>
                     <span>Cetak Laporan</span>
