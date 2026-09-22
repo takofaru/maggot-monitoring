@@ -28,7 +28,7 @@
 
             <!-- Logo & Nama Aplikasi di Kanan -->
             <div class="flex items-center gap-2">
-                <span class="font-extrabold text-[#163428] text-base tracking-wider">MAGGOT</span>
+                <span class="font-extrabold text-[#163428] text-base tracking-wider">Smart Maggot Farming</span>
                 <img src="{{ asset('images/logoMaggot.svg') }}" alt="Logo Maggot" class="w-7 h-7 object-contain shrink-0" />
             </div>
         </header>

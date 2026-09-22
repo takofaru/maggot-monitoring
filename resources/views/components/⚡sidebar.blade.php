@@ -83,7 +83,7 @@ new class extends Component
                         x-transition:enter-end="opacity-100 translate-x-0"
                         class="font-extrabold text-[#163428] text-base tracking-wider whitespace-nowrap"
                     >
-                        MAGGOT
+                        Smart Maggot Farming
                     </span>
                 </div>
 
@@ -228,7 +228,7 @@ new class extends Component
             <div class="flex items-center gap-2.5">
                 <img src="{{ asset('images/logoMaggot.svg') }}" alt="Logo Maggot" class="w-[26px] h-[26px] object-contain shrink-0" />
                 <span class="font-extrabold text-[#163428] text-base tracking-wider">
-                    MAGGOT
+                    Smart Maggot Farming
                 </span>
             </div>
 
