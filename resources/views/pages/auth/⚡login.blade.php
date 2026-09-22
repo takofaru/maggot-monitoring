@@ -43,9 +43,7 @@ new #[Layout('layouts.guest')] class extends Component
 <div class="w-screen h-screen flex justify-center items-center bg-(--bg-colour)">
     <div class="flex flex-col gap-(--size-42) min-w-(--size-304) max-w-(--size-304) items-center">
         <div id="logo">
-            <div class="w-16 h-16 bg-[#163428] text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
-                MAGGOT
-            </div>
+            <img src="{{ asset('images/logoMaggot.svg') }}" alt="Logo Maggot" class="w-20 h-20 object-contain" />
         </div>
 
         <div id="login" class="flex flex-col gap-(--size-26) w-full">

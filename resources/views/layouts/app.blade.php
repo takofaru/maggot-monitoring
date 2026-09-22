@@ -8,6 +8,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 
         @livewireStyles
     </head>
@@ -28,9 +29,7 @@
             <!-- Logo & Nama Aplikasi di Kanan -->
             <div class="flex items-center gap-2">
                 <span class="font-extrabold text-[#163428] text-base tracking-wider">MAGGOT</span>
-                <div class="w-7 h-7 bg-[#163428] rounded-full flex items-center justify-center text-white font-bold text-xs shadow-xs">
-                    M
-                </div>
+                <img src="{{ asset('images/logoMaggot.svg') }}" alt="Logo Maggot" class="w-7 h-7 object-contain shrink-0" />
             </div>
         </header>
 

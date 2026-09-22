@@ -75,9 +75,7 @@ new class extends Component
             >
                 <!-- Logo 26px & Nama Aplikasi -->
                 <div class="flex items-center gap-2.5 overflow-hidden">
-                    <div class="w-[26px] h-[26px] bg-[#163428] rounded-full flex items-center justify-center text-white font-bold text-[11px] shadow-sm shrink-0">
-                        M
-                    </div>
+                    <img src="{{ asset('images/logoMaggot.svg') }}" alt="Logo Maggot" class="w-[26px] h-[26px] object-contain shrink-0" />
                     <span
                         x-show="!hoverMode || isHovered"
                         x-transition:enter="transition ease-out duration-200"
@@ -228,9 +226,7 @@ new class extends Component
         <!-- Top Drawer Header: Logo & Close -->
         <div class="flex items-center justify-between px-4 py-4 border-b border-(--outline-colour)/40">
             <div class="flex items-center gap-2.5">
-                <div class="w-[26px] h-[26px] bg-[#163428] rounded-full flex items-center justify-center text-white font-bold text-[11px] shadow-sm shrink-0">
-                    M
-                </div>
+                <img src="{{ asset('images/logoMaggot.svg') }}" alt="Logo Maggot" class="w-[26px] h-[26px] object-contain shrink-0" />
                 <span class="font-extrabold text-[#163428] text-base tracking-wider">
                     MAGGOT
                 </span>
